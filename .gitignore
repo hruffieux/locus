@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.png
+*.pdf
+.DS_Store
+
+# temporary files emacs 
+*~
+[#]*[#]
+.\#*
