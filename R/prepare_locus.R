@@ -121,15 +121,13 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
                  "Please increase p0_av. \n",
                  sep = ""))
 
-    if (p0_av / p > 1 - eps)
+    if (p0_av / p > 0.95)
       stop(paste("p0_av = ", p0_av, ": \n",
                  "invalid provided value of p0_av.\n",
-                 "The prior sparsity level, p0_av / p, must be smaller than ",
-                 "one. \n",
-                 "Please decrease p0_av. \n",
+                 "Induces a non-sparse formulation. Please decrease p0_av. \n",
                  sep = ""))
 
-    if (p0_av > ceiling(p / 2))
+    if (p0_av > ceiling(4 * p / 5))
       warning(paste("Prior model size p0_av = ", p0_av, ": \n",
                     "p0_av / p is large, so multiplicity control may be weak. ",
                     "You may want to consider a smaller p0_av. \n", sep=""))
@@ -193,11 +191,11 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
 
     if (list_hyper$d_hyper != d)
       stop(paste("The dimensions of the provided hyperparameters ",
-                 "(list_hyper) are not consistent with those of Y.\n", sep=""))
+                 "(list_hyper) are not consistent with that of Y.\n", sep=""))
 
     if (list_hyper$p_hyper != p_hyper_match)
       stop(paste("The dimensions of the provided hyperparameters ",
-                 "(list_hyper) are not consistent with those of X.\n", sep=""))
+                 "(list_hyper) are not consistent with that of X.\n", sep=""))
 
     if (class(list_hyper) == "hyper") {
       # remove the entries corresponding to the removed constant covariates in X
@@ -234,7 +232,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
 
       if (list_hyper$q_hyper != q_hyper_match)
         stop(paste("The dimensions of the provided hyperparameters ",
-                   "(list_hyper) are not consistent with those of Z.\n", sep=""))
+                   "(list_hyper) are not consistent with that of Z.\n", sep=""))
 
       if (!is.null(names(list_hyper$phi)) && names(list_hyper$phi) != names_z)
         stop("Provided names for the entries of phi do not match the colnames of Z")
@@ -247,8 +245,9 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
 
   }
 
-  list_hyper
+  class(list_hyper) <- "out_hyper"
 
+  list_hyper
 }
 
 
@@ -288,11 +287,11 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_
 
     if (list_init$d_init != d)
       stop(paste("The dimensions of the provided initial parameters ",
-                 "(list_init) are not consistent with those of Y.\n", sep=""))
+                 "(list_init) are not consistent with that of Y.\n", sep=""))
 
     if (list_init$p_init != p_init_match)
       stop(paste("The dimensions of the provided initial parameters ",
-                 "(list_init) are not consistent with those of X.\n", sep=""))
+                 "(list_init) are not consistent with that of X.\n", sep=""))
 
     if (class(list_init) == "init") {
       # remove the entries corresponding to the removed constant covariates in X
@@ -317,10 +316,12 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_
 
       if (list_init$q_init != q_init_match)
         stop(paste("The dimensions of the provided initial parameters ",
-                   "(list_init) are not consistent with those of Z.\n", sep=""))
+                   "(list_init) are not consistent with that of Z.\n", sep=""))
     }
 
   }
+
+  class(list_init) <- "out_init"
 
   list_init
 }
@@ -336,19 +337,19 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init
                sep=""))
 
   if (!is.null(p0_av) | !is.null(list_hyper) | !is.null(list_init))
-    stop(paste("p0_av, list_hyper and list_init must all be NULL if if non NULL ",
+    stop(paste("p0_av, list_hyper and list_init must all be NULL if non NULL ",
                "list_cv is provided (cross-validation).", sep = ""))
 
   if (list_cv$n_cv != n)
     stop(paste("The number of observations n provided to the function set_cv",
-               "is not consistent with that of the data.", sep=""))
+               "is not consistent with those of the data.", sep=""))
 
   if (list_cv$p_cv != length(bool_rmvd_x))
     stop(paste("The number of covariate p provided to the function set_cv ",
                "is not consistent with X.\n", sep=""))
 
   if (any(list_cv$p0_av_grid > p)) { # p has potentially been reduced because
-                                       # of constant covariates
+    # of constant covariates
 
     list_cv$p0_av_grid <- create_grid_(p, list_cv$size_p0_av_grid)
 
@@ -372,3 +373,122 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init
 }
 
 
+
+prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper, list_init, list_cv, verbose) {
+
+  if (class(list_blocks) != "blocks")
+    stop(paste("The provided list_blocks must be an object of class ``blocks''. \n",
+               "*** you must either use the function set_blocks to give the settings ",
+               "for parallels applications of locus on blocks of covariates or set list_blocks to NULL to ",
+               "apply locus jointly on all the covariates (sufficient RAM required). ***",
+               sep=""))
+
+  if (!is.null(list_cv))
+    stop(paste("list_cv must be NULL if non NULL ",
+               "list_blocks is provided (parallel applications of locus on blocks of covariates).\n",
+               "Cross-validation for block-wise applications will be enabled soon.",sep = ""))
+
+  if (list_blocks$p_blocks != length(bool_rmvd_x))
+    stop(paste("The number of covariate p provided to the function set_blocks ",
+               "is not consistent with X.\n", sep=""))
+
+  check_structure_(p0_av, "vector", "numeric", c(1, n_bl))
+
+
+  vec_fac_bl <- list_blocks$vec_fac_bl[!bool_rmvd_x]
+
+  tab_bl <- table(list_blocks$vec_fac_bl)
+  pres_bl <- tab_bl > 0
+  vec_p_bl <- as.vector(tab_bl[pres_bl])
+  # in case a block was removed due to the above because of bool_rmvd_x
+  n_bl  <- sum(pres_bl)
+  if(list_blocks$n_cpus > n_bl) n_cpus <- n_bl
+
+  if (is.null(list_hyper) | is.null(list_init)) {
+
+    check_structure_(p0_av, "vector", "numeric", c(1, length(pres_bl)))
+
+    if(length(p0_av) == 1) {
+      min_max_sanity <- c(min(vec_p_bl), max(vec_p_bl))
+      p_star <- sapply(min_max_sanity, function(m_p_bl) convert_p0_av_(p0_av, m_p_bl, verbose = F))[1]
+      p_star <- rep(p_star, length(vec_fac_bl))
+    } else {
+      p0_av <- p0_av[pres_bl]
+      p_star <- sapply(1:n_bl, function(k) {
+        p_star_k <- convert_p0_av_(p0_av[k], vec_p_bl[k], verbose = F)
+        rep(p_star_k, vec_p_bl[k])
+        })
+    }
+  } else {
+
+    if (!is.null(p0_av))
+      warning(paste("Provided argument p0_av not used, as both list_hyper ",
+                    "and list_init were provided.", sep = ""))
+
+    p_star <- NULL
+
+  }
+
+  create_named_list_(p_star, n_bl, n_cpus, vec_fac_bl, vec_p_bl)
+
+}
+
+
+
+#' @export
+set_blocks <- function(p, pos_bl, n_cpus, verbose) {
+
+  check_structure_(verbose, "vector", "logical", 1)
+
+  check_structure_(pos_bl, "vector", "numeric")
+  check_natural_(pos_bl)
+
+
+  if (any(pos_bl < 1) | any(pos_bl > p))
+    stop("The positions provided in pos_bl must range between 1 and total number of variables in X, p.")
+
+  if (any(duplicated(pos_bl)))
+    stop("The positions provided in pos_bl must be unique.")
+
+  if (any(pos_bl != cummax(pos_bl)))
+    stop("The positions provided in pos_bl must be monotonically increasing.")
+
+  vec_fac_bl <- as.factor(cumsum(seq_along(1:p) %in% pos_bl))
+
+  n_bl <- length(unique(vec_fac_bl))
+
+  check_structure_(n_cpus, "vector", "numeric", 1)
+  check_natural_(n_cpus)
+
+
+  if (n_cpus > 1) {
+
+    n_cpus_avail <- parallel::detectCores()
+    if (n_cpus > n_cpus_avail) {
+      n_cpus <- n_cpus_avail
+      warning(paste("The number of CPUs specified exceeds the number of CPUs ",
+                    "available on the machine. The latter has been used instead.",
+                    sep=""))
+    }
+
+    if (n_cpus > n_bl){
+      message <- paste("The number of cpus in use is at most equal to the number of blocks.",
+                       "n_cpus is therefore set to ", n_bl, ". \n", sep ="")
+      if(verbose) cat(message)
+      else warning(message)
+      n_cpus <- n_bl
+    }
+
+    if (verbose) cat(paste("locus applied in parallel on ", n_bl, " blocks of covariates, using ",
+                           n_cpus, " CPUs.\n",
+                           "Please make sure that enough RAM is available.", sep=""))
+  }
+
+  p_blocks <- p
+
+  list_blocks <- create_named_list_(p_blocks, n_bl, n_cpus, vec_fac_bl)
+
+  class(list_blocks) <- "blocks"
+
+  list_blocks
+}

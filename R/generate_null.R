@@ -1,6 +1,7 @@
 #' @export
-generate_null <- function(n_perm, Y, X, p0_av, Z, list_hyper, list_init, user_seed,
-                          tol, maxit, batch, verbose, rel_results_dir, n_cpus) {
+generate_null <- function(n_perm, Y, X, p0_av, Z, list_hyper, list_init,
+                          list_blocks, user_seed, tol, maxit, batch, verbose,
+                          rel_results_dir, n_cpus) {
 
   if (!is.null(user_seed)){
     RNGkind("L'Ecuyer-CMRG") # ensure reproducibility when using mclapply
@@ -15,8 +16,10 @@ generate_null <- function(n_perm, Y, X, p0_av, Z, list_hyper, list_init, user_se
     rownames(Y) <- NULL
 
     # user_seed must be NULL here otherwise always the same permutation
-    res_perm <- locus(Y[ind_perm, ], X, p0_av, Z, list_hyper, list_init,
-                       list_cv = NULL, user_seed = NULL, tol, maxit, batch, verbose)
+    res_perm <- locus(Y = Y[ind_perm, ], X = X, p0_av = p0_av, Z = Z,
+                      list_hyper = list_hyper, list_init = list_init,
+                      list_cv = NULL, list_blocks = list_blocks, user_seed = NULL,
+                      tol = tol, maxit = maxit, batch = batch, verbose = verbose)
 
     om_vb <- res_perm$om_vb
     gam_vb <- res_perm$gam_vb

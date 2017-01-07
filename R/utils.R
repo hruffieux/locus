@@ -1,7 +1,7 @@
 check_natural_ <- function(x, eps = .Machine$double.eps^0.75){
-  if (x < eps | abs(x - round(x)) > eps) {
+  if (any(x < eps | abs(x - round(x)) > eps)) {
     stop(paste(deparse(substitute(x)),
-               " must be a natural number greater than 0.", sep=""))
+               " must be natural.", sep=""))
   }
 }
 

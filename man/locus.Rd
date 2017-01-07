@@ -4,9 +4,9 @@
 \alias{locus}
 \title{Fit a sparse multivariate regression model using variational inference.}
 \usage{
-locus(Y, X, p_guess, Z = NULL, list_hyper = NULL, list_init = NULL,
-  list_cv = NULL, user_seed = NULL, tol = 0.001, maxit = 1000,
-  batch = T, save_hyper = F, save_init = F, verbose = T)
+locus(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
+  list_cv = NULL, list_blocks = NULL, user_seed = NULL, tol = 0.001,
+  maxit = 1000, batch = T, save_hyper = F, save_init = F, verbose = T)
 }
 \arguments{
 \item{Y}{continuous response data matrix of dimension n x d, where n is the
@@ -15,7 +15,7 @@ number of observations and d is the number of response variables.}
 \item{X}{input matrix of dimension n x p, where p is the number of candidate
 predictors. X cannot contain NAs.}
 
-\item{p_guess}{is the 'a priori' average number of predictors included in the
+\item{p0_av}{is the 'a priori' average number of predictors included in the
 model.}
 
 \item{Z}{covariate matrix of dimension n x q, where q is the number of

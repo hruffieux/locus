@@ -19,6 +19,9 @@ generate_snps <- function(n, p, cor_type, vec_rho, vec_maf = NULL, n_cpus = 1) {
 
   if (cor_type == "none") {
 
+    if (n_cpus > 1)
+      warning("n_cpus is ignored when the snps are generated independently of one another.")
+
     snps <- sapply(vec_maf, function(maf) rbinom(n, 2, maf)) # Hardy-Weinberg equilibrium
 
   } else {
@@ -176,6 +179,9 @@ generate_phenos <- function(n, d, cor_type, vec_rho, vec_var_err, n_cpus = 1) {
   check_positive_(vec_var_err)
 
   if (cor_type == "none") {
+
+    if (n_cpus > 1)
+      warning("n_cpus is ignored when the phenotypes are generated independently of one another.")
 
     phenos <- sapply(vec_var_err, function(var_err) rnorm(n, 0, sqrt(var_err))) # Hardy-Weinberg equilibrium
     ind_bl <- NULL

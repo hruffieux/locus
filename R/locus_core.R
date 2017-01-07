@@ -255,7 +255,7 @@ lower_bound_ <- function(Y, X, d, n, p,
              sweep(gam_vb, 1, log_om_vb, `*`) +
              sweep(1-gam_vb, 1, log_1_min_om_vb, `*`) +
              1 / 2 * sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) -
-             gam_vb * log(gam_vb+eps) - (1-gam_vb) * log(1-gam_vb+eps))
+             gam_vb * log(gam_vb+eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
 
   G <- sum((eta-eta_vb) * log_tau_vb -
              (kappa-kappa_vb) * tau_vb + eta * log(kappa) -
