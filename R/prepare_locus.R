@@ -129,12 +129,10 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
                  "Please decrease p0_av. \n",
                  sep = ""))
 
-    if (p0_av > ceiling(p / 4))
-      warning(paste("p0_av = ", p0_av, ": \n",
-                    "lower prior sparsity levels, p0_av / p, are commonly ",
-                    "assumed for genetic association studies. \n",
-                    "You may want to consider a smaller value of p0_av. \n",
-                    sep=""))
+    if (p0_av > ceiling(p / 2))
+      warning(paste("Prior model size p0_av = ", p0_av, ": \n",
+                    "p0_av / p is large, so multiplicity control may be weak. ",
+                    "You may want to consider a smaller p0_av. \n", sep=""))
 
     p_star <- p0_av
 
@@ -151,11 +149,10 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
                  "All entries must lie between 0 and 1 (strictly). \n",
                  sep = ""))
 
-    if (median(p0_av) > 1 / 4)
-      warning(paste("A lower number of covariates is commonly assumed to have ",
-                    "a significant prior probability of association with ",
-                    "with responses in genetic association studies. \n",
-                    "You may want to decrease the value of several ",
+    if (median(p0_av) > 1 / 2)
+      warning(paste("The number of covariates with large prior inclusion ",
+                    "probability is large, so multiplicity control may be weak. \n",
+                    "You may want to decrease the values of several ",
                     "entries of p0_av. \n",
                     sep=""))
 
