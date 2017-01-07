@@ -103,63 +103,63 @@ prepare_data_ <- function(Y, X, Z, user_seed, tol, maxit, batch, verbose) {
 }
 
 
-convert_p_guess_ <- function(p_guess, p, verbose, eps = .Machine$double.eps^0.5) {
+convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
 
-  check_structure_(p_guess, "vector", "numeric", c(1, p))
+  check_structure_(p0_av, "vector", "numeric", c(1, p))
 
-  if (length(p_guess) == 1) {
+  if (length(p0_av) == 1) {
 
-    if (verbose) cat(paste("Provided p_guess = ", p_guess, " interpreted as ",
+    if (verbose) cat(paste("Provided p0_av = ", p0_av, " interpreted as ",
                            "the prior number of covariates associated with at ",
                            "least one response. \n\n", sep = ""))
 
-    if (p_guess / p < eps)
-      stop(paste("p_guess = ", p_guess, ": \n",
-                 "invalid provided value of p_guess.\n",
-                 "The prior sparsity level, p_guess / p, must be larger than ",
+    if (p0_av / p < eps)
+      stop(paste("p0_av = ", p0_av, ": \n",
+                 "invalid provided value of p0_av.\n",
+                 "The prior sparsity level, p0_av / p, must be larger than ",
                  "zero. \n",
-                 "Please increase p_guess. \n",
+                 "Please increase p0_av. \n",
                  sep = ""))
 
-    if (p_guess / p > 1 - eps)
-      stop(paste("p_guess = ", p_guess, ": \n",
-                 "invalid provided value of p_guess.\n",
-                 "The prior sparsity level, p_guess / p, must be smaller than ",
+    if (p0_av / p > 1 - eps)
+      stop(paste("p0_av = ", p0_av, ": \n",
+                 "invalid provided value of p0_av.\n",
+                 "The prior sparsity level, p0_av / p, must be smaller than ",
                  "one. \n",
-                 "Please decrease p_guess. \n",
+                 "Please decrease p0_av. \n",
                  sep = ""))
 
-    if (p_guess > ceiling(p / 4))
-      warning(paste("p_guess = ", p_guess, ": \n",
-                    "lower prior sparsity levels, p_guess / p, are commonly ",
+    if (p0_av > ceiling(p / 4))
+      warning(paste("p0_av = ", p0_av, ": \n",
+                    "lower prior sparsity levels, p0_av / p, are commonly ",
                     "assumed for genetic association studies. \n",
-                    "You may want to consider a smaller value of p_guess. \n",
+                    "You may want to consider a smaller value of p0_av. \n",
                     sep=""))
 
-    p_star <- p_guess
+    p_star <- p0_av
 
   } else {
 
-    if (verbose) cat(paste("- The sth entry of the provided p_guess ",
+    if (verbose) cat(paste("- The sth entry of the provided p0_av ",
                            "interpreted as the prior probability that ",
                            "covariate s is associated with at least one ",
                            "response. \n\n",
                            sep = ""))
 
-    if (any(p_guess) < eps | any(p_guess) > 1 - eps)
-      stop(paste("Invalid provided vector of p_guess.\n",
+    if (any(p0_av) < eps | any(p0_av) > 1 - eps)
+      stop(paste("Invalid provided vector of p0_av.\n",
                  "All entries must lie between 0 and 1 (strictly). \n",
                  sep = ""))
 
-    if (median(p_guess) > 1 / 4)
+    if (median(p0_av) > 1 / 4)
       warning(paste("A lower number of covariates is commonly assumed to have ",
                     "a significant prior probability of association with ",
                     "with responses in genetic association studies. \n",
                     "You may want to decrease the value of several ",
-                    "entries of p_guess. \n",
+                    "entries of p0_av. \n",
                     sep=""))
 
-    p_star <- p_guess * p
+    p_star <- p0_av * p
 
   }
 
@@ -329,7 +329,7 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_
 }
 
 
-prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p_guess, list_hyper, list_init, verbose) {
+prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init, verbose) {
 
   if (class(list_cv) != "cv")
     stop(paste("The provided list_cv must be an object of class ``cv''. \n",
@@ -338,8 +338,8 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p_guess, list_hyper, list_in
                "cross-validation step. ***",
                sep=""))
 
-  if (!is.null(p_guess) | !is.null(list_hyper) | !is.null(list_init))
-    stop(paste("p_guess, list_hyper and list_init must all be NULL if if non NULL ",
+  if (!is.null(p0_av) | !is.null(list_hyper) | !is.null(list_init))
+    stop(paste("p0_av, list_hyper and list_init must all be NULL if if non NULL ",
                "list_cv is provided (cross-validation).", sep = ""))
 
   if (list_cv$n_cv != n)
@@ -350,21 +350,21 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p_guess, list_hyper, list_in
     stop(paste("The number of covariate p provided to the function set_cv ",
                "is not consistent with X.\n", sep=""))
 
-  if (any(list_cv$p_guess_grid > p)) { # p has potentially been reduced because
+  if (any(list_cv$p0_av_grid > p)) { # p has potentially been reduced because
                                        # of constant covariates
 
-    list_cv$p_guess_grid <- create_grid_(p, list_cv$size_p_guess_grid)
+    list_cv$p0_av_grid <- create_grid_(p, list_cv$size_p0_av_grid)
 
-    new_size <- length(list_cv$p_guess_grid)
-    if (list_cv$size_p_guess_grid > new_size) {
-      if (verbose) cat(paste("Cross-validation p_guess_grid reduced to ", new_size,
+    new_size <- length(list_cv$p0_av_grid)
+    if (list_cv$size_p0_av_grid > new_size) {
+      if (verbose) cat(paste("Cross-validation p0_av_grid reduced to ", new_size,
                              " elements as p is small.\n", sep = ""))
-      list_cv$size_p_guess_grid <- new_size
+      list_cv$size_p0_av_grid <- new_size
     }
 
     message <- paste("The cross-validation grid has been readjusted because to ",
                      "account for the removal of constant covariates. Grid used: ",
-                     list_cv$p_guess_grid, ". \n", sep = "")
+                     list_cv$p0_av_grid, ". \n", sep = "")
 
     if (verbose) cat(message)
     else warning(message)

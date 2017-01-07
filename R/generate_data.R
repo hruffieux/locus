@@ -421,7 +421,7 @@ generate_eff_sizes_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
       vec_var_act <- 2 * vec_maf_act * (1 - vec_maf_act)
 
       beta_k <- rep(0.0, p)
-      beta_k[pat[,k]] <- sqrt((tot_var_expl + vec_var_err[k]) * vec_pve_per_snp / vec_var_act )
+      beta_k[pat[,k]] <- sqrt((tot_var_expl + vec_var_err[k]) * vec_pve_per_snp / vec_var_act)
 
       # switches signs with probabilty 0.5
       beta_k[pat[,k]] <- sample(c(1, -1), p0_k, replace = T) * beta_k[pat[,k]]

@@ -1,5 +1,5 @@
 #' @export
-generate_null <- function(n_perm, Y, X, p_guess, Z, list_hyper, list_init, user_seed,
+generate_null <- function(n_perm, Y, X, p0_av, Z, list_hyper, list_init, user_seed,
                           tol, maxit, batch, verbose, rel_results_dir, n_cpus) {
 
   if (!is.null(user_seed)){
@@ -15,7 +15,7 @@ generate_null <- function(n_perm, Y, X, p_guess, Z, list_hyper, list_init, user_
     rownames(Y) <- NULL
 
     # user_seed must be NULL here otherwise always the same permutation
-    res_perm <- locus(Y[ind_perm, ], X, p_guess, Z, list_hyper, list_init,
+    res_perm <- locus(Y[ind_perm, ], X, p0_av, Z, list_hyper, list_init,
                        list_cv = NULL, user_seed = NULL, tol, maxit, batch, verbose)
 
     om_vb <- res_perm$om_vb

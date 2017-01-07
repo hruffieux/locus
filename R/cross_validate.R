@@ -1,5 +1,5 @@
 #' @export
-set_cv <- function(n, p, n_folds, size_p_guess_grid, n_cpus, tol_cv, maxit_cv = 1000,
+set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv, maxit_cv = 1000,
                    batch_cv = T, verbose = T) {
 
   check_structure_(n_folds, "vector", "numeric", 1)
@@ -10,23 +10,23 @@ set_cv <- function(n, p, n_folds, size_p_guess_grid, n_cpus, tol_cv, maxit_cv = 
   if (n_folds > 16) warning("n_folds is large and may induce expensive computations.")
 
 
-  check_structure_(size_p_guess_grid, "vector", "numeric", 1)
-  check_natural_(size_p_guess_grid)
-  if (size_p_guess_grid < 2) stop(paste("size_p_guess_grid must be at greater 1 ",
+  check_structure_(size_p0_av_grid, "vector", "numeric", 1)
+  check_natural_(size_p0_av_grid)
+  if (size_p0_av_grid < 2) stop(paste("size_p0_av_grid must be at greater 1 ",
                                         "to allow for comparisons.",
                                         sep=""))
-  if (size_p_guess_grid > 10) stop(paste("size_p_guess_grid is large and may ",
+  if (size_p0_av_grid > 10) stop(paste("size_p0_av_grid is large and may ",
                                          "induce expensive computations. Choose ",
-                                         "size_p_guess_grid in {2, 3, ..., 10}.",
+                                         "size_p0_av_grid in {2, 3, ..., 10}.",
                                          sep=""))
 
-  p_guess_grid <- create_grid_(p, size_p_guess_grid)
+  p0_av_grid <- create_grid_(p, size_p0_av_grid)
 
-  new_size <- length(p_guess_grid)
-  if (size_p_guess_grid > new_size) {
-    if (verbose) cat(paste("Cross-validation p_guess_grid reduced to ", new_size,
+  new_size <- length(p0_av_grid)
+  if (size_p0_av_grid > new_size) {
+    if (verbose) cat(paste("Cross-validation p0_av_grid reduced to ", new_size,
                            " elements as p is small.\n", sep = ""))
-    size_p_guess_grid <- new_size
+    size_p0_av_grid <- new_size
   }
 
   check_structure_(tol_cv, "vector", "numeric", 1)
@@ -62,7 +62,7 @@ set_cv <- function(n, p, n_folds, size_p_guess_grid, n_cpus, tol_cv, maxit_cv = 
   n_cv <- n
   p_cv <- p
 
-  list_cv <- create_named_list_(n_cv, p_cv, n_folds, p_guess_grid, size_p_guess_grid,
+  list_cv <- create_named_list_(n_cv, p_cv, n_folds, p0_av_grid, size_p0_av_grid,
                                 tol_cv, n_cpus, maxit_cv, batch_cv)
   class(list_cv) <- "cv"
 
@@ -71,25 +71,25 @@ set_cv <- function(n, p, n_folds, size_p_guess_grid, n_cpus, tol_cv, maxit_cv = 
 }
 
 
-create_grid_ <- function(p, size_p_guess_grid) {
+create_grid_ <- function(p, size_p0_av_grid) {
 
   if (p < 75) { # a different treatment to avoid having a single element in the grid
-    p_guess_grid <- unique(round(seq(max(floor(p/4), 1), max(ceiling(p/3), 2),
-                                     length.out = size_p_guess_grid), 0))
+    p0_av_grid <- unique(round(seq(max(floor(p/4), 1), max(ceiling(p/3), 2),
+                                     length.out = size_p0_av_grid), 0))
   } else {
 
-    p_guess_grid <- seq(max(min(1000, p/4), 1),
+    p0_av_grid <- seq(max(min(1000, p/4), 1),
                         max(min(1500, p/2), 1),
-                        length.out = size_p_guess_grid)
+                        length.out = size_p0_av_grid)
 
     base_round_ <- function(x, base){
       sapply( round(x / base) * base, function(el) max(el, 1) )
     }
 
-    p_guess_grid <- unique(base_round_(p_guess_grid, 25))
+    p0_av_grid <- unique(base_round_(p0_av_grid, 25))
   }
 
-  p_guess_grid
+  p0_av_grid
 
 }
 
@@ -146,13 +146,13 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
       Z_tr <- Z_test <- NULL
     }
 
-    lb_vec <- vector(length = size_p_guess_grid)
+    lb_vec <- vector(length = size_p0_av_grid)
 
-    for(ind_pg in 1:size_p_guess_grid) {
+    for(ind_pg in 1:size_p0_av_grid) {
 
-      pg <-  p_guess_grid[ind_pg]
+      pg <-  p0_av_grid[ind_pg]
 
-      if (verbose) cat(paste("Evaluating p_guess = ", pg, "... \n", sep=""))
+      if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
 
       list_hyper_pg <- auto_set_hyperparam_(Y_tr, p, pg, q)
       list_init_pg <- auto_init_param_(Y_tr, p, pg, user_seed, q)
@@ -185,7 +185,7 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
                                          m2_alpha, m1_beta, m2_beta, sum_gam)
       }
 
-      if (verbose) { cat(paste("Lower bound on test set, fold ", k, ", p_guess ",
+      if (verbose) { cat(paste("Lower bound on test set, fold ", k, ", p0_av ",
                                pg, ": ", lb_vec[ind_pg], ". \n", sep = ""))
         cat("-------------------------\n") }
     }
@@ -198,18 +198,18 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
   lb_mat <- do.call(rbind, lb_mat)
 
   rownames(lb_mat) <- paste("fold_", 1:n_folds, sep = "")
-  colnames(lb_mat) <- paste("p_guess_", p_guess_grid, sep = "")
+  colnames(lb_mat) <- paste("p0_av_", p0_av_grid, sep = "")
 
-  p_guess_opt <- p_guess_grid[which.max(colMeans(lb_mat))]
+  p0_av_opt <- p0_av_grid[which.max(colMeans(lb_mat))]
 
   if (verbose) {
     cat("Lower bounds on test sets for each fold and each grid element: \n")
     print(lb_mat)
-    cat(paste("===== ...end of cross-validation with selected p_guess = ",
-              p_guess_opt, " ===== \n", sep=""))
+    cat(paste("===== ...end of cross-validation with selected p0_av = ",
+              p0_av_opt, " ===== \n", sep=""))
   }
 
-  p_guess_opt
+  p0_av_opt
 
 }
 

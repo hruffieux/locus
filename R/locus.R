@@ -10,7 +10,7 @@
 #'   number of observations and d is the number of response variables.
 #' @param X input matrix of dimension n x p, where p is the number of candidate
 #'   predictors. X cannot contain NAs.
-#' @param p_guess is the 'a priori' average number of predictors included in the
+#' @param p0_av is the 'a priori' average number of predictors included in the
 #'   model.
 #' @param Z covariate matrix of dimension n x q, where q is the number of
 #'   covariates. NULL if no covariate. Factor covariates must be supplied after
@@ -18,7 +18,7 @@
 #'   no intercept must be supplied.
 #'
 #' @export
-locus <- function(Y, X, p_guess, Z = NULL,
+locus <- function(Y, X, p0_av, Z = NULL,
                    list_hyper = NULL, list_init = NULL, list_cv = NULL,
                    user_seed = NULL, tol = 1e-3, maxit = 1000, batch = T,
                    save_hyper = F, save_init = F, verbose = T) { ##
@@ -59,7 +59,7 @@ locus <- function(Y, X, p_guess, Z = NULL,
       cat("===== Cross-validation... ===== \n")
       cat("=============================== \n")
     }
-    list_cv <- prepare_cv_(list_cv, n, p, bool_rmvd_x, p_guess, list_hyper,
+    list_cv <- prepare_cv_(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper,
                            list_init, verbose)
 
     p_star <- cross_validate_(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose)
@@ -68,15 +68,15 @@ locus <- function(Y, X, p_guess, Z = NULL,
 
     if (is.null(list_hyper) | is.null(list_init)) {
 
-      p_star <- convert_p_guess_(p_guess, p, verbose)
+      p_star <- convert_p0_av_(p0_av, p, verbose)
 
       # remove the entries corresponding to the removed constant covariates in X (if any)
       if (length(p_star) > 1) p_star <- p_star[!bool_rmvd_x]
 
     } else {
 
-      if (!is.null(p_guess))
-        warning(paste("Provided argument p_guess not used, as both list_hyper ",
+      if (!is.null(p0_av))
+        warning(paste("Provided argument p0_av not used, as both list_hyper ",
                       "and list_init were provided.", sep = ""))
 
       p_star <- NULL
