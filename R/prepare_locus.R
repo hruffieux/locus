@@ -327,7 +327,8 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_
 }
 
 
-prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init, verbose) {
+prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init,
+                        verbose) {
 
   if (class(list_cv) != "cv")
     stop(paste("The provided list_cv must be an object of class ``cv''. \n",
@@ -433,8 +434,8 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper, list_in
 
 }
 
-
-
+#' Gather settings for parallel inference on partitioned predictor space.
+#'
 #' @export
 set_blocks <- function(p, pos_bl, n_cpus, verbose) {
 

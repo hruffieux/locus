@@ -1,5 +1,6 @@
 #' @export
-generate_snps <- function(n, p, cor_type, vec_rho, vec_maf = NULL, n_cpus = 1) {
+generate_snps <- function(n, p, cor_type = NULL, vec_rho = NULL, vec_maf = NULL,
+                          n_cpus = 1) {
 
   check_structure_(n, "vector", "numeric", 1)
   check_natural_(n)
@@ -7,7 +8,8 @@ generate_snps <- function(n, p, cor_type, vec_rho, vec_maf = NULL, n_cpus = 1) {
   check_structure_(p, "vector", "numeric", 1)
   check_natural_(p)
 
-  stopifnot(cor_type %in% c("autocorrelated", "equicorrelated", "none"))
+  if (!is.null(cor_type))
+    stopifnot(cor_type %in% c("autocorrelated", "equicorrelated"))
 
   if(is.null(vec_maf)) {
     vec_maf <- runif(p, 0.05, 0.5)
@@ -17,7 +19,7 @@ generate_snps <- function(n, p, cor_type, vec_rho, vec_maf = NULL, n_cpus = 1) {
   }
 
 
-  if (cor_type == "none") {
+  if (is.null(cor_type)) {
 
     if (n_cpus > 1)
       warning("n_cpus is ignored when the snps are generated independently of one another.")
@@ -26,14 +28,14 @@ generate_snps <- function(n, p, cor_type, vec_rho, vec_maf = NULL, n_cpus = 1) {
 
   } else {
 
+    check_structure_(vec_rho, "vector", "numeric")
+    if(cor_type == "equicorrelated") check_zero_one_(vec_rho)
+    else check_zero_one_(abs(vec_rho))
+
     if(length(vec_rho) > p)
       stop(paste("Provided number of blocks of correlated SNPs, length(vec_rho), ",
                  "must be smaller than the number of SNPs, p: ",
                  length(vec_rho), " > ", p, sep = ""))
-
-    check_structure_(vec_rho, "vector", "numeric")
-    if(cor_type == "equicorrelated") check_zero_one_(vec_rho)
-    else check_zero_one_(abs(vec_rho))
 
     check_structure_(n_cpus, "vector", "numeric", 1)
     check_natural_(n_cpus)
@@ -165,7 +167,7 @@ replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NUL
 }
 
 #' @export
-generate_phenos <- function(n, d, cor_type, vec_rho, vec_var_err, n_cpus = 1) {
+generate_phenos <- function(n, d, var_err, cor_type = NULL, vec_rho = NULL, n_cpus = 1) {
 
   check_structure_(n, "vector", "numeric", 1)
   check_natural_(n)
@@ -173,29 +175,31 @@ generate_phenos <- function(n, d, cor_type, vec_rho, vec_var_err, n_cpus = 1) {
   check_structure_(d, "vector", "numeric", 1)
   check_natural_(d)
 
-  stopifnot(cor_type %in% c("autocorrelated", "equicorrelated", "none"))
+  if (!is.null(cor_type))
+    stopifnot(cor_type %in% c("autocorrelated", "equicorrelated"))
 
-  check_structure_(vec_var_err, "vector", "numeric", d)
-  check_positive_(vec_var_err)
+  check_structure_(var_err, "vector", "numeric", c(1, d))
+  check_positive_(var_err)
+  if (length(var_err) == 1) var_err <- rep(var_err, d)
 
-  if (cor_type == "none") {
+  if (is.null(cor_type)) {
 
     if (n_cpus > 1)
       warning("n_cpus is ignored when the phenotypes are generated independently of one another.")
 
-    phenos <- sapply(vec_var_err, function(var_err) rnorm(n, 0, sqrt(var_err))) # Hardy-Weinberg equilibrium
+    phenos <- sapply(var_err, function(var_err) rnorm(n, 0, sqrt(var_err))) # Hardy-Weinberg equilibrium
     ind_bl <- NULL
 
   } else {
+
+    check_structure_(vec_rho, "vector", "numeric")
+    if(cor_type == "equicorrelated") check_zero_one_(vec_rho)
+    else check_zero_one_(abs(vec_rho))
 
     if(length(vec_rho) > d)
       stop(paste("Provided number of blocks of correlated phenotypes, length(vec_rho), ",
                  "must be smaller than the number of phenotypes, d: ",
                  length(vec_rho), " > ", d, sep = ""))
-
-    check_structure_(vec_rho, "vector", "numeric")
-    if(cor_type == "equicorrelated") check_zero_one_(vec_rho)
-    else check_zero_one_(abs(vec_rho))
 
     check_structure_(n_cpus, "vector", "numeric", 1)
     check_natural_(n_cpus)
@@ -232,10 +236,10 @@ generate_phenos <- function(n, d, cor_type, vec_rho, vec_var_err, n_cpus = 1) {
   rownames(phenos) <- paste("ind_", 1:n, sep = "")
   colnames(phenos) <- paste("pheno_", 1:d, sep = "")
 
-  vec_var_err <- apply(phenos, 2, var) # empirical error variance
-  names(vec_var_err) <- colnames(phenos)
+  var_err <- apply(phenos, 2, var) # empirical error variance
+  names(var_err) <- colnames(phenos)
 
-  list_phenos <- create_named_list_(phenos, vec_var_err, ind_bl)
+  list_phenos <- create_named_list_(phenos, var_err, ind_bl)
   class(list_phenos) <- "sim_phenos"
   list_phenos
 }
@@ -295,12 +299,12 @@ replicate_real_phenos <- function(n, real_phenos, bl_lgth = NULL, d = NULL, n_cp
   rownames(phenos) <- paste("ind_", 1:n, sep = "")
   colnames(phenos) <- paste("pheno_", 1:d, sep = "")
 
-  vec_var_err <- apply(phenos, 2, var) # empirical error variance
-  names(vec_var_err) <- colnames(phenos)
+  var_err <- apply(phenos, 2, var) # empirical error variance
+  names(var_err) <- colnames(phenos)
 
   ind_bl <- NULL # block chuncks do not necessarily represent blocks of correlated phenotypes.
 
-  list_phenos <- create_named_list_(phenos, vec_var_err, ind_bl)
+  list_phenos <- create_named_list_(phenos, var_err, ind_bl)
   class(list_phenos) <- "sim_phenos"
   list_phenos
 }
@@ -309,7 +313,7 @@ replicate_real_phenos <- function(n, real_phenos, bl_lgth = NULL, d = NULL, n_cp
 set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph){
 
   if (is.null(chunks_ph)) { # no imposed correlation block structure (either indep
-                            # or correlation from real phenotypes). creates artificial chunks.
+    # or correlation from real phenotypes). creates artificial chunks.
     n_chunks_ph <- length(vec_prob_sh)
     chunks_ph <- make_chunks_(1:d, n_chunks_ph)
   } else {
@@ -356,7 +360,7 @@ set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph){
 
 
 generate_eff_sizes_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
-                                pve_per_snp, max_tot_pve, vec_var_err, chunks_ph) {
+                                pve_per_snp, max_tot_pve, var_err, chunks_ph) {
 
   # pve_per_snp average variance explained per snp
   check_structure_(ind_d0, "vector", "numeric", null_ok = T)
@@ -391,8 +395,8 @@ generate_eff_sizes_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
     check_structure_(vec_maf, "vector", "numeric", p)
     check_zero_one_(vec_maf)
 
-    check_structure_(vec_var_err, "vector", "numeric", d)
-    check_positive_(vec_var_err)
+    check_structure_(var_err, "vector", "numeric", d)
+    check_positive_(var_err)
 
     max_per_resp <- max(colSums(pat))
     eps <- .Machine$double.eps^0.75
@@ -418,16 +422,16 @@ generate_eff_sizes_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
 
       p0_k <- sum(pat[,k])
       vec_pve_per_snp <- rbeta(p0_k, shape1 = 2, shape2 = 5) # positively skewed Beta distribution,
-                                                             # to give more weight to smaller effect sizes
+      # to give more weight to smaller effect sizes
       vec_pve_per_snp <- vec_pve_per_snp / sum(vec_pve_per_snp) * pve_per_snp * p0_k
 
-      tot_var_expl <- pve_per_snp * p0_k * vec_var_err[k] / (1 - pve_per_snp * p0_k)
+      tot_var_expl <- pve_per_snp * p0_k * var_err[k] / (1 - pve_per_snp * p0_k)
 
       vec_maf_act <- vec_maf[pat[,k]]
       vec_var_act <- 2 * vec_maf_act * (1 - vec_maf_act)
 
       beta_k <- rep(0.0, p)
-      beta_k[pat[,k]] <- sqrt((tot_var_expl + vec_var_err[k]) * vec_pve_per_snp / vec_var_act)
+      beta_k[pat[,k]] <- sqrt((tot_var_expl + var_err[k]) * vec_pve_per_snp / vec_var_act)
 
       # switches signs with probabilty 0.5
       beta_k[pat[,k]] <- sample(c(1, -1), p0_k, replace = T) * beta_k[pat[,k]]
@@ -491,7 +495,7 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0, vec_prob
   }
 
   list_eff <- generate_eff_sizes_(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
-                                  pve_per_snp, max_tot_pve, vec_var_err,
+                                  pve_per_snp, max_tot_pve, var_err,
                                   chunks_ph = ind_bl)
 
   list2env(list_eff, envir=environment())

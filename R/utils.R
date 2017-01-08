@@ -94,7 +94,7 @@ log_sum_exp_ <- function(x) { # avoid numerical underflow or overflow
 }
 
 log_sum_exp_vec_ <- function(list_vec) { # avoid numerical underflow or overflow
-                                         # for a list of two vectors only
+  # for a list of two vectors only
   stopifnot(length(list_vec) == 2)
 
   a <- list_vec[[1]]

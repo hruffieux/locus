@@ -1,6 +1,11 @@
+#' Gather settings for the cross-validation procedure used in \code{locus}.
+#'
+#' Settings for ....
+#'
+#'
 #' @export
-set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv, maxit_cv = 1000,
-                   batch_cv = T, verbose = T) {
+set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv,
+                   maxit_cv = 1000, batch_cv = T, verbose = T) {
 
   check_structure_(n_folds, "vector", "numeric", 1)
   check_natural_(n_folds)
@@ -13,12 +18,12 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv, maxit_cv = 10
   check_structure_(size_p0_av_grid, "vector", "numeric", 1)
   check_natural_(size_p0_av_grid)
   if (size_p0_av_grid < 2) stop(paste("size_p0_av_grid must be at greater 1 ",
-                                        "to allow for comparisons.",
-                                        sep=""))
+                                      "to allow for comparisons.",
+                                      sep=""))
   if (size_p0_av_grid > 10) stop(paste("size_p0_av_grid is large and may ",
-                                         "induce expensive computations. Choose ",
-                                         "size_p0_av_grid in {2, 3, ..., 10}.",
-                                         sep=""))
+                                       "induce expensive computations. Choose ",
+                                       "size_p0_av_grid in {2, 3, ..., 10}.",
+                                       sep=""))
 
   p0_av_grid <- create_grid_(p, size_p0_av_grid)
 
@@ -75,12 +80,12 @@ create_grid_ <- function(p, size_p0_av_grid) {
 
   if (p < 75) { # a different treatment to avoid having a single element in the grid
     p0_av_grid <- unique(round(seq(max(floor(p/4), 1), max(ceiling(p/3), 2),
-                                     length.out = size_p0_av_grid), 0))
+                                   length.out = size_p0_av_grid), 0))
   } else {
 
     p0_av_grid <- seq(max(min(1000, p/4), 1),
-                        max(min(1500, p/2), 1),
-                        length.out = size_p0_av_grid)
+                      max(min(1500, p/2), 1),
+                      length.out = size_p0_av_grid)
 
     base_round_ <- function(x, base){
       sapply( round(x / base) * base, function(el) max(el, 1) )

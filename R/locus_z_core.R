@@ -28,7 +28,7 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, list_init, tol, maxit
 
   while ((!converged) & (it < maxit)) {
 
-    if (verbose & it == 1 | it %% 5 == 0)
+    if (verbose & (it == 1 | it %% 5 == 0))
       cat(paste("Iteration ", format(it), "... \n", sep = ""))
 
     # % #
@@ -47,7 +47,7 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, list_init, tol, maxit
     # % #
     eta_vb <- update_eta_z_vb_(gam_vb, eta, q, n)
     kappa_vb <- update_kappa_z_vb_(Y, X, Z, d, n, p, q, sig2_inv_vb, zeta2_inv_vb,
-                                  mu_alpha_vb, m2_alpha, m1_beta, m2_beta, kappa)
+                                   mu_alpha_vb, m2_alpha, m1_beta, m2_beta, kappa)
 
     tau_vb <- eta_vb / kappa_vb
     # % #
@@ -166,7 +166,7 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, list_init, tol, maxit
                              m2_alpha, m1_beta, m2_beta, sum_gam)
 
 
-    if (verbose & it == 1 | it %% 5 == 0)
+    if (verbose & (it == 1 | it %% 5 == 0))
       cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
 
     converged <- (abs(lb_new-lb_old) < tol)
@@ -240,7 +240,7 @@ update_eta_z_vb_ <- function(gam_vb, eta, q, n) {
 }
 
 update_kappa_z_vb_ <- function(Y_mat, X_mat, Z_mat, d, n, p, q, sig2_inv_vb, zeta2_inv_vb,
-                              mu_alpha_vb, m2_alpha, m1_beta, m2_beta, kappa) {
+                               mu_alpha_vb, m2_alpha, m1_beta, m2_beta, kappa) {
   # put X_mat and Y_mat instead of X and Y to avoid conflicts with the function sapply,
   # which has also an "X" argument with different meaning...
 
@@ -315,7 +315,7 @@ lower_bound_z_ <- function(Y, X, Z, d, n, p, q,
 
   eta_vb <- update_eta_z_vb_(gam_vb, eta, q, n)
   kappa_vb <- update_kappa_z_vb_(Y, X, Z, d, n, p, q, sig2_inv_vb, zeta2_inv_vb,
-                                mu_alpha_vb, m2_alpha, m1_beta, m2_beta, kappa)
+                                 mu_alpha_vb, m2_alpha, m1_beta, m2_beta, kappa)
 
   lambda_vb <- update_lambda_vb_(sum_gam, lambda)
   nu_vb <- update_nu_vb_(tau_vb, m2_beta, nu)

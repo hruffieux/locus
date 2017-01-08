@@ -1,27 +1,71 @@
 #' Fit a sparse multivariate regression model using variational inference.
 #'
-#' \code{locus} applies a variational approximation procedure to fit a sparse
-#' multivariate regression model allowing combined selection of predictors and
-#' associated responses in high-dimensional set-ups. Dependence across responses
-#' linked to the same predictors is captured through the model hierarchical
-#' structure.
+#' Variational approximation procedure fitting a sparse multivariate regression
+#' model for combined selection of predictors and associated responses in
+#' high-dimensional set-ups. Dependence across responses linked to the same
+#' predictors is captured through the model hierarchical structure.
 #'
-#' @param Y continuous response data matrix of dimension n x d, where n is the
+#' @param Y Continuous response data matrix of dimension n x d, where n is the
 #'   number of observations and d is the number of response variables.
-#' @param X input matrix of dimension n x p, where p is the number of candidate
-#'   predictors. X cannot contain NAs.
-#' @param p0_av is the 'a priori' average number of predictors included in the
-#'   model.
-#' @param Z covariate matrix of dimension n x q, where q is the number of
-#'   covariates. NULL if no covariate. Factor covariates must be supplied after
-#'   transformation to dummy coding. \code{locus} standardizes the variables so
-#'   no intercept must be supplied.
+#' @param X Input matrix of dimension n x p, where p is the number of candidate
+#'   predictors. \code{X} cannot contain NAs. No intercept must be supplied.
+#' @param p0_av Prior average number of predictors included in the model.
+#'   Must be \code{NULL} if \code{list_init} and \code{list_hyper} are both
+#'   non-\code{NULL} or if non \code{list_cv} is non-\code{NULL}.
+#' @param Z Covariate matrix of dimension n x q, where q is the number of
+#'   covariates. \code{NULL} if no covariate. Factor covariates must be supplied
+#'   after transformation to dummy coding. No intercept must be supplied.
+#' @param list_hyper List containing the model hyperparameters. Must be filled
+#'   using the \code{\link{feed_hyperparam}} function or must be \code{NULL} for
+#'   default hyperparameters.
+#' @param list_init List containing the variational initial parameters. Must be
+#'   be filled using the \code{\link{feed_init_param}} function or be
+#'   \code{NULL} for a default initialization.
+#' @param list_cv List containing settings for choosing the prior average number
+#'   of predictors included in the model, \code{p0_av}, by cross-validation.
+#'   Must be filled using the \code{\link{set_cv}} function  or must be
+#'   \code{NULL} for no cross-validation. If \code{list_cv} is non-\code{NULL},
+#'   \code{p0_av}, \code{list_init} and \code{list_hyper} must all be
+#'   \code{NULL}.
+#' @param list_blocks List containing setting for parallel inference on a
+#'   partitioned predictor space. Must be filled using the
+#'   \code{\link{set_blocks}} function or must be \code{NULL} for no
+#'   partitioning.
+#' @param user_seed Seed set for reproducible default choices of hyperparameters
+#'   (if \code{list_hyper} is \code{NULL}) and inital variational parameters (if
+#'   \code{list_init} is \code{NULL}). Also used at the cross-validation stage
+#'   (if \code{list_cv} is non-\code{NULL}).
+#' @param tol Tolerance for the stopping criterion.
+#' @param maxit Maximum number of iterations allowed.
+#' @param batch If TRUE a fast batch updating scheme is used (recommended).
+#' @param save_hyper If TRUE, the hyperparameters used for the model are saved
+#'   as output.
+#' @param save_init If TRUE, the initial variational parameters used for the
+#'   inference are saved as output.
+#' @param verbose If TRUE, messages are displayed during execution.
+#'
+#' @examples
+#'
+#' user_seed <- 123; set.seed(user_seed)
+#' n <- 200; p <- 500; p0 <- 100; d <- 50; d0 <- 40
+#' list_X <- generate_snps(n = n, p = p)
+#' list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
+#'
+#' dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+#'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+#'                            vec_prob_sh = 0.1, pve_per_snp = 0.05)
+#'
+#' vb <- locus(Y=dat$phenos, X=dat$snps, p0_av = p0, user_seed = user_seed)
+#'
+#'
+#' @seealso \code{\link{feed_hyperparam}}, \code{\link{feed_init_param}},
+#'   \code{\link{set_cv}}, \code{\link{set_blocks}}
 #'
 #' @export
 #'
 locus <- function(Y, X, p0_av, Z = NULL,
                   list_hyper = NULL, list_init = NULL, list_cv = NULL,
-                  list_blocks = NULL, user_seed = NULL, tol = 1e-3, maxit = 1000,
+                  list_blocks = NULL, user_seed = NULL, tol = 1e-4, maxit = 1000,
                   batch = T, save_hyper = F, save_init = F, verbose = T) { ##
 
 
@@ -133,19 +177,19 @@ locus <- function(Y, X, p0_av, Z = NULL,
     list_pos_bl <- split(1:p, vec_fac_bl)
 
     split_bl_hyper <- lapply(list_pos_bl, function(pos_bl) {
-        list_hyper$p_hyper <- length(n_bl)
-        list_hyper$a <- list_hyper$a[pos_bl]
-        list_hyper$b <- list_hyper$b[pos_bl]
-        list_hyper
-      })
+      list_hyper$p_hyper <- length(n_bl)
+      list_hyper$a <- list_hyper$a[pos_bl]
+      list_hyper$b <- list_hyper$b[pos_bl]
+      list_hyper
+    })
 
     split_bl_init <- lapply(list_pos_bl, function(pos_bl) {
-        list_init$p_init <- length(pos_bl)
-        list_init$gam_vb <- list_init$gam_vb[pos_bl,, drop = F]
-        list_init$mu_beta_vb <- list_init$mu_beta_vb[pos_bl,, drop = F]
-        list_init$om_vb <- list_init$om_vb[pos_bl]
-        list_init
-      })
+      list_init$p_init <- length(pos_bl)
+      list_init$gam_vb <- list_init$gam_vb[pos_bl,, drop = F]
+      list_init$mu_beta_vb <- list_init$mu_beta_vb[pos_bl,, drop = F]
+      list_init$om_vb <- list_init$om_vb[pos_bl]
+      list_init
+    })
 
     locus_bl_ <- function(k) {
 

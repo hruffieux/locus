@@ -1,5 +1,5 @@
 locus_core_ <- function(Y, X, d, n, p, list_hyper, list_init,
-                               tol, maxit, batch, verbose, full_output = F) {
+                        tol, maxit, batch, verbose, full_output = F) {
 
   # Y must have been centered, and X, standardized.
 
@@ -23,7 +23,7 @@ locus_core_ <- function(Y, X, d, n, p, list_hyper, list_init,
 
   while ((!converged) & (it < maxit)) {
 
-    if (verbose & it == 1 | it %% 5 == 0)
+    if (verbose & (it == 1 | it %% 5 == 0))
       cat(paste("Iteration ", format(it), "... \n", sep = ""))
 
     # % #
@@ -126,7 +126,7 @@ locus_core_ <- function(Y, X, d, n, p, list_hyper, list_init,
                            eta, kappa, lambda, nu, a, b, a_vb, b_vb,
                            m1_beta, m2_beta, sum_gam)
 
-    if (verbose & it == 1 | it %% 5 == 0)
+    if (verbose & (it == 1 | it %% 5 == 0))
       cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
 
     converged <- (abs(lb_new - lb_old) < tol)
@@ -193,7 +193,7 @@ update_eta_vb_ <- function(gam_vb, eta, n) {
 }
 
 update_kappa_vb_ <- function(Y_mat, X_mat, d, n, p, sig2_inv_vb, m1_beta, m2_beta,
-                            kappa) {
+                             kappa) {
   # put X_mat and Y_mat instead of X and Y to avoid conflicts with the function sapply,
   # which has also an "X" argument with different meaning...
 

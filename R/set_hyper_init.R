@@ -1,3 +1,5 @@
+#' Gather model hyperparameters provided by the user.
+#'
 #' @export
 feed_hyperparam <- function(d, p, eta, kappa, lambda, nu, a, b,
                             q = NULL, phi = NULL, xi = NULL) {
@@ -35,7 +37,7 @@ feed_hyperparam <- function(d, p, eta, kappa, lambda, nu, a, b,
     if (length(xi) == 1) xi <- rep(xi, q)
 
   } else if (!is.null(phi) | !is.null(xi)) {
-     stop("Provided q = NULL, not consitent with phi or xi being non-null.")
+    stop("Provided q = NULL, not consitent with phi or xi being non-null.")
   }
 
   d_hyper <- d
@@ -101,7 +103,8 @@ auto_set_hyperparam_ <- function(Y, p, p_star, q = NULL) {
 
 }
 
-
+#' Gather initial variational parameters provided by the user.
+#'
 #' @export
 feed_init_param <- function(d, p, gam_vb, mu_beta_vb, om_vb, sig2_beta_vb,
                             sig2_inv_vb, tau_vb, q = NULL, mu_alpha_vb = NULL,

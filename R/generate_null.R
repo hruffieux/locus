@@ -26,18 +26,18 @@ generate_null <- function(n_perm, Y, X, p0_av, Z, list_hyper, list_init,
     rm(res_perm)
 
     if (is.null(results_dir)) {
-      
+
       create_named_list_(ind_perm, gam_vb, om_vb)
-      
+
     } else {
-      
+
       save(ind_perm, gam_vb, om_vb,
            file = paste(results_dir, "vb_real_data_", i, ".RData", sep=""))
       rm(om_vb)
       rm(gam_vb)
       NULL
-      
-    }  
+
+    }
   }
 
   parallel::mclapply(1:n_perm, function(i) permute(i), mc.cores = n_cpus)
