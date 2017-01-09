@@ -44,6 +44,32 @@
 #'   inference are saved as output.
 #' @param verbose If TRUE, messages are displayed during execution.
 #'
+#' @return A list containing the following variational estimates and settings:
+#'  \item{lb_opt}{Optimized variational lower bound for the marginal likelihood.}
+#'  \item{gam_vb}{Posterior inclusion probability matrix of dimension p x d.
+#'                Entry (s, t) corresponds to the posterior probability of
+#'                association between predictor s and response t.}
+#'  \item{mu_alpha_vb}{Matrix of dimension q x d whose entries are the posterior
+#'                     mean regression coefficients for the covariates. }
+#'  \item{om_vb}{Vector of size p containing the posterior mean of omega. Entry
+#'              s controls the proportion of responses associated with predictor
+#'              s.}
+#'  \item{x_prpnst}{Vector of size p containing the sums over the colums of
+#'                  \code{gam_vb}, used to evaluate the propensity for the
+#'                  candidate predictors to be involved in associations.
+#'                  \code{NULL} is \code{Z} is \code{NULL}.}
+#'  \item{y_prpnst}{Vector of size d containing the sums over the rows of
+#'                  \code{gam_vb}, used to evaluate the propensity for the
+#'                  responses to be involved in associations.}
+#'  \item{rmvd_cst_x, rmvd_cst_z}{Vectors containing the indices of constant
+#'                                variables in X (resp. Z) removed prior to the
+#'                                analysis.}
+#'  \item{rmvd_coll_x, rmvd_coll_z}{Vectors containing the indices of variables
+#'                                  in X (resp. Z) removed prior to the
+#'                                  analysis as collinear to other variables.}
+#'  \item{list_hyper, list_init}{If \code{save_hyper}, resp. \code{save_init},
+#'                               is TRUE, hyperparameters, resp. initial
+#'                               variational parameters, used for inference.}
 #' @examples
 #'
 #' user_seed <- 123; set.seed(user_seed)

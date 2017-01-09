@@ -8,6 +8,6 @@ set_cv(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv, maxit_cv = 1000,
   batch_cv = T, verbose = T)
 }
 \description{
-Settings for ....
+Gather settings for the cross-validation procedure used in \code{locus}.
 }
 

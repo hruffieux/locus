@@ -1,3 +1,5 @@
+#' Generate empirical null distribution using permuted data.
+#'
 #' @export
 generate_null <- function(n_perm, Y, X, p0_av, Z, list_hyper, list_init,
                           list_blocks, user_seed, tol, maxit, batch, verbose,

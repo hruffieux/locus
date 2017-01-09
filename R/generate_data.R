@@ -1,3 +1,5 @@
+#' Generate SNP data with prespecified spatial correlation structure.
+#'
 #' @export
 generate_snps <- function(n, p, cor_type = NULL, vec_rho = NULL, vec_maf = NULL,
                           n_cpus = 1) {
@@ -90,6 +92,9 @@ generate_snps <- function(n, p, cor_type = NULL, vec_rho = NULL, vec_maf = NULL,
   list_snps
 }
 
+
+#' Generate SNPs emulating real SNP data at hand.
+#'
 #' @export
 replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NULL,
                                 n_cpus = 1) {
@@ -166,6 +171,9 @@ replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NUL
   list_snps
 }
 
+
+#' Generate phenotypic data with prespecified block-wise correlation structure.
+#'
 #' @export
 generate_phenos <- function(n, d, var_err, cor_type = NULL, vec_rho = NULL, n_cpus = 1) {
 
@@ -244,6 +252,9 @@ generate_phenos <- function(n, d, var_err, cor_type = NULL, vec_rho = NULL, n_cp
   list_phenos
 }
 
+
+#' Generate phenotypes emulating real phenotypic data at hand.
+#'
 #' @export
 replicate_real_phenos <- function(n, real_phenos, bl_lgth = NULL, d = NULL, n_cpus = 1) {
 
@@ -445,6 +456,8 @@ generate_eff_sizes_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
 
 }
 
+#' Generate pleiotropic associations between phenotypes and SNPs.
+#'
 #' @export
 generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0, vec_prob_sh,
                                 pve_per_snp = NULL, max_tot_pve = NULL) {
@@ -462,7 +475,7 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0, vec_prob
                "*** You must either use the function generate_snps to simulate snps ",
                "under Hardy-Weinberg equilibrium or the function replicate_real_snps ",
                "to simulate SNPs from real SNP data, by replicating their minor ",
-               " allele frequencies and linkage desequilibrium structure. ***",
+               "allele frequencies and linkage desequilibrium structure. ***",
                sep=""))
   list2env(list_snps, envir=environment())
   rm(list_snps)
