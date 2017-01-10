@@ -4,7 +4,7 @@
 \alias{set_blocks}
 \title{Gather settings for parallel inference on partitioned predictor space.}
 \usage{
-set_blocks(p, pos_bl, n_cpus, verbose)
+set_blocks(p, pos_bl, n_cpus, verbose = T)
 }
 \description{
 Gather settings for parallel inference on partitioned predictor space.

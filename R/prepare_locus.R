@@ -437,7 +437,7 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper, list_in
 #' Gather settings for parallel inference on partitioned predictor space.
 #'
 #' @export
-set_blocks <- function(p, pos_bl, n_cpus, verbose) {
+set_blocks <- function(p, pos_bl, n_cpus, verbose = T) {
 
   check_structure_(verbose, "vector", "logical", 1)
 

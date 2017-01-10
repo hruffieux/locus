@@ -9,9 +9,9 @@
 #'   number of observations and d is the number of response variables.
 #' @param X Input matrix of dimension n x p, where p is the number of candidate
 #'   predictors. \code{X} cannot contain NAs. No intercept must be supplied.
-#' @param p0_av Prior average number of predictors included in the model.
-#'   Must be \code{NULL} if \code{list_init} and \code{list_hyper} are both
-#'   non-\code{NULL} or if non \code{list_cv} is non-\code{NULL}.
+#' @param p0_av Prior average number of predictors expected to be included in
+#'   the model. Must be \code{NULL} if \code{list_init} and \code{list_hyper}
+#'   are both non-\code{NULL} or if \code{list_cv} is non-\code{NULL}.
 #' @param Z Covariate matrix of dimension n x q, where q is the number of
 #'   covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 #'   after transformation to dummy coding. No intercept must be supplied.
@@ -22,9 +22,9 @@
 #'   be filled using the \code{\link{feed_init_param}} function or be
 #'   \code{NULL} for a default initialization.
 #' @param list_cv List containing settings for choosing the prior average number
-#'   of predictors included in the model, \code{p0_av}, by cross-validation.
-#'   Must be filled using the \code{\link{set_cv}} function  or must be
-#'   \code{NULL} for no cross-validation. If \code{list_cv} is non-\code{NULL},
+#'   of predictors expected to be included in the model, \code{p0_av}, by
+#'   cross-validation. Must be filled using the \code{\link{set_cv}} function or
+#'   must be \code{NULL} for no cross-validation. If non-\code{NULL},
 #'   \code{p0_av}, \code{list_init} and \code{list_hyper} must all be
 #'   \code{NULL}.
 #' @param list_blocks List containing setting for parallel inference on a
@@ -45,19 +45,20 @@
 #' @param verbose If TRUE, messages are displayed during execution.
 #'
 #' @return A list containing the following variational estimates and settings:
-#'  \item{lb_opt}{Optimized variational lower bound for the marginal likelihood.}
+#'  \item{lb_opt}{Optimized variational lower bound for the marginal
+#'                log-likelihood.}
 #'  \item{gam_vb}{Posterior inclusion probability matrix of dimension p x d.
 #'                Entry (s, t) corresponds to the posterior probability of
 #'                association between predictor s and response t.}
 #'  \item{mu_alpha_vb}{Matrix of dimension q x d whose entries are the posterior
-#'                     mean regression coefficients for the covariates. }
+#'                     mean regression coefficients for the covariates provided
+#'                     in \code{Z}. \code{NULL} if \code{Z} is \code{NULL}.}
 #'  \item{om_vb}{Vector of size p containing the posterior mean of omega. Entry
 #'              s controls the proportion of responses associated with predictor
 #'              s.}
 #'  \item{x_prpnst}{Vector of size p containing the sums over the colums of
 #'                  \code{gam_vb}, used to evaluate the propensity for the
-#'                  candidate predictors to be involved in associations.
-#'                  \code{NULL} is \code{Z} is \code{NULL}.}
+#'                  candidate predictors to be involved in associations.}
 #'  \item{y_prpnst}{Vector of size d containing the sums over the rows of
 #'                  \code{gam_vb}, used to evaluate the propensity for the
 #'                  responses to be involved in associations.}
@@ -66,10 +67,12 @@
 #'                                analysis.}
 #'  \item{rmvd_coll_x, rmvd_coll_z}{Vectors containing the indices of variables
 #'                                  in X (resp. Z) removed prior to the
-#'                                  analysis as collinear to other variables.}
+#'                                  analysis because collinear to other
+#'                                  variables.}
 #'  \item{list_hyper, list_init}{If \code{save_hyper}, resp. \code{save_init},
-#'                               is TRUE, hyperparameters, resp. initial
-#'                               variational parameters, used for inference.}
+#'                               TRUE, hyperparameters, resp. initial
+#'                               variational parameters, used for inference are
+#'                               saved as output.}
 #' @examples
 #'
 #' user_seed <- 123; set.seed(user_seed)
@@ -81,7 +84,7 @@
 #'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
 #'                            vec_prob_sh = 0.1, pve_per_snp = 0.05)
 #'
-#' vb <- locus(Y=dat$phenos, X=dat$snps, p0_av = p0, user_seed = user_seed)
+#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, user_seed = user_seed)
 #'
 #'
 #' @seealso \code{\link{feed_hyperparam}}, \code{\link{feed_init_param}},
@@ -265,5 +268,5 @@ locus <- function(Y, X, p0_av, Z = NULL,
 
   vb
 
-
 }
+
