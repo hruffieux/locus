@@ -470,51 +470,49 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0, vec_prob
                   "pve per SNP was to its maximum value so that the total pve for ",
                   "the responses are all below 1.", sep = ""))
 
-  if (class(list_snps) != "sim_snps")
+  if (!inherits(list_snps, "sim_snps"))
     stop(paste("The provided list_snps must be an object of class ``sim_snps''. \n",
                "*** You must either use the function generate_snps to simulate snps ",
                "under Hardy-Weinberg equilibrium or the function replicate_real_snps ",
                "to simulate SNPs from real SNP data, by replicating their minor ",
                "allele frequencies and linkage desequilibrium structure. ***",
                sep=""))
-  list2env(list_snps, envir=environment())
-  rm(list_snps)
 
-  n <- nrow(snps)
-  p <- ncol(snps)
 
-  if (class(list_phenos) != "sim_phenos")
+  if (!inherits(list_phenos, "sim_phenos"))
     stop(paste("The provided list_phenos must be an object of class ``sim_phenos''. \n",
                "*** You must either use the function generate_phenos to simulate ",
                "phenotypes from (possibly correlated) gaussian variables or the ",
                "function replicate_real_phenos to simulate phenotypes from real ",
                "phenotypic data, by replicating their correlation structure. ***",
                sep=""))
-  list2env(list_phenos, envir=environment())
-  rm(list_phenos)
 
-  if(n != nrow(phenos))
-    stop("The number of observations used for list_snps and for list_phenos does not match.")
+  with(c(list_snps, list_phenos), {
 
-  d <- ncol(phenos)
+    n <- nrow(snps)
+    p <- ncol(snps)
 
-  bool_cst <- is.nan(colSums(snps[, ind_p0]))
-  if (any(bool_cst)) {
-    ind_p0 <- ind_p0[!bool_cst]
-    if (length(ind_p0) == 0)
-      stop(paste("SNP(s) number ", ind_p0[bool_cst], " constant. Effect(s) on the ",
-                 "responses removed.\n No remaining ``active'' snps, change ",
-                 "ind_p0 (now empty).", sep = ""))
-  }
+    if(n != nrow(phenos))
+      stop("The number of observations used for list_snps and for list_phenos does not match.")
 
-  list_eff <- generate_eff_sizes_(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
-                                  pve_per_snp, max_tot_pve, var_err,
-                                  chunks_ph = ind_bl)
+    d <- ncol(phenos)
 
-  list2env(list_eff, envir=environment())
-  rm(list_eff)
+    bool_cst <- is.nan(colSums(snps[, ind_p0]))
+    if (any(bool_cst)) {
+      ind_p0 <- ind_p0[!bool_cst]
+      if (length(ind_p0) == 0)
+        stop(paste("SNP(s) number ", ind_p0[bool_cst], " constant. Effect(s) on the ",
+                   "responses removed.\n No remaining ``active'' snps, change ",
+                   "ind_p0 (now empty).", sep = ""))
+    }
 
-  phenos <- phenos + snps %*% beta
+    list_eff <- generate_eff_sizes_(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
+                                    pve_per_snp, max_tot_pve, var_err,
+                                    chunks_ph = ind_bl)
+    with(list_eff, {
+      phenos <- phenos + snps %*% beta
 
-  create_named_list_(phenos, snps, beta, pat, pve_per_snp)
+      create_named_list_(phenos, snps, beta, pat, pve_per_snp)
+    })
+  })
 }

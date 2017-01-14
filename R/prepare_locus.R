@@ -174,7 +174,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
 
   } else {
 
-    if (!(class(list_hyper) %in% c("hyper", "out_hyper")))
+    if (!inherits(list_hyper, c("hyper", "out_hyper")))
       stop(paste("The provided list_hyper must be an object of class ``hyper'' ",
                  "or ``out_hyper''. \n",
                  "*** you must either use the function feed_hyperparam to ",
@@ -182,7 +182,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
                  "object or set the argument list_hyper to NULL for automatic choice. ***",
                  sep=""))
 
-    if (class(list_hyper) == "hyper") {
+    if (inherits(list_hyper, "hyper")) {
       p_hyper_match <- length(bool_rmvd_x)
     } else {
       p_hyper_match <- p
@@ -197,7 +197,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
       stop(paste("The dimensions of the provided hyperparameters ",
                  "(list_hyper) are not consistent with that of X.\n", sep=""))
 
-    if (class(list_hyper) == "hyper") {
+    if (inherits(list_hyper, "hyper")) {
       # remove the entries corresponding to the removed constant covariates in X
       # (if any)
       list_hyper$a <- list_hyper$a[!bool_rmvd_x]
@@ -220,7 +220,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
 
     if (!is.null(q)) {
 
-      if (class(list_hyper) == "hyper") {
+      if (inherits(list_hyper, "hyper")) {
         q_hyper_match <- length(bool_rmvd_z)
         # remove the entries corresponding to the removed constant covariates in X
         # (if any)
@@ -269,7 +269,7 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_
     if (!is.null(user_seed))
       warning("user_seed not used since a non-NULL list_init was provided. \n")
 
-    if (!(class(list_init) %in% c("init", "out_init")))
+    if (!inherits(list_init, c("init", "out_init")))
       stop(paste("The provided list_init must be an object of class ``init'' or ",
                  " `` out_init''. \n",
                  "*** you must either use the function feed_init_param to ",
@@ -278,7 +278,7 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_
                  "initialization. ***",
                  sep=""))
 
-    if (class(list_init) == "init") {
+    if (inherits(list_init, "init")) {
       p_init_match <- length(bool_rmvd_x)
     } else {
       p_init_match <- p
@@ -293,7 +293,7 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_
       stop(paste("The dimensions of the provided initial parameters ",
                  "(list_init) are not consistent with that of X.\n", sep=""))
 
-    if (class(list_init) == "init") {
+    if (inherits(list_init, "init")) {
       # remove the entries corresponding to the removed constant covariates in X
       # (if any)
       list_init$gam_vb <- list_init$gam_vb[!bool_rmvd_x,, drop=F]
@@ -303,7 +303,7 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_
 
     if (!is.null(q)) {
 
-      if (class(list_init) == "init") {
+      if (inherits(list_init, "init")) {
         q_init_match <- length(bool_rmvd_z)
         # remove the entries corresponding to the removed constant covariates in X
         # (if any)
@@ -330,7 +330,7 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_
 prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init,
                         verbose) {
 
-  if (class(list_cv) != "cv")
+  if (!inherits(list_cv, "cv"))
     stop(paste("The provided list_cv must be an object of class ``cv''. \n",
                "*** you must either use the function set_cv to give the settings ",
                "for the cross-validation or set list_cv to NULL to skip the ",
@@ -377,7 +377,7 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init
 
 prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper, list_init, list_cv, verbose) {
 
-  if (class(list_blocks) != "blocks")
+  if (!inherits(list_blocks, "blocks"))
     stop(paste("The provided list_blocks must be an object of class ``blocks''. \n",
                "*** you must either use the function set_blocks to give the settings ",
                "for parallels applications of locus on blocks of covariates or set list_blocks to NULL to ",
