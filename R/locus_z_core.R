@@ -1,12 +1,12 @@
 ## with covariates.
 locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
-                          sig2_beta_vb, tau_vb, mu_alpha_vb,
-                          sig2_alpha_vb, tol, maxit, batch,
-                          verbose, full_output = F) {
+                          sig2_beta_vb, tau_vb, mu_alpha_vb, sig2_alpha_vb, tol,
+                          maxit, batch, verbose, full_output = F) {
 
   # Y must have been centered, and X, standardized.
 
-  with(list_hyper, {
+  with(list_hyper, {  # list_init not used with the with() function to avoid
+                      # copy-on-write for large objects
     m2_alpha <- (sig2_alpha_vb + mu_alpha_vb ^ 2)
 
     m1_beta <- mu_beta_vb * gam_vb
@@ -154,13 +154,10 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
 
       sum_gam <- sum(rowsums_gam)
 
-      lb_new <- lower_bound_z_(Y, X, Z, d, n, p, q,
-                               mu_alpha_vb, sig2_alpha_vb, zeta2_inv_vb,
-                               mu_beta_vb, sig2_beta_vb, sig2_inv_vb,
-                               tau_vb, gam_vb, om_vb,
-                               eta, kappa, lambda, nu, a, b, a_vb, b_vb,
-                               phi, phi_vb, xi,
-                               m2_alpha, m1_beta, m2_beta, sum_gam)
+      lb_new <- lower_bound_z_(Y, X, Z, d, n, p, q, mu_alpha_vb, sig2_alpha_vb,
+                               zeta2_inv_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
+                               gam_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb,
+                               phi, phi_vb, xi, m2_alpha, m1_beta, m2_beta, sum_gam)
 
 
       if (verbose & (it == 1 | it %% 5 == 0))
@@ -194,11 +191,9 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
 
 
     if (full_output) { # for internal use only
-      create_named_list_(mu_alpha_vb, sig2_alpha_vb, zeta2_inv_vb,
-                         mu_beta_vb, sig2_beta_vb, sig2_inv_vb,
-                         tau_vb, gam_vb, om_vb,
-                         eta, kappa, lambda, nu, a, b, a_vb, b_vb,
-                         phi, phi_vb, xi,
+      create_named_list_(mu_alpha_vb, sig2_alpha_vb, zeta2_inv_vb, mu_beta_vb,
+                         sig2_beta_vb, sig2_inv_vb, tau_vb, gam_vb, om_vb, eta,
+                         kappa, lambda, nu, a, b, a_vb, b_vb, phi, phi_vb, xi,
                          m2_alpha, m1_beta, m2_beta, sum_gam)
     } else {
       names_x <- colnames(X)
@@ -236,8 +231,9 @@ update_eta_z_vb_ <- function(gam_vb, eta, q, n) {
 
 }
 
-update_kappa_z_vb_ <- function(Y_mat, X_mat, Z_mat, d, n, p, q, sig2_inv_vb, zeta2_inv_vb,
-                               mu_alpha_vb, m2_alpha, m1_beta, m2_beta, kappa) {
+update_kappa_z_vb_ <- function(Y_mat, X_mat, Z_mat, d, n, p, q, sig2_inv_vb,
+                               zeta2_inv_vb, mu_alpha_vb, m2_alpha, m1_beta,
+                               m2_beta, kappa) {
   # put X_mat and Y_mat instead of X and Y to avoid conflicts with the function sapply,
   # which has also an "X" argument with different meaning...
 
@@ -300,13 +296,10 @@ update_kappa_z_vb_ <- function(Y_mat, X_mat, Z_mat, d, n, p, q, sig2_inv_vb, zet
   kappa_vb
 }
 
-lower_bound_z_ <- function(Y, X, Z, d, n, p, q,
-                           mu_alpha_vb, sig2_alpha_vb, zeta2_inv_vb,
-                           mu_beta_vb, sig2_beta_vb, sig2_inv_vb,
-                           tau_vb, gam_vb, om_vb,
-                           eta, kappa, lambda, nu, a, b, a_vb, b_vb,
-                           phi, phi_vb, xi,
-                           m2_alpha, m1_beta, m2_beta, sum_gam) {
+lower_bound_z_ <- function(Y, X, Z, d, n, p, q, mu_alpha_vb, sig2_alpha_vb,
+                           zeta2_inv_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
+                           gam_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb,
+                           phi, phi_vb, xi, m2_alpha, m1_beta, m2_beta, sum_gam) {
 
   xi_vb <- update_xi_z_vb_(xi, tau_vb, m2_alpha)
 
@@ -332,30 +325,28 @@ lower_bound_z_ <- function(Y, X, Z, d, n, p, q,
              sweep(gam_vb, MARGIN = 2, log_tau_vb, `*`) / 2 -
              sweep(m2_beta, MARGIN = 2, tau_vb, `*`) * sig2_inv_vb / 2 +
              sweep(gam_vb, MARGIN = 1, log_om_vb, `*`) +
-             sweep(1-gam_vb, MARGIN = 1, log_1_min_om_vb, `*`) +
+             sweep(1 - gam_vb, MARGIN = 1, log_1_min_om_vb, `*`) +
              1 / 2 * sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) -
-             gam_vb * log(gam_vb+eps) - (1-gam_vb) * log(1-gam_vb+eps))
+             gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
 
-  G <- sum((eta-eta_vb) * log_tau_vb -
-             (kappa-kappa_vb) * tau_vb + eta * log(kappa) -
-             eta_vb * log(kappa_vb) - lgamma(eta) + lgamma(eta_vb))
+  G <- sum((eta - eta_vb) * log_tau_vb - (kappa - kappa_vb) * tau_vb +
+             eta * log(kappa) - eta_vb * log(kappa_vb) - lgamma(eta) +
+             lgamma(eta_vb))
 
-  H <- (lambda-lambda_vb) * log_sig2_inv_vb - (nu-nu_vb) * sig2_inv_vb +
-    lambda * log(nu) - lambda_vb * log(nu_vb) - lgamma(lambda) +
-    lgamma(lambda_vb)
+  H <- (lambda - lambda_vb) * log_sig2_inv_vb - (nu - nu_vb) * sig2_inv_vb +
+    lambda * log(nu) - lambda_vb * log(nu_vb) - lgamma(lambda) + lgamma(lambda_vb)
 
-  J <- sum((a-a_vb) * log_om_vb + (b-b_vb) * log_1_min_om_vb - lbeta(a, b) +
+  J <- sum((a - a_vb) * log_om_vb + (b - b_vb) * log_1_min_om_vb - lbeta(a, b) +
              lbeta(a_vb, b_vb))
 
   K <- sum(sweep( sweep( sweep( sweep(m2_alpha, MARGIN = 2, tau_vb, `*`),
                                 MARGIN = 1, - zeta2_inv_vb / 2, `*`),
                          MARGIN = 2, log_tau_vb / 2, `+`),
                   MARGIN = 1, log_zeta2_inv_vb / 2, `+`) +
-             log(sig2_alpha_vb) /2 + 1 / 2)
+             log(sig2_alpha_vb) / 2 + 1 / 2)
 
-  L <- sum((phi-phi_vb) * log_zeta2_inv_vb -
-             (xi-xi_vb) * zeta2_inv_vb + phi * log(xi) -
-             phi_vb * log(xi_vb) - lgamma(phi) + lgamma(phi_vb))
+  L <- sum((phi - phi_vb) * log_zeta2_inv_vb - (xi - xi_vb) * zeta2_inv_vb +
+             phi * log(xi) - phi_vb * log(xi_vb) - lgamma(phi) + lgamma(phi_vb))
 
   A + B + G + H + J + K + L
 

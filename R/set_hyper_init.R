@@ -44,8 +44,8 @@ feed_hyperparam <- function(d, p, eta, kappa, lambda, nu, a, b,
   p_hyper <- p
   q_hyper <- q
 
-  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper,
-                                   eta, kappa, lambda, nu, a, b, phi, xi)
+  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, eta, kappa, lambda,
+                                   nu, a, b, phi, xi)
 
   class(list_hyper) <- "hyper"
 
@@ -94,8 +94,8 @@ auto_set_hyperparam_ <- function(Y, p, p_star, q = NULL) {
   p_hyper <- p
   q_hyper <- q
 
-  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper,
-                                   eta, kappa, lambda, nu, a, b, phi, xi)
+  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, eta, kappa, lambda,
+                                   nu, a, b, phi, xi)
 
   class(list_hyper) <- "out_hyper"
 
@@ -106,9 +106,8 @@ auto_set_hyperparam_ <- function(Y, p, p_star, q = NULL) {
 #' Gather initial variational parameters provided by the user.
 #'
 #' @export
-feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
-                            tau_vb, q = NULL, mu_alpha_vb = NULL,
-                            sig2_alpha_vb = NULL) {
+feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+                            q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL) {
 
   check_structure_(gam_vb, "matrix", "double", c(p, d))
   check_zero_one_(gam_vb)
@@ -143,8 +142,7 @@ feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
   q_init <- q
 
   list_init <- create_named_list_(d_init, p_init, q_init, gam_vb, mu_beta_vb,
-                                  sig2_beta_vb, tau_vb, mu_alpha_vb,
-                                  sig2_alpha_vb)
+                                  sig2_beta_vb, tau_vb, mu_alpha_vb, sig2_alpha_vb)
 
   class(list_init) <- "init"
 
@@ -200,8 +198,7 @@ auto_init_param_ <- function(Y, p, p_star, user_seed, q = NULL) {
   q_init <- q
 
   list_init <- create_named_list_(d_init, p_init, q_init, gam_vb, mu_beta_vb,
-                                  sig2_beta_vb, tau_vb, mu_alpha_vb,
-                                  sig2_alpha_vb)
+                                  sig2_beta_vb, tau_vb, mu_alpha_vb, sig2_alpha_vb)
 
   class(list_init) <- "out_init"
 

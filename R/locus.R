@@ -92,10 +92,10 @@
 #'
 #' @export
 #'
-locus <- function(Y, X, p0_av, Z = NULL,
-                  list_hyper = NULL, list_init = NULL, list_cv = NULL,
-                  list_blocks = NULL, user_seed = NULL, tol = 1e-4, maxit = 1000,
-                  batch = T, save_hyper = F, save_init = F, verbose = T) { ##
+locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
+                  list_cv = NULL, list_blocks = NULL, user_seed = NULL,
+                  tol = 1e-4, maxit = 1000, batch = T, save_hyper = F,
+                  save_init = F, verbose = T) { ##
 
 
   if (verbose) cat("== Preparing the data ... \n")
@@ -195,17 +195,13 @@ locus <- function(Y, X, p0_av, Z = NULL,
 
     if (is.null(q))
       vb <- locus_core_(Y, X, d, n, p, list_hyper, list_init$gam_vb,
-                        list_init$mu_beta_vb,
-                        list_init$sig2_beta_vb,
-                        list_init$tau_vb, tol, maxit,
-                        batch, verbose)
+                        list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                        list_init$tau_vb, tol, maxit, batch, verbose)
     else
-      vb <- locus_z_core_(Y, X, Z, d, n, p, q, list_hyper,
-                          list_init$gam_vb, list_init$mu_beta_vb,
-                          list_init$sig2_beta_vb,
-                          list_init$tau_vb,
-                          list_init$mu_alpha_vb, list_init$sig2_alpha_vb,
-                          tol, maxit, batch, verbose)
+      vb <- locus_z_core_(Y, X, Z, d, n, p, q, list_hyper, list_init$gam_vb,
+                          list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                          list_init$tau_vb, list_init$mu_alpha_vb,
+                          list_init$sig2_alpha_vb, tol, maxit, batch, verbose)
 
   } else {
 
@@ -237,14 +233,12 @@ locus <- function(Y, X, p0_av, Z = NULL,
 
         vb_bl <- locus_core_(Y, X_bl, d, n, vec_p_bl[k], list_hyper_bl,
                              list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
-                             list_init_bl$sig2_beta_vb,
-                             list_init_bl$tau_vb,
+                             list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
                              tol, maxit, batch, verbose)
       else
         vb_bl <- locus_z_core_(Y, X_bl, Z, d, n, vec_p_bl[k], q, list_hyper_bl,
                                list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
-                               list_init_bl$sig2_beta_vb,
-                               list_init_bl$tau_vb,
+                               list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
                                list_init_bl$mu_alpha_vb, list_init_bl$sig2_alpha_vb,
                                tol, maxit, batch, verbose)
       vb_bl

@@ -159,32 +159,30 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
         list_init_pg <- auto_init_param_(Y_tr, p, pg, user_seed, q)
 
         if (is.null(q)) {
-          vb_tr <- locus_core_(Y_tr, X_tr, d, n_tr, p, list_hyper_pg, list_init_pg$gam_vb,
-                               list_init_pg$mu_beta_vb,
-                               list_init_pg$sig2_beta_vb,
-                               list_init_pg$tau_vb,
-                               tol_cv, maxit_cv, batch_cv, verbose = F, full_output = T)
+          vb_tr <- locus_core_(Y_tr, X_tr, d, n_tr, p, list_hyper_pg,
+                               list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
+                               list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
+                               tol_cv, maxit_cv, batch_cv, verbose = F,
+                               full_output = T)
 
           lb_vec[ind_pg] <- with(vb_tr, {
-            lower_bound_(Y_test, X_test, d, n_test, p, mu_beta_vb, sig2_beta_vb,
-                         sig2_inv_vb, tau_vb, gam_vb, om_vb, eta, kappa, lambda,
-                         nu, a, b, a_vb, b_vb, m1_beta, m2_beta, sum_gam)
+            lower_bound_(Y_test, X_test, d, n_test, p, sig2_beta_vb, sig2_inv_vb,
+                         tau_vb, gam_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb,
+                         m1_beta, m2_beta, sum_gam)
           })
         } else {
           vb_tr <- locus_z_core_(Y_tr, X_tr, Z_tr, d, n_tr, p, q, list_hyper_pg,
                                  list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
-                                 list_init_pg$sig2_beta_vb,
-                                 list_init_pg$tau_vb,
-                                 list_init_pg$mu_alpha_vb, list_init_pg$sig2_alpha_vb,
-                                 tol_cv, maxit_cv, batch_cv, verbose = F,
-                                 full_output = T)
+                                 list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
+                                 list_init_pg$mu_alpha_vb,
+                                 list_init_pg$sig2_alpha_vb, tol_cv, maxit_cv,
+                                 batch_cv, verbose = F, full_output = T)
 
           lb_vec[ind_pg] <- with(vb_tr, {
             lower_bound_z_(Y_test, X_test, Z_test, d, n_test, p, q, mu_alpha_vb,
-                           sig2_alpha_vb, zeta2_inv_vb, mu_beta_vb, sig2_beta_vb,
-                           sig2_inv_vb, tau_vb, gam_vb, om_vb, eta, kappa,
-                           lambda, nu, a, b, a_vb, b_vb, phi, phi_vb, xi,
-                           m2_alpha, m1_beta, m2_beta, sum_gam)
+                           sig2_alpha_vb, zeta2_inv_vb, sig2_beta_vb, sig2_inv_vb,
+                           tau_vb, gam_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb,
+                           phi, phi_vb, xi, m2_alpha, m1_beta, m2_beta, sum_gam)
           })
         }
 
@@ -197,7 +195,8 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
 
     RNGkind("L'Ecuyer-CMRG") # ensure reproducibility when using mclapply
 
-    lb_mat <- parallel::mclapply(1:n_folds, function(k) evaluate_fold_(k), mc.cores = n_cpus)
+    lb_mat <- parallel::mclapply(1:n_folds, function(k) evaluate_fold_(k),
+                                 mc.cores = n_cpus)
     lb_mat <- do.call(rbind, lb_mat)
 
     rownames(lb_mat) <- paste("fold_", 1:n_folds, sep = "")

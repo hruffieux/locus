@@ -1,10 +1,11 @@
-locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb,
-                        mu_beta_vb, sig2_beta_vb, tau_vb,
-                        tol, maxit, batch, verbose, full_output = F) {
+locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb, mu_beta_vb,
+                        sig2_beta_vb, tau_vb, tol, maxit, batch, verbose,
+                        full_output = F) {
 
   # Y must have been centered, and X, standardized.
 
-  with(list_hyper, {
+  with(list_hyper, { # list_init not used with the with() function to avoid
+                     # copy-on-write for large objects
     m1_beta <- mu_beta_vb * gam_vb
     m2_beta <- sweep(mu_beta_vb ^ 2, 2, sig2_beta_vb, `+`) * gam_vb
 
@@ -31,7 +32,8 @@ locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb,
 
       # % #
       eta_vb <- update_eta_vb_(gam_vb, eta, n)
-      kappa_vb <- update_kappa_vb_(Y, X, d, n, p, sig2_inv_vb, m1_beta, m2_beta, kappa)
+      kappa_vb <- update_kappa_vb_(Y, X, d, n, p, sig2_inv_vb, m1_beta, m2_beta,
+                                   kappa)
 
       tau_vb <- eta_vb / kappa_vb
       # % #
@@ -116,10 +118,8 @@ locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb,
 
       sum_gam <- sum(rowsums_gam)
 
-      lb_new <- lower_bound_(Y, X, d, n, p,
-                             mu_beta_vb, sig2_beta_vb, sig2_inv_vb,
-                             tau_vb, gam_vb, om_vb,
-                             eta, kappa, lambda, nu, a, b, a_vb, b_vb,
+      lb_new <- lower_bound_(Y, X, d, n, p, sig2_beta_vb, sig2_inv_vb, tau_vb,
+                             gam_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb,
                              m1_beta, m2_beta, sum_gam)
 
       if (verbose & (it == 1 | it %% 5 == 0))
@@ -188,8 +188,8 @@ update_eta_vb_ <- function(gam_vb, eta, n) {
 
 }
 
-update_kappa_vb_ <- function(Y_mat, X_mat, d, n, p, sig2_inv_vb, m1_beta, m2_beta,
-                             kappa) {
+update_kappa_vb_ <- function(Y_mat, X_mat, d, n, p, sig2_inv_vb, m1_beta,
+                             m2_beta, kappa) {
   # put X_mat and Y_mat instead of X and Y to avoid conflicts with the function sapply,
   # which has also an "X" argument with different meaning...
 
@@ -223,12 +223,9 @@ update_kappa_vb_ <- function(Y_mat, X_mat, d, n, p, sig2_inv_vb, m1_beta, m2_bet
 
 }
 
-lower_bound_ <- function(Y, X, d, n, p,
-                         mu_beta_vb, sig2_beta_vb, sig2_inv_vb,
-                         tau_vb, gam_vb, om_vb,
-                         eta, kappa, lambda, nu, a, b, a_vb, b_vb,
-                         m1_beta, m2_beta, sum_gam) {
-
+lower_bound_ <- function(Y, X, d, n, p, sig2_beta_vb, sig2_inv_vb, tau_vb, gam_vb,
+                         eta, kappa, lambda, nu, a, b, a_vb, b_vb, m1_beta,
+                         m2_beta, sum_gam) {
 
   eta_vb <- update_eta_vb_(gam_vb, eta, n)
   kappa_vb <- update_kappa_vb_(Y, X, d, n, p, sig2_inv_vb, m1_beta, m2_beta, kappa)
@@ -249,19 +246,19 @@ lower_bound_ <- function(Y, X, d, n, p,
              sweep(gam_vb, 2, log_tau_vb, `*`) / 2 -
              sweep(m2_beta, 2, tau_vb, `*`) * sig2_inv_vb / 2 +
              sweep(gam_vb, 1, log_om_vb, `*`) +
-             sweep(1-gam_vb, 1, log_1_min_om_vb, `*`) +
+             sweep(1 - gam_vb, 1, log_1_min_om_vb, `*`) +
              1 / 2 * sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) -
-             gam_vb * log(gam_vb+eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
+             gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
 
-  G <- sum((eta-eta_vb) * log_tau_vb -
-             (kappa-kappa_vb) * tau_vb + eta * log(kappa) -
-             eta_vb * log(kappa_vb) - lgamma(eta) + lgamma(eta_vb))
+  G <- sum((eta - eta_vb) * log_tau_vb -
+            (kappa - kappa_vb) * tau_vb + eta * log(kappa) -
+            eta_vb * log(kappa_vb) - lgamma(eta) + lgamma(eta_vb))
 
-  H <- (lambda-lambda_vb) * log_sig2_inv_vb - (nu-nu_vb) * sig2_inv_vb +
+  H <- (lambda - lambda_vb) * log_sig2_inv_vb - (nu - nu_vb) * sig2_inv_vb +
     lambda * log(nu) - lambda_vb * log(nu_vb) - lgamma(lambda) +
     lgamma(lambda_vb)
 
-  J <- sum((a-a_vb) * log_om_vb + (b-b_vb) * log_1_min_om_vb - lbeta(a, b) +
+  J <- sum((a - a_vb) * log_om_vb + (b - b_vb) * log_1_min_om_vb - lbeta(a, b) +
              lbeta(a_vb, b_vb))
 
   A + B + G + H + J
