@@ -159,7 +159,10 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
         list_init_pg <- auto_init_param_(Y_tr, p, pg, user_seed, q)
 
         if (is.null(q)) {
-          vb_tr <- locus_core_(Y_tr, X_tr, d, n_tr, p, list_hyper_pg, list_init_pg,
+          vb_tr <- locus_core_(Y_tr, X_tr, d, n_tr, p, list_hyper_pg, list_init_pg$gam_vb,
+                               list_init_pg$mu_beta_vb,
+                               list_init_pg$om_vb, list_init_pg$sig2_beta_vb,
+                               list_init_pg$sig2_inv_vb, list_init_pg$tau_vb,
                                tol_cv, maxit_cv, batch_cv, verbose = F, full_output = T)
 
           lb_vec[ind_pg] <- with(vb_tr, {
@@ -169,7 +172,11 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
           })
         } else {
           vb_tr <- locus_z_core_(Y_tr, X_tr, Z_tr, d, n_tr, p, q, list_hyper_pg,
-                                 list_init_pg, tol_cv, maxit_cv, batch_cv, verbose = F,
+                                 list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
+                                 list_init_pg$om_vb, list_init_pg$sig2_beta_vb,
+                                 list_init_pg$sig2_inv_vb, list_init_pg$tau_vb,
+                                 list_init_pg$mu_alpha_vb, list_init_pg$sig2_alpha_vb,
+                                 list_init_pg$zeta2_inv_vb, tol_cv, maxit_cv, batch_cv, verbose = F,
                                  full_output = T)
 
           lb_vec[ind_pg] <- with(vb_tr, {

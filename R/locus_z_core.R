@@ -1,11 +1,12 @@
 ## with covariates.
-locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, list_init, tol, maxit,
-                          batch, verbose, full_output = F) {
+locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
+                          om_vb, sig2_beta_vb, sig2_inv_vb, tau_vb, mu_alpha_vb,
+                          sig2_alpha_vb, zeta2_inv_vb, tol, maxit, batch,
+                          verbose, full_output = F) {
 
   # Y must have been centered, and X, standardized.
 
-  with(c(list_hyper, list_init), {
-
+  with(list_hyper, {
     m2_alpha <- (sig2_alpha_vb + mu_alpha_vb ^ 2)
 
     m1_beta <- mu_beta_vb * gam_vb
@@ -215,7 +216,6 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, list_init, tol, maxit
       create_named_list_(lb_opt, gam_vb, om_vb, mu_alpha_vb, x_prpnst, y_prpnst)
     }
   })
-
 }
 
 update_phi_z_vb_ <- function(phi, d) {
