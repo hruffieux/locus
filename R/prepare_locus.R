@@ -308,7 +308,6 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_
         # (if any)
         list_init$mu_alpha_vb <- list_init$mu_alpha_vb[!bool_rmvd_z,, drop=F]
         list_init$sig2_alpha_vb <- list_init$sig2_alpha_vb[!bool_rmvd_z,, drop=F]
-        list_init$zeta2_inv_vb <- list_init$zeta2_inv_vb[!bool_rmvd_z]
       } else {
         q_init_match <- q
       }

@@ -108,7 +108,7 @@ auto_set_hyperparam_ <- function(Y, p, p_star, q = NULL) {
 #' @export
 feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
                             tau_vb, q = NULL, mu_alpha_vb = NULL,
-                            sig2_alpha_vb = NULL, zeta2_inv_vb = NULL) {
+                            sig2_alpha_vb = NULL) {
 
   check_structure_(gam_vb, "matrix", "double", c(p, d))
   check_zero_one_(gam_vb)
@@ -133,12 +133,9 @@ feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
     check_structure_(sig2_alpha_vb, "matrix", "double", c(q, d))
     check_positive_(sig2_alpha_vb)
 
-    check_structure_(zeta2_inv_vb, "vector", "double", q)
-    check_positive_(zeta2_inv_vb)
-
-  } else if (!is.null(mu_alpha_vb) | !is.null(sig2_alpha_vb) | !is.null(zeta2_inv_vb) ) {
-    stop(paste("Provided q = NULL, not consistent with mu_alpha_vb, sig2_alpha_vb",
-               "or zeta2_inv_vb being non-null.", sep = ""))
+  } else if (!is.null(mu_alpha_vb) | !is.null(sig2_alpha_vb)) {
+    stop(paste("Provided q = NULL, not consistent with mu_alpha_vb or ",
+               "sig2_alpha_vb being non-null.", sep = ""))
   }
 
   d_init <- d
@@ -147,7 +144,7 @@ feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
 
   list_init <- create_named_list_(d_init, p_init, q_init, gam_vb, mu_beta_vb,
                                   sig2_beta_vb, tau_vb, mu_alpha_vb,
-                                  sig2_alpha_vb, zeta2_inv_vb)
+                                  sig2_alpha_vb)
 
   class(list_init) <- "init"
 
@@ -195,7 +192,6 @@ auto_init_param_ <- function(Y, p, p_star, user_seed, q = NULL) {
   } else {
     mu_alpha_vb <- NULL
     sig2_alpha_vb <- NULL
-    zeta2_inv_vb <- NULL
   }
 
 
@@ -205,7 +201,7 @@ auto_init_param_ <- function(Y, p, p_star, user_seed, q = NULL) {
 
   list_init <- create_named_list_(d_init, p_init, q_init, gam_vb, mu_beta_vb,
                                   sig2_beta_vb, tau_vb, mu_alpha_vb,
-                                  sig2_alpha_vb, zeta2_inv_vb)
+                                  sig2_alpha_vb)
 
   class(list_init) <- "out_init"
 

@@ -5,7 +5,7 @@
 \title{Gather initial variational parameters provided by the user.}
 \usage{
 feed_init_param(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, q = NULL,
-  mu_alpha_vb = NULL, sig2_alpha_vb = NULL, zeta2_inv_vb = NULL)
+  mu_alpha_vb = NULL, sig2_alpha_vb = NULL)
 }
 \description{
 Gather initial variational parameters provided by the user.

@@ -205,7 +205,7 @@ locus <- function(Y, X, p0_av, Z = NULL,
                           list_init$sig2_beta_vb,
                           list_init$tau_vb,
                           list_init$mu_alpha_vb, list_init$sig2_alpha_vb,
-                          list_init$zeta2_inv_vb, tol, maxit, batch, verbose)
+                          tol, maxit, batch, verbose)
 
   } else {
 
@@ -246,7 +246,7 @@ locus <- function(Y, X, p0_av, Z = NULL,
                                list_init_bl$sig2_beta_vb,
                                list_init_bl$tau_vb,
                                list_init_bl$mu_alpha_vb, list_init_bl$sig2_alpha_vb,
-                               list_init_bl$zeta2_inv_vb, tol, maxit, batch, verbose)
+                               tol, maxit, batch, verbose)
       vb_bl
     }
 

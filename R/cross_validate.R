@@ -176,7 +176,7 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
                                  list_init_pg$sig2_beta_vb,
                                  list_init_pg$tau_vb,
                                  list_init_pg$mu_alpha_vb, list_init_pg$sig2_alpha_vb,
-                                 list_init_pg$zeta2_inv_vb, tol_cv, maxit_cv, batch_cv, verbose = F,
+                                 tol_cv, maxit_cv, batch_cv, verbose = F,
                                  full_output = T)
 
           lb_vec[ind_pg] <- with(vb_tr, {
