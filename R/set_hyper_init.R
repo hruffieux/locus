@@ -107,7 +107,7 @@ auto_set_hyperparam_ <- function(Y, p, p_star, q = NULL) {
 #'
 #' @export
 feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
-                            sig2_inv_vb, tau_vb, q = NULL, mu_alpha_vb = NULL,
+                            tau_vb, q = NULL, mu_alpha_vb = NULL,
                             sig2_alpha_vb = NULL, zeta2_inv_vb = NULL) {
 
   check_structure_(gam_vb, "matrix", "double", c(p, d))
@@ -121,9 +121,6 @@ feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
   check_structure_(sig2_beta_vb, "vector", "double", d)
 
   check_positive_(sig2_beta_vb)
-
-  check_structure_(sig2_inv_vb, "vector", "double", 1)
-  check_positive_(sig2_inv_vb)
 
   check_structure_(tau_vb, "vector", "double", d)
   check_positive_(tau_vb)
@@ -149,7 +146,7 @@ feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
   q_init <- q
 
   list_init <- create_named_list_(d_init, p_init, q_init, gam_vb, mu_beta_vb,
-                                  sig2_beta_vb, sig2_inv_vb, tau_vb, mu_alpha_vb,
+                                  sig2_beta_vb, tau_vb, mu_alpha_vb,
                                   sig2_alpha_vb, zeta2_inv_vb)
 
   class(list_init) <- "init"
@@ -177,12 +174,13 @@ auto_init_param_ <- function(Y, p, p_star, user_seed, q = NULL) {
   gam_vb <- matrix(rbeta(p * d, shape1 = shape1_gam, shape2 = shape2_gam),
                    nrow = p)
   mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
-  sig2_inv_vb <- 1e-2
+
 
   tau_vb <- 1 / median(apply(Y, 2, var))
   if (!is.finite(tau_vb)) tau_vb <- 1e3
   tau_vb <- rep(tau_vb, d)
 
+  sig2_inv_vb <- 1e-2
   sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / (sig2_inv_vb * tau_vb))
 
 
@@ -206,7 +204,7 @@ auto_init_param_ <- function(Y, p, p_star, user_seed, q = NULL) {
   q_init <- q
 
   list_init <- create_named_list_(d_init, p_init, q_init, gam_vb, mu_beta_vb,
-                                  sig2_beta_vb, sig2_inv_vb, tau_vb, mu_alpha_vb,
+                                  sig2_beta_vb, tau_vb, mu_alpha_vb,
                                   sig2_alpha_vb, zeta2_inv_vb)
 
   class(list_init) <- "out_init"

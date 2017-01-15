@@ -1,5 +1,5 @@
 locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb,
-                        mu_beta_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
+                        mu_beta_vb, sig2_beta_vb, tau_vb,
                         tol, maxit, batch, verbose, full_output = F) {
 
   # Y must have been centered, and X, standardized.
@@ -17,7 +17,7 @@ locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb,
     lb_old <- -Inf
     it <- 1
 
-    while ((!converged) & (it < maxit)) {
+    while ((!converged) & (it <= maxit)) {
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("Iteration ", format(it), "... \n", sep = ""))

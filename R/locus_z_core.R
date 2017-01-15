@@ -1,6 +1,6 @@
 ## with covariates.
 locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
-                          sig2_beta_vb, sig2_inv_vb, tau_vb, mu_alpha_vb,
+                          sig2_beta_vb, tau_vb, mu_alpha_vb,
                           sig2_alpha_vb, zeta2_inv_vb, tol, maxit, batch,
                           verbose, full_output = F) {
 
@@ -23,7 +23,7 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
 
     phi_vb <- update_phi_z_vb_(phi, d) ###
 
-    while ((!converged) & (it < maxit)) {
+    while ((!converged) & (it <= maxit)) {
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("Iteration ", format(it), "... \n", sep = ""))
