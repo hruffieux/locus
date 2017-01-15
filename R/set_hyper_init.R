@@ -106,7 +106,7 @@ auto_set_hyperparam_ <- function(Y, p, p_star, q = NULL) {
 #' Gather initial variational parameters provided by the user.
 #'
 #' @export
-feed_init_param <- function(d, p, gam_vb, mu_beta_vb, om_vb, sig2_beta_vb,
+feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
                             sig2_inv_vb, tau_vb, q = NULL, mu_alpha_vb = NULL,
                             sig2_alpha_vb = NULL, zeta2_inv_vb = NULL) {
 
@@ -115,9 +115,6 @@ feed_init_param <- function(d, p, gam_vb, mu_beta_vb, om_vb, sig2_beta_vb,
 
   check_structure_(mu_beta_vb, "matrix", "double", c(p, d))
 
-  check_structure_(om_vb, "vector", "double", p)
-  check_zero_one_(om_vb)
-  #
   # check_structure_(sig2_beta_vb, "matrix", "double", c(p, d))
   # check_positive_(sig2_beta_vb)
 
@@ -151,7 +148,7 @@ feed_init_param <- function(d, p, gam_vb, mu_beta_vb, om_vb, sig2_beta_vb,
   p_init <- p
   q_init <- q
 
-  list_init <- create_named_list_(d_init, p_init, q_init, gam_vb, mu_beta_vb, om_vb,
+  list_init <- create_named_list_(d_init, p_init, q_init, gam_vb, mu_beta_vb,
                                   sig2_beta_vb, sig2_inv_vb, tau_vb, mu_alpha_vb,
                                   sig2_alpha_vb, zeta2_inv_vb)
 
@@ -168,18 +165,17 @@ auto_init_param_ <- function(Y, p, p_star, user_seed, q = NULL) {
   if (!is.null(user_seed)) set.seed(user_seed)
 
   if (length(p_star) == 1) {
-    shape1_gam <- shape1_om <- 1
+    shape1_gam <- 1
     p0 <- p_star
   } else {
-    shape1_gam <- shape1_om <- rep(1, p)
+    shape1_gam <- rep(1, p)
     p0 <- sum(p_star / p)
   }
 
-  shape2_gam <- shape2_om <- d * (p - p_star) / p_star
+  shape2_gam <- d * (p - p_star) / p_star
 
   gam_vb <- matrix(rbeta(p * d, shape1 = shape1_gam, shape2 = shape2_gam),
                    nrow = p)
-  om_vb <- rbeta(p, shape1 = shape1_om, shape2 = shape2_om)
   mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
   sig2_inv_vb <- 1e-2
 
@@ -209,7 +205,7 @@ auto_init_param_ <- function(Y, p, p_star, user_seed, q = NULL) {
   p_init <- p
   q_init <- q
 
-  list_init <- create_named_list_(d_init, p_init, q_init, gam_vb, mu_beta_vb, om_vb,
+  list_init <- create_named_list_(d_init, p_init, q_init, gam_vb, mu_beta_vb,
                                   sig2_beta_vb, sig2_inv_vb, tau_vb, mu_alpha_vb,
                                   sig2_alpha_vb, zeta2_inv_vb)
 

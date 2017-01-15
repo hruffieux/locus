@@ -298,7 +298,6 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_
       # (if any)
       list_init$gam_vb <- list_init$gam_vb[!bool_rmvd_x,, drop=F]
       list_init$mu_beta_vb <- list_init$mu_beta_vb[!bool_rmvd_x,, drop=F]
-      list_init$om_vb <- list_init$om_vb[!bool_rmvd_x]
     }
 
     if (!is.null(q)) {

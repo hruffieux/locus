@@ -196,13 +196,13 @@ locus <- function(Y, X, p0_av, Z = NULL,
     if (is.null(q))
       vb <- locus_core_(Y, X, d, n, p, list_hyper, list_init$gam_vb,
                         list_init$mu_beta_vb,
-                        list_init$om_vb, list_init$sig2_beta_vb,
+                        list_init$sig2_beta_vb,
                         list_init$sig2_inv_vb, list_init$tau_vb, tol, maxit,
                         batch, verbose)
     else
       vb <- locus_z_core_(Y, X, Z, d, n, p, q, list_hyper,
                           list_init$gam_vb, list_init$mu_beta_vb,
-                          list_init$om_vb, list_init$sig2_beta_vb,
+                          list_init$sig2_beta_vb,
                           list_init$sig2_inv_vb, list_init$tau_vb,
                           list_init$mu_alpha_vb, list_init$sig2_alpha_vb,
                           list_init$zeta2_inv_vb, tol, maxit, batch, verbose)
@@ -223,7 +223,6 @@ locus <- function(Y, X, p0_av, Z = NULL,
       list_init$p_init <- length(pos_bl)
       list_init$gam_vb <- list_init$gam_vb[pos_bl,, drop = F]
       list_init$mu_beta_vb <- list_init$mu_beta_vb[pos_bl,, drop = F]
-      list_init$om_vb <- list_init$om_vb[pos_bl]
       list_init
     })
 
@@ -238,13 +237,13 @@ locus <- function(Y, X, p0_av, Z = NULL,
 
         vb_bl <- locus_core_(Y, X_bl, d, n, vec_p_bl[k], list_hyper_bl,
                              list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
-                             list_init_bl$om_vb, list_init_bl$sig2_beta_vb,
+                             list_init_bl$sig2_beta_vb,
                              list_init_bl$sig2_inv_vb, list_init_bl$tau_vb,
                              tol, maxit, batch, verbose)
       else
         vb_bl <- locus_z_core_(Y, X_bl, Z, d, n, vec_p_bl[k], q, list_hyper_bl,
                                list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
-                               list_init_bl$om_vb, list_init_bl$sig2_beta_vb,
+                               list_init_bl$sig2_beta_vb,
                                list_init_bl$sig2_inv_vb, list_init_bl$tau_vb,
                                list_init_bl$mu_alpha_vb, list_init_bl$sig2_alpha_vb,
                                list_init_bl$zeta2_inv_vb, tol, maxit, batch, verbose)
