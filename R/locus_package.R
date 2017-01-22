@@ -4,10 +4,11 @@
 #' The locus package provides an efficient variational algorithm for
 #' simultaneous variable selection of predictors and associated outcomes based
 #' on a sparse multivariate regression model (Helene Ruffieux, Anthony C.
-#' Davison, Jorg Hager, Irina Irincheeva, 2016, arXiv:1609.03400). This software
-#' on large genetic datasets from molecular quantitative trait locus (QTL)
-#' problems with over 200K single nucleotide polymorphisms (SNPs), hundreds of
-#' molecular expression levels and hundreds of samples.
+#' Davison, Jorg Hager, Irina Irincheeva, 2016, arXiv:1609.03400). The methods
+#' from this package have been used on large genetic datasets from molecular 
+#' quantitative trait locus (QTL) problems with over 200K single nucleotide 
+#' polymorphisms (SNPs), hundreds of molecular expression levels and hundreds 
+#' of samples.
 #'
 #' @section locus functions: set_hyper, set_init,
 #' generate_dependence, generate_null, generate_phenos, generate_snps, locus,
