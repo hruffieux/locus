@@ -24,7 +24,6 @@
 #'  \item{vec_maf}{Vector containing the SNP sample minor allele frequencies.}
 #'
 #' @examples
-#'
 #' user_seed <- 123; set.seed(user_seed)
 #' n <- 500; p <- 10000
 #' cor_type <- "autocorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
@@ -169,7 +168,6 @@ generate_snps <- function(n, p, cor_type = NULL, vec_rho = NULL, vec_maf = NULL,
 #'  \item{vec_maf}{Vector containing the SNP sample minor allele frequencies.}
 #'
 #' @examples
-#'
 #' user_seed <- 123; set.seed(user_seed)
 #' n <- 500; p <- 7500
 #' cor_type <- "autocorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
@@ -305,7 +303,6 @@ replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NUL
 #'                \code{cor_type} is \code{NULL}.}
 #'
 #' @examples
-#'
 #' user_seed <- 123; set.seed(user_seed)
 #' n <- 500; d <- 10000; var_err <- runif(d, min = 0.1, max = 0.4)
 #' cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
@@ -441,7 +438,6 @@ generate_phenos <- function(n, d, var_err, cor_type = NULL, vec_rho = NULL,
 #'                \code{cor_type} is \code{NULL}.}
 #'
 #' @examples
-#'
 #' user_seed <- 123; set.seed(user_seed)
 #' n <- 500; d <- 1000; var_err <- runif(d, min = 0.1, max = 0.4)
 #' cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
@@ -745,7 +741,6 @@ generate_eff_sizes_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
 #'
 #'
 #' @examples
-#'
 #' user_seed <- 123; set.seed(user_seed)
 #' n <- 500; p <- 5000; p0 <- 200; d <- 500; d0 <- 400
 #' list_snps <- generate_snps(n = n, p = p)

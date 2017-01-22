@@ -40,7 +40,6 @@ This function generates SNPs under Hardy-Weinberg equilibrium with specific
 block correlation structure and minor allele frequencies.
 }
 \examples{
-
 user_seed <- 123; set.seed(user_seed)
 n <- 500; p <- 10000
 cor_type <- "autocorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)

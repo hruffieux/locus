@@ -35,12 +35,12 @@ covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 after transformation to dummy coding. No intercept must be supplied.}
 
 \item{list_hyper}{An object of class "\code{hyper}" containing the model
-hyperparameters. Must be filled using the \code{\link{feed_hyperparam}}
+hyperparameters. Must be filled using the \code{\link{set_hyper}}
 function or must be \code{NULL} for default hyperparameters.}
 
 \item{list_init}{An object of class "\code{init}" containing the initial
 variational parameters. Must be filled using the
-\code{\link{feed_init_param}} function or be \code{NULL} for a default
+\code{\link{set_init}} function or be \code{NULL} for a default
 initialization.}
 
 \item{list_blocks}{An object of class "\code{blocks}" containing setting for
@@ -88,7 +88,6 @@ labels. A common use is for estimatimation of data-driven false discovery
 rates of given thresholds on the posterior probabilities of inclusion.
 }
 \examples{
-
 user_seed <- 123; set.seed(user_seed)
 n <- 200; p <- 250; p0 <- 20; d <- 25; d0 <- 20
 list_X <- generate_snps(n = n, p = p)

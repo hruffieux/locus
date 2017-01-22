@@ -9,7 +9,7 @@
 #' problems with over 200K single nucleotide polymorphisms (SNPs), hundreds of
 #' molecular expression levels and hundreds of samples.
 #'
-#' @section locus functions: feed_hyperparam, feed_init_param,
+#' @section locus functions: set_hyper, set_init,
 #' generate_dependence, generate_null, generate_phenos, generate_snps, locus,
 #' replicate_real_phenos, replicate_real_snps, set_blocks, set_cv.
 #'

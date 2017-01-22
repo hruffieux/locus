@@ -32,12 +32,12 @@ covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 after transformation to dummy coding. No intercept must be supplied.}
 
 \item{list_hyper}{An object of class "\code{hyper}" containing the model
-hyperparameters. Must be filled using the \code{\link{feed_hyperparam}}
+hyperparameters. Must be filled using the \code{\link{set_hyper}}
 function or must be \code{NULL} for default hyperparameters.}
 
 \item{list_init}{An object of class "\code{init}" containing the initial
 variational parameters. Must be filled using the
-\code{\link{feed_init_param}} function or be \code{NULL} for a default
+\code{\link{set_init}} function or be \code{NULL} for a default
 initialization.}
 
 \item{list_cv}{An object of class "\code{cv}" containing settings for
@@ -111,7 +111,6 @@ high-dimensional set-ups. Dependence across responses linked to the same
 predictors is captured through the model hierarchical structure.
 }
 \examples{
-
 user_seed <- 123; set.seed(user_seed)
 n <- 200; p <- 300; p0 <- 50; d <- 40; d0 <- 30
 list_X <- generate_snps(n = n, p = p)
@@ -123,10 +122,9 @@ dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 
 vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, user_seed = user_seed)
 
-
 }
 \seealso{
-\code{\link{feed_hyperparam}}, \code{\link{feed_init_param}},
+\code{\link{set_hyper}}, \code{\link{set_init}},
   \code{\link{set_cv}}, \code{\link{set_blocks}}
 }
 

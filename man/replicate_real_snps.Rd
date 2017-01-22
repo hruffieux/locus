@@ -41,7 +41,6 @@ This function simulates SNPs from real SNP data based on their sample minor
 allele frequencies and correlation structure.
 }
 \examples{
-
 user_seed <- 123; set.seed(user_seed)
 n <- 500; p <- 7500
 cor_type <- "autocorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)

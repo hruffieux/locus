@@ -83,7 +83,6 @@ explained are drawn from a Beta distribution with shape parameters 2 and 5,
 putting more weights on smaller effects.
 }
 \examples{
-
 user_seed <- 123; set.seed(user_seed)
 n <- 500; p <- 5000; p0 <- 200; d <- 500; d0 <- 400
 list_snps <- generate_snps(n = n, p = p)

@@ -47,7 +47,6 @@ function and is used to select the prior average number of predictors
 hyperparameters and ensure sparse predictor selections.
 }
 \examples{
-
 user_seed <- 123; set.seed(user_seed)
 n <- 150; p <- 200; p0 <- 50; d <- 25; d0 <- 20
 list_X <- generate_snps(n = n, p = p)

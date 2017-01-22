@@ -29,7 +29,6 @@ Parallel applications of the method on blocks of candidate predictors for
 large datasets allows faster and less RAM-greedy executions.
 }
 \examples{
-
 user_seed <- 123; set.seed(user_seed)
 n <- 200; p <- 1200; p0 <- 200; d <- 50; d0 <- 40
 list_X <- generate_snps(n = n, p = p)

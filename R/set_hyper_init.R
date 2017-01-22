@@ -4,7 +4,7 @@
 #' used in \code{\link{locus}}.
 #'
 #' The \code{\link{locus}} function can also be used with default
-#' hyperparameter choices (without using \code{\link{feed_hyperparam}}) by
+#' hyperparameter choices (without using \code{\link{set_hyper}}) by
 #' setting its argument \code{list_hyper} to \code{NULL}.
 #'
 #' @param d Number of responses.
@@ -48,7 +48,6 @@
 #'   form that can be passed to the \code{\link{locus}} function.
 #'
 #' @examples
-#'
 #' user_seed <- 123
 #' n <- 200; p <- 400; p0 <- 100; d <- 25; d0 <- 20
 #' list_X <- generate_snps(n = n, p = p, user_seed = user_seed)
@@ -61,17 +60,17 @@
 #'
 #' # a and b chosen so that each candidate predictor has a prior probability to
 #' # be included in the model of 1/4.
-#' list_hyper <- feed_hyperparam(d, p, eta = 1, kappa = apply(dat$phenos, 2, var),
+#' list_hyper <- set_hyper(d, p, eta = 1, kappa = apply(dat$phenos, 2, var),
 #'                               lambda = 1, nu = 1, a = 1, b = 4*d-1)
 #'
 #' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, list_hyper = list_hyper,
 #'             user_seed = user_seed)
 #'
-#' @seealso  \code{\link{feed_init_param}}, \code{\link{locus}}
+#' @seealso  \code{\link{set_init}}, \code{\link{locus}}
 #'
 #' @export
 #'
-feed_hyperparam <- function(d, p, eta, kappa, lambda, nu, a, b,
+set_hyper <- function(d, p, eta, kappa, lambda, nu, a, b,
                             q = NULL, phi = NULL, xi = NULL) {
 
   check_structure_(eta, "vector", "double", c(1, d))
@@ -124,7 +123,7 @@ feed_hyperparam <- function(d, p, eta, kappa, lambda, nu, a, b,
 }
 
 
-auto_set_hyperparam_ <- function(Y, p, p_star, q = NULL) {
+auto_set_hyper_ <- function(Y, p, p_star, q = NULL) {
 
   d <- ncol(Y)
 
@@ -179,7 +178,7 @@ auto_set_hyperparam_ <- function(Y, p, p_star, q = NULL) {
 #' parameters used in \code{\link{locus}}.
 #'
 #' The \code{\link{locus}} function can also be used with default initial
-#' parameter choices (without using \code{\link{feed_init_param}}) by setting
+#' parameter choices (without using \code{\link{set_init}}) by setting
 #' its argument \code{list_init} to \code{NULL}.
 #'
 #' @param d Number of responses.
@@ -212,7 +211,6 @@ auto_set_hyperparam_ <- function(Y, p, p_star, q = NULL) {
 #'   \code{\link{locus}} function.
 #'
 #' @examples
-#'
 #' user_seed <- 123; set.seed(user_seed)
 #' n <- 200; p <- 400; p0 <- 100; d <- 25; d0 <- 20
 #' list_X <- generate_snps(n = n, p = p)
@@ -229,15 +227,15 @@ auto_set_hyperparam_ <- function(Y, p, p_star, q = NULL) {
 #' tau_vb <- 1 / apply(dat$phenos, 2, var)
 #' sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
 #'
-#' list_init <- feed_init_param(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb)
+#' list_init <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb)
 #'
 #' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, list_init = list_init)
 #'
-#' @seealso  \code{\link{feed_hyperparam}}, \code{\link{locus}}
+#' @seealso  \code{\link{set_hyper}}, \code{\link{locus}}
 #'
 #' @export
 #'
-feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
                             q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL) {
 
   check_structure_(gam_vb, "matrix", "double", c(p, d))
@@ -278,7 +276,7 @@ feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 }
 
 
-auto_init_param_ <- function(Y, p, p_star, user_seed, q = NULL) {
+auto_set_init_ <- function(Y, p, p_star, user_seed, q = NULL) {
 
   d <- ncol(Y)
 

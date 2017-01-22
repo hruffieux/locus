@@ -29,7 +29,6 @@
 #'   \code{\link{locus}} function.
 #'
 #' @examples
-#'
 #' user_seed <- 123; set.seed(user_seed)
 #' n <- 150; p <- 200; p0 <- 50; d <- 25; d0 <- 20
 #' list_X <- generate_snps(n = n, p = p)
@@ -45,7 +44,6 @@
 #'             user_seed = user_seed)
 #'
 #' @seealso \code{\link{locus}}
-#'
 #'
 #' @export
 #'
@@ -203,8 +201,8 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
 
         if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
 
-        list_hyper_pg <- auto_set_hyperparam_(Y_tr, p, pg, q)
-        list_init_pg <- auto_init_param_(Y_tr, p, pg, user_seed, q)
+        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q)
+        list_init_pg <- auto_set_init_(Y_tr, p, pg, user_seed, q)
 
         if (is.null(q)) {
           vb_tr <- locus_core_(Y_tr, X_tr, d, n_tr, p, list_hyper_pg,

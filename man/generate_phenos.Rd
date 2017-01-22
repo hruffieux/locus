@@ -43,7 +43,6 @@ This function generates Gaussian phenotypes with specific block correlation
 structure.
 }
 \examples{
-
 user_seed <- 123; set.seed(user_seed)
 n <- 500; d <- 10000; var_err <- runif(d, min = 0.1, max = 0.4)
 cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)

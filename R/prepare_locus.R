@@ -170,14 +170,14 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
 
     if (verbose) cat("- list_hyper set automatically. \n")
 
-    list_hyper <- auto_set_hyperparam_(Y, p, p_star, q)
+    list_hyper <- auto_set_hyper_(Y, p, p_star, q)
 
   } else {
 
     if (!inherits(list_hyper, c("hyper", "out_hyper")))
       stop(paste("The provided list_hyper must be an object of class ``hyper'' ",
                  "or ``out_hyper''. \n",
-                 "*** you must either use the function feed_hyperparam to ",
+                 "*** you must either use the function set_hyper to ",
                  "set your own hyperparameters or use list_hyper from a ``vb'' ",
                  "object or set the argument list_hyper to NULL for automatic choice. ***",
                  sep=""))
@@ -263,7 +263,7 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x,
 
     if (verbose) cat(paste("list_init set automatically. \n", sep=""))
 
-    list_init <- auto_init_param_(Y, p, p_star, user_seed, q)
+    list_init <- auto_set_init_(Y, p, p_star, user_seed, q)
 
   } else {
 
@@ -273,7 +273,7 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x,
     if (!inherits(list_init, c("init", "out_init")))
       stop(paste("The provided list_init must be an object of class ``init'' or ",
                  " `` out_init''. \n",
-                 "*** you must either use the function feed_init_param to ",
+                 "*** you must either use the function set_init to ",
                  "set your own initialization or use list_init from a ``vb'' ",
                  "object or  set the argument list_init to NULL for automatic ",
                  "initialization. ***",
@@ -455,7 +455,6 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper,
 #'   function.
 #'
 #' @examples
-#'
 #' user_seed <- 123; set.seed(user_seed)
 #' n <- 200; p <- 1200; p0 <- 200; d <- 50; d0 <- 40
 #' list_X <- generate_snps(n = n, p = p)
