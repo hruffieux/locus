@@ -4,10 +4,66 @@
 \alias{set_cv}
 \title{Gather settings for the cross-validation procedure used in \code{locus}.}
 \usage{
-set_cv(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv, maxit_cv = 1000,
-  batch_cv = T, verbose = T)
+set_cv(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 0.001,
+  maxit_cv = 1000, batch_cv = TRUE, verbose = TRUE)
+}
+\arguments{
+\item{n}{Number of observations.}
+
+\item{p}{Number of candidate predictors.}
+
+\item{n_folds}{Number of number of folds. Large folds are not recommended for
+large datasets as the procedure may become computationally expensive.}
+
+\item{size_p0_av_grid}{Number of possible values of p0_av to be compared.
+Large numbers are not recommended for large datasets as the procedure may
+become computationally expensive.}
+
+\item{n_cpus}{Number of CPUs to be used for the cross-validation procedure.
+If large, one should ensure that enough RAM will be available for parallel
+execution. Set to 1 for serial execution.}
+
+\item{tol_cv}{Tolerance for the variational algorithm stopping criterion used
+within the cross-validation procedure.}
+
+\item{maxit_cv}{Maximum number of iterations allowed for the variational
+algorithm used within the cross-validation procedure.}
+
+\item{batch_cv}{If \code{TRUE}, a fast batch updating scheme is used within
+the cross-validation procedure (recommended).}
+
+\item{verbose}{If \code{TRUE}, messages are displayed when calling
+\code{set_cv}.}
+}
+\value{
+An object of class "\code{cv}" preparing the settings for the
+  cross-validation settings in a form that can be passed to the
+  \code{\link{locus}} function.
 }
 \description{
-Gather settings for the cross-validation procedure used in \code{locus}.
+The cross-validation procedure uses the variational lower bound as objective
+function and is used to select the prior average number of predictors
+\code{p0_av} expected to be included in the model used to set the model
+hyperparameters and ensure sparse predictor selections.
+}
+\examples{
+
+user_seed <- 123; set.seed(user_seed)
+n <- 150; p <- 200; p0 <- 50; d <- 25; d0 <- 20
+list_X <- generate_snps(n = n, p = p)
+list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
+
+dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+                           ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+                           vec_prob_sh = 0.1, max_tot_pve = 0.9)
+
+list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 2)
+
+vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = NULL, list_cv = list_cv,
+            user_seed = user_seed)
+
+}
+\seealso{
+\code{\link{locus}}
 }
 

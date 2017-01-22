@@ -1,6 +1,76 @@
 #' Gather model hyperparameters provided by the user.
 #'
+#' This function must be used to provide hyperparameter values for the model
+#' used in \code{\link{locus}}.
+#'
+#' The \code{\link{locus}} function can also be used with default
+#' hyperparameter choices (without using \code{\link{feed_hyperparam}}) by
+#' setting its argument \code{list_hyper} to \code{NULL}.
+#'
+#' @param d Number of responses.
+#' @param p Number of candidate predictors.
+#' @param eta Vector of length 1 or d providing the values of hyperparameter
+#'   \eqn{\eta} for the prior distributions of the response residual precisions,
+#'   \eqn{\tau} (vector of size d). If of length 1, the provided value is
+#'   repeated d times.
+#' @param kappa Vector of length 1 or d providing the values of hyperparameter
+#'   \eqn{\kappa} for the prior distributions of the response residual
+#'   precisions, \eqn{\tau} (vector of size d). If of length 1, the provided
+#'   value is repeated d times.
+#' @param lambda Value of hyperparameter \eqn{\lambda} for the prior
+#'   distribution of \eqn{\sigma^{-2}}. \eqn{\sigma^2} represents the typical
+#'   size of nonzero effects.
+#' @param nu Value of hyperparameter \eqn{\nu} for the prior distribution of
+#'   \eqn{\sigma^{-2}}. \eqn{\sigma^2} represents the typical size of nonzero
+#'   effects.
+#' @param a Vector of length 1 or p providing the values of hyperparameter
+#'   \eqn{a} for the prior distributions for the proportion of responses
+#'   associated with each candidate predictor, \eqn{\omega} (vector of size p).
+#'   If of length 1, the provided value is repeated p times.
+#' @param b Vector of length 1 or p providing the values of hyperparameter
+#'   \eqn{b} for the prior distributions for the proportion of responses
+#'   associated with each candidate predictor, \eqn{\omega} (vector of size p).
+#'   If of length 1, the provided value is repeated p times.
+#' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
+#'   \code{NULL}.
+#' @param phi Vector of length 1 or q providing the values of hyperparameter
+#'   \eqn{\phi} for the prior distributions for the sizes of the nonzero
+#'   covariate effects, \eqn{\zeta} (vector of size q). If of length 1, the
+#'   provided value is repeated q times. Default is \code{NULL}, for \code{Z}
+#'   \code{NULL}.
+#' @param xi Vector of length 1 or q providing the values of hyperparameter
+#'   \eqn{\xi} for the prior distributions for the sizes of the nonzero
+#'   covariate effects, \eqn{\zeta} (vector of size q). If of length 1, the
+#'   provided value is repeated q times. Default is \code{NULL}, for \code{Z}
+#'   \code{NULL}.
+#'
+#' @return An object of class "\code{hyper}" preparing user hyperparameter in a
+#'   form that can be passed to the \code{\link{locus}} function.
+#'
+#' @examples
+#'
+#' user_seed <- 123
+#' n <- 200; p <- 400; p0 <- 100; d <- 25; d0 <- 20
+#' list_X <- generate_snps(n = n, p = p, user_seed = user_seed)
+#' list_Y <- generate_phenos(n = n, d = d, var_err = 0.25, user_seed = user_seed)
+#'
+#' dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+#'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+#'                            vec_prob_sh = 0.1, max_tot_pve = 0.9,
+#'                            user_seed = user_seed)
+#'
+#' # a and b chosen so that each candidate predictor has a prior probability to
+#' # be included in the model of 1/4.
+#' list_hyper <- feed_hyperparam(d, p, eta = 1, kappa = apply(dat$phenos, 2, var),
+#'                               lambda = 1, nu = 1, a = 1, b = 4*d-1)
+#'
+#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, list_hyper = list_hyper,
+#'             user_seed = user_seed)
+#'
+#' @seealso  \code{\link{feed_init_param}}, \code{\link{locus}}
+#'
 #' @export
+#'
 feed_hyperparam <- function(d, p, eta, kappa, lambda, nu, a, b,
                             q = NULL, phi = NULL, xi = NULL) {
 
@@ -64,10 +134,10 @@ auto_set_hyperparam_ <- function(Y, p, p_star, q = NULL) {
   eta <- rep(eta, d)
   kappa <- rep(1, d)
 
-  # if p_star is of length 1, p_star is the guessed number of active predictors
-  # else (p_star is of length p), p_star / p is the vector of guessed
-  # probabilities that each predictor is active and the sum of its entries is
-  # the corresponding guessed number of active predictors
+  # if p_star is of length 1, p_star is the prior average number of active
+  # predictors else (p_star is of length p), p_star / p is the vector containg
+  # the prior probabilities that each predictor is active and the sum of its
+  # entries is the corresponding prior average number of active predictors
   if (length(p_star) == 1) p0 <- p_star
   else p0 <- sum(p_star / p)
 
@@ -105,7 +175,68 @@ auto_set_hyperparam_ <- function(Y, p, p_star, q = NULL) {
 
 #' Gather initial variational parameters provided by the user.
 #'
+#' This function must be used to provide initial values for the variational
+#' parameters used in \code{\link{locus}}.
+#'
+#' The \code{\link{locus}} function can also be used with default initial
+#' parameter choices (without using \code{\link{feed_init_param}}) by setting
+#' its argument \code{list_init} to \code{NULL}.
+#'
+#' @param d Number of responses.
+#' @param p Number of candidate predictors.
+#' @param gam_vb Matrix of size p x d with initial values for the variational
+#'   parameter yielding posterior probabilities of inclusion.
+#' @param mu_beta_vb Matrix of size p x d with initial values for the variational
+#'   parameter yielding regression coefficient estimates for predictor-response
+#'   pairs included in the model.
+#' @param sig2_beta_vb Vector of size d with initial values for the variational
+#'   parameter yielding estimates of effect variances for predictor-response
+#'   pairs included in the model. These values are the same for all predictors
+#'   (as a result of the predictor variables being standardized before the
+#'   variational algorithm).
+#' @param tau_vb  Vector of size d with initial values for the variational
+#'   parameter yielding estimates for the response residual precisions.
+#' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
+#'   \code{NULL}.
+#' @param mu_alpha_vb Matrix of size p x q with initial values for the
+#'   variational parameter yielding regression coefficient estimates for
+#'   covariate-response pairs. Default is \code{NULL}, for \code{Z}
+#'   \code{NULL}.
+#' @param sig2_alpha_vb Matrix of size p x q with initial values for the
+#'   variational parameter yielding estimates of effect variances for
+#'   covariate-response pairs. Default is \code{NULL}, for \code{Z}
+#'   \code{NULL}.
+#'
+#' @return An object of class "\code{init}" preparing user initial values for
+#'   the variational parameters in a form that can be passed to the
+#'   \code{\link{locus}} function.
+#'
+#' @examples
+#'
+#' user_seed <- 123; set.seed(user_seed)
+#' n <- 200; p <- 400; p0 <- 100; d <- 25; d0 <- 20
+#' list_X <- generate_snps(n = n, p = p)
+#' list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
+#'
+#' dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+#'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+#'                            vec_prob_sh = 0.1, max_tot_pve = 0.9)
+#'
+#' # gam_vb chosen so that each candidate predictor has a prior probability to
+#' # be included in the model of 1/4.
+#' gam_vb <- matrix(rbeta(p * d, shape1 = 1, shape2 = 4*d-1), nrow = p)
+#' mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
+#' tau_vb <- 1 / apply(dat$phenos, 2, var)
+#' sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
+#'
+#' list_init <- feed_init_param(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb)
+#'
+#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, list_init = list_init)
+#'
+#' @seealso  \code{\link{feed_hyperparam}}, \code{\link{locus}}
+#'
 #' @export
+#'
 feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
                             q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL) {
 
@@ -113,9 +244,6 @@ feed_init_param <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   check_zero_one_(gam_vb)
 
   check_structure_(mu_beta_vb, "matrix", "double", c(p, d))
-
-  # check_structure_(sig2_beta_vb, "matrix", "double", c(p, d))
-  # check_positive_(sig2_beta_vb)
 
   check_structure_(sig2_beta_vb, "vector", "double", d)
 

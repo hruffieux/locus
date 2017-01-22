@@ -4,9 +4,49 @@
 \alias{set_blocks}
 \title{Gather settings for parallel inference on partitioned predictor space.}
 \usage{
-set_blocks(p, pos_bl, n_cpus, verbose = T)
+set_blocks(p, pos_bl, n_cpus, verbose = TRUE)
+}
+\arguments{
+\item{p}{Number of candidate predictors.}
+
+\item{pos_bl}{Vector gathering the predictor block positions (first index of
+each block).}
+
+\item{n_cpus}{Number of CPUs to be used. If large, one should ensure that
+enough RAM will be available for parallel execution. Set to 1 for serial
+execution.}
+
+\item{verbose}{If \code{TRUE}, messages are displayed when calling
+\code{set_blocks}.}
+}
+\value{
+An object of class "\code{blocks}" preparing the settings for parallel
+  inference in a form that can be passed to the \code{\link{locus}}
+  function.
 }
 \description{
-Gather settings for parallel inference on partitioned predictor space.
+Parallel applications of the method on blocks of candidate predictors for
+large datasets allows faster and less RAM-greedy executions.
+}
+\examples{
+
+user_seed <- 123; set.seed(user_seed)
+n <- 200; p <- 1200; p0 <- 200; d <- 50; d0 <- 40
+list_X <- generate_snps(n = n, p = p)
+list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
+
+dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+                           ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+                           vec_prob_sh = 0.05, max_tot_pve = 0.9)
+n_bl <- 12
+pos_bl <- seq(1, p, by = ceiling(p/n_bl))
+list_blocks <- set_blocks(p, pos_bl, n_cpus = 2)
+
+vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = ceiling(p0 / n_bl),
+            list_blocks = list_blocks, user_seed = user_seed)
+
+}
+\seealso{
+\code{\link{locus}}
 }
 

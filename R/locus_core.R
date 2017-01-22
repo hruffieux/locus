@@ -1,6 +1,6 @@
 locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb, mu_beta_vb,
                         sig2_beta_vb, tau_vb, tol, maxit, batch, verbose,
-                        full_output = F) {
+                        full_output = FALSE) {
 
   # Y must have been centered, and X, standardized.
 
@@ -14,7 +14,7 @@ locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb, mu_beta_vb,
 
     lambda_vb <- nu_vb <- eta_vb <- kappa_vb <- a_vb <- b_vb <- NULL
 
-    converged <- F
+    converged <- FALSE
     lb_old <- -Inf
     it <- 1
 
@@ -200,7 +200,7 @@ update_kappa_vb_ <- function(Y_mat, X_mat, d, n, p, sig2_inv_vb, m1_beta,
   if (p > 1) {
 
     mat_x_list <- lapply(p:1, function(j) {
-      X_mat[, j, drop = F] %*% m1_beta[j,, drop = F]
+      X_mat[, j, drop = FALSE] %*% m1_beta[j,, drop = FALSE]
     }
     )
 

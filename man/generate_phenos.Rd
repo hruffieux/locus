@@ -5,9 +5,54 @@
 \title{Generate phenotypic data with prespecified block-wise correlation structure.}
 \usage{
 generate_phenos(n, d, var_err, cor_type = NULL, vec_rho = NULL,
-  n_cpus = 1)
+  n_cpus = 1, user_seed = NULL)
+}
+\arguments{
+\item{n}{Number of observations.}
+
+\item{d}{Number of phenos.}
+
+\item{var_err}{Vector of length 1 or d containing the variances of the
+Gaussian distributions used to draw the phenotytpes. If of length 1, the
+value is repeated d times.}
+
+\item{cor_type}{String describing the type of dependence structure. The
+phenotypes can \code{autocorrelated}, \code{equicorrelated}. Set to
+\code{NULL} for independent phenotypes.}
+
+\item{vec_rho}{Vector of correlation coefficients. Its length determines the
+number of blocks of correlated phenotypes. Must be smaller than d. Set to
+\code{NULL} if independent phenotypes.}
+
+\item{n_cpus}{Number of CPUs used when simulating correlated phenotype blocks.
+Ignored if independent phenotypes. Set to 1 for serial execution.}
+
+\item{user_seed}{Seed set for reproducibility. Default is \code{NULL}, no
+seed set.}
+}
+\value{
+An object of class "\code{sim_phenos}".
+ \item{phenos}{Matrix containing the generated phenotypic data.}
+ \item{var_err}{Vector containing the sample phenotypic variances.}
+ \item{ind_bl}{List of length given by the number of blocks, containing the
+               indices of the phenotypes in each block. Is \code{NULL} if
+               \code{cor_type} is \code{NULL}.}
 }
 \description{
-Generate phenotypic data with prespecified block-wise correlation structure.
+This function generates Gaussian phenotypes with specific block correlation
+structure.
+}
+\examples{
+
+user_seed <- 123; set.seed(user_seed)
+n <- 500; d <- 10000; var_err <- runif(d, min = 0.1, max = 0.4)
+cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
+list_phenos <- generate_phenos(n, d, var_err, cor_type, vec_rho, n_cpus = 2,
+                               user_seed = user_seed)
+
+}
+\seealso{
+\code{\link{generate_snps}}, \code{\link{replicate_real_snps}},
+  \code{\link{replicate_real_phenos}}, \code{\link{generate_dependence}}
 }
 

@@ -7,7 +7,89 @@
 feed_hyperparam(d, p, eta, kappa, lambda, nu, a, b, q = NULL, phi = NULL,
   xi = NULL)
 }
+\arguments{
+\item{d}{Number of responses.}
+
+\item{p}{Number of candidate predictors.}
+
+\item{eta}{Vector of length 1 or d providing the values of hyperparameter
+\eqn{\eta} for the prior distributions of the response residual precisions,
+\eqn{\tau} (vector of size d). If of length 1, the provided value is
+repeated d times.}
+
+\item{kappa}{Vector of length 1 or d providing the values of hyperparameter
+\eqn{\kappa} for the prior distributions of the response residual
+precisions, \eqn{\tau} (vector of size d). If of length 1, the provided
+value is repeated d times.}
+
+\item{lambda}{Value of hyperparameter \eqn{\lambda} for the prior
+distribution of \eqn{\sigma^{-2}}. \eqn{\sigma^2} represents the typical
+size of nonzero effects.}
+
+\item{nu}{Value of hyperparameter \eqn{\nu} for the prior distribution of
+\eqn{\sigma^{-2}}. \eqn{\sigma^2} represents the typical size of nonzero
+effects.}
+
+\item{a}{Vector of length 1 or p providing the values of hyperparameter
+\eqn{a} for the prior distributions for the proportion of responses
+associated with each candidate predictor, \eqn{\omega} (vector of size p).
+If of length 1, the provided value is repeated p times.}
+
+\item{b}{Vector of length 1 or p providing the values of hyperparameter
+\eqn{b} for the prior distributions for the proportion of responses
+associated with each candidate predictor, \eqn{\omega} (vector of size p).
+If of length 1, the provided value is repeated p times.}
+
+\item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
+\code{NULL}.}
+
+\item{phi}{Vector of length 1 or q providing the values of hyperparameter
+\eqn{\phi} for the prior distributions for the sizes of the nonzero
+covariate effects, \eqn{\zeta} (vector of size q). If of length 1, the
+provided value is repeated q times. Default is \code{NULL}, for \code{Z}
+\code{NULL}.}
+
+\item{xi}{Vector of length 1 or q providing the values of hyperparameter
+\eqn{\xi} for the prior distributions for the sizes of the nonzero
+covariate effects, \eqn{\zeta} (vector of size q). If of length 1, the
+provided value is repeated q times. Default is \code{NULL}, for \code{Z}
+\code{NULL}.}
+}
+\value{
+An object of class "\code{hyper}" preparing user hyperparameter in a
+  form that can be passed to the \code{\link{locus}} function.
+}
 \description{
-Gather model hyperparameters provided by the user.
+This function must be used to provide hyperparameter values for the model
+used in \code{\link{locus}}.
+}
+\details{
+The \code{\link{locus}} function can also be used with default
+hyperparameter choices (without using \code{\link{feed_hyperparam}}) by
+setting its argument \code{list_hyper} to \code{NULL}.
+}
+\examples{
+
+user_seed <- 123
+n <- 200; p <- 400; p0 <- 100; d <- 25; d0 <- 20
+list_X <- generate_snps(n = n, p = p, user_seed = user_seed)
+list_Y <- generate_phenos(n = n, d = d, var_err = 0.25, user_seed = user_seed)
+
+dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+                           ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+                           vec_prob_sh = 0.1, max_tot_pve = 0.9,
+                           user_seed = user_seed)
+
+# a and b chosen so that each candidate predictor has a prior probability to
+# be included in the model of 1/4.
+list_hyper <- feed_hyperparam(d, p, eta = 1, kappa = apply(dat$phenos, 2, var),
+                              lambda = 1, nu = 1, a = 1, b = 4*d-1)
+
+vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, list_hyper = list_hyper,
+            user_seed = user_seed)
+
+}
+\seealso{
+\code{\link{feed_init_param}}, \code{\link{locus}}
 }
 

@@ -1,8 +1,56 @@
 #' Gather settings for the cross-validation procedure used in \code{locus}.
 #'
+#' The cross-validation procedure uses the variational lower bound as objective
+#' function and is used to select the prior average number of predictors
+#' \code{p0_av} expected to be included in the model used to set the model
+#' hyperparameters and ensure sparse predictor selections.
+#'
+#' @param n Number of observations.
+#' @param p Number of candidate predictors.
+#' @param n_folds Number of number of folds. Large folds are not recommended for
+#'   large datasets as the procedure may become computationally expensive.
+#' @param size_p0_av_grid Number of possible values of p0_av to be compared.
+#'   Large numbers are not recommended for large datasets as the procedure may
+#'   become computationally expensive.
+#' @param n_cpus Number of CPUs to be used for the cross-validation procedure.
+#'   If large, one should ensure that enough RAM will be available for parallel
+#'   execution. Set to 1 for serial execution.
+#' @param tol_cv Tolerance for the variational algorithm stopping criterion used
+#'   within the cross-validation procedure.
+#' @param maxit_cv Maximum number of iterations allowed for the variational
+#'   algorithm used within the cross-validation procedure.
+#' @param batch_cv If \code{TRUE}, a fast batch updating scheme is used within
+#'   the cross-validation procedure (recommended).
+#' @param verbose If \code{TRUE}, messages are displayed when calling
+#'   \code{set_cv}.
+#'
+#' @return An object of class "\code{cv}" preparing the settings for the
+#'   cross-validation settings in a form that can be passed to the
+#'   \code{\link{locus}} function.
+#'
+#' @examples
+#'
+#' user_seed <- 123; set.seed(user_seed)
+#' n <- 150; p <- 200; p0 <- 50; d <- 25; d0 <- 20
+#' list_X <- generate_snps(n = n, p = p)
+#' list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
+#'
+#' dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+#'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+#'                            vec_prob_sh = 0.1, max_tot_pve = 0.9)
+#'
+#' list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 2)
+#'
+#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = NULL, list_cv = list_cv,
+#'             user_seed = user_seed)
+#'
+#' @seealso \code{\link{locus}}
+#'
+#'
 #' @export
-set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv,
-                   maxit_cv = 1000, batch_cv = T, verbose = T) {
+#'
+set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
+                   maxit_cv = 1e3, batch_cv = TRUE, verbose = TRUE) {
 
   check_structure_(n_folds, "vector", "numeric", 1)
   check_natural_(n_folds)
@@ -112,35 +160,35 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
       n_test <- length(current)
       n_tr <- n - n_test
 
-      Y_tr <- Y[-current,, drop = F]
-      Y_test <- Y[current,, drop = F] # drop = F for the case where n_folds = n
+      Y_tr <- Y[-current,, drop = FALSE]
+      Y_test <- Y[current,, drop = FALSE] # drop = FALSE for the case where n_folds = n
 
-      X_tr <- X[-current,, drop = F]
-      X_test <- X[current,, drop = F]
+      X_tr <- X[-current,, drop = FALSE]
+      X_test <- X[current,, drop = FALSE]
 
       # rescale X_tr as the algorithm then uses sample variance 1
       X_tr <- scale(X_tr)
       bool_cst_x <- is.nan(colSums(X_tr))
       if (any(bool_cst_x)) {
-        X_tr <- X_tr[, !bool_cst_x, drop = F]
+        X_tr <- X_tr[, !bool_cst_x, drop = FALSE]
         # remove the corresponding columns in X_test too so that the lower bound
         # obtained with X_tr can be evaluated on X_test
-        X_test <- X_test[, !bool_cst_x, drop = F]
+        X_test <- X_test[, !bool_cst_x, drop = FALSE]
         p <- ncol(X_tr)
       }
 
-      Y_tr <- scale(Y_tr, center = T, scale = F)
-      Y_test <- scale(Y_test, center = T, scale = F)
+      Y_tr <- scale(Y_tr, center = TRUE, scale = FALSE)
+      Y_test <- scale(Y_test, center = TRUE, scale = FALSE)
 
 
       if (!is.null(Z)) {
-        Z_tr <- Z[-current,, drop = F]
-        Z_test <- Z[current,, drop = F]
+        Z_tr <- Z[-current,, drop = FALSE]
+        Z_test <- Z[current,, drop = FALSE]
         Z_tr <- scale(Z_tr)
         bool_cst_z <- is.nan(colSums(Z_tr))
         if (any(bool_cst_z)) {
-          Z_tr <- Z_tr[, !bool_cst_z, drop = F]
-          Z_test <- Z_test[, !bool_cst_z, drop = F]
+          Z_tr <- Z_tr[, !bool_cst_z, drop = FALSE]
+          Z_test <- Z_test[, !bool_cst_z, drop = FALSE]
           q <- ncol(Z_tr)
         }
       } else {
@@ -162,8 +210,8 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
           vb_tr <- locus_core_(Y_tr, X_tr, d, n_tr, p, list_hyper_pg,
                                list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
                                list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
-                               tol_cv, maxit_cv, batch_cv, verbose = F,
-                               full_output = T)
+                               tol_cv, maxit_cv, batch_cv, verbose = FALSE,
+                               full_output = TRUE)
 
           lb_vec[ind_pg] <- with(vb_tr, {
             lower_bound_(Y_test, X_test, d, n_test, p, sig2_beta_vb, sig2_inv_vb,
@@ -176,7 +224,7 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
                                  list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
                                  list_init_pg$mu_alpha_vb,
                                  list_init_pg$sig2_alpha_vb, tol_cv, maxit_cv,
-                                 batch_cv, verbose = F, full_output = T)
+                                 batch_cv, verbose = FALSE, full_output = TRUE)
 
           lb_vec[ind_pg] <- with(vb_tr, {
             lower_bound_z_(Y_test, X_test, Z_test, d, n_test, p, q, mu_alpha_vb,

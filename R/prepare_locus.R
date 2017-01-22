@@ -1,6 +1,6 @@
 prepare_data_ <- function(Y, X, Z, user_seed, tol, maxit, batch, verbose) {
 
-  check_structure_(user_seed, "vector", "numeric", 1, null_ok = T)
+  check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
 
   check_structure_(tol, "vector", "numeric", 1)
   check_positive_(tol, eps=.Machine$double.eps)
@@ -11,7 +11,7 @@ prepare_data_ <- function(Y, X, Z, user_seed, tol, maxit, batch, verbose) {
   check_structure_(batch, "vector", "logical", 1)
 
   check_structure_(verbose, "vector", "logical", 1)
-
+#
   check_structure_(X, "matrix", "numeric")
   check_structure_(Y, "matrix", "double")
 
@@ -91,9 +91,9 @@ prepare_data_ <- function(Y, X, Z, user_seed, tol, maxit, batch, verbose) {
   bool_rmvd_x <- bool_cst_x
   bool_rmvd_x[!bool_cst_x] <- bool_coll_x
 
-  Y <- scale(Y, center = T, scale = F)
+  Y <- scale(Y, center = TRUE, scale = FALSE)
 
-  if (p < 1) stop(paste("There must be at least 1 non-constant covariate ",
+  if (p < 1) stop(paste("There must be at least 1 non-constant candidate predictor ",
                         " stored in X.", sep=""))
   if (is.null(q) || q < 1) Z <- NULL
 
@@ -110,7 +110,7 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
   if (length(p0_av) == 1) {
 
     if (verbose) cat(paste("Provided p0_av = ", p0_av, " interpreted as ",
-                           "the prior number of covariates associated with at ",
+                           "the prior number of predictors associated with at ",
                            "least one response. \n\n", sep = ""))
 
     if (p0_av / p < eps)
@@ -138,7 +138,7 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
 
     if (verbose) cat(paste("- The sth entry of the provided p0_av ",
                            "interpreted as the prior probability that ",
-                           "covariate s is associated with at least one ",
+                           "predictor s is associated with at least one ",
                            "response. \n\n",
                            sep = ""))
 
@@ -148,7 +148,7 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
                  sep = ""))
 
     if (median(p0_av) > 1 / 2)
-      warning(paste("The number of covariates with large prior inclusion ",
+      warning(paste("The number of predictors with large prior inclusion ",
                     "probability is large, so multiplicity control may be weak. \n",
                     "You may want to decrease the values of several ",
                     "entries of p0_av. \n",
@@ -198,7 +198,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
                  "(list_hyper) are not consistent with that of X.\n", sep=""))
 
     if (inherits(list_hyper, "hyper")) {
-      # remove the entries corresponding to the removed constant covariates in X
+      # remove the entries corresponding to the removed constant predictors in X
       # (if any)
       list_hyper$a <- list_hyper$a[!bool_rmvd_x]
       list_hyper$b <- list_hyper$b[!bool_rmvd_x]
@@ -222,7 +222,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
 
       if (inherits(list_hyper, "hyper")) {
         q_hyper_match <- length(bool_rmvd_z)
-        # remove the entries corresponding to the removed constant covariates in X
+        # remove the entries corresponding to the removed constant predictors in X
         # (if any)
         list_hyper$phi <- list_hyper$phi[!bool_rmvd_z]
         list_hyper$xi <- list_hyper$xi[!bool_rmvd_z]
@@ -252,8 +252,9 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
 
 
 
-prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_rmvd_z,
-                               names_x, names_y, names_z, user_seed, verbose) {
+prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x,
+                               bool_rmvd_z, names_x, names_y, names_z,
+                               user_seed, verbose) {
 
   if (is.null(list_init)) {
 
@@ -294,20 +295,20 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x, bool_
                  "(list_init) are not consistent with that of X.\n", sep=""))
 
     if (inherits(list_init, "init")) {
-      # remove the entries corresponding to the removed constant covariates in X
+      # remove the entries corresponding to the removed constant predictors in X
       # (if any)
-      list_init$gam_vb <- list_init$gam_vb[!bool_rmvd_x,, drop=F]
-      list_init$mu_beta_vb <- list_init$mu_beta_vb[!bool_rmvd_x,, drop=F]
+      list_init$gam_vb <- list_init$gam_vb[!bool_rmvd_x,, drop = FALSE]
+      list_init$mu_beta_vb <- list_init$mu_beta_vb[!bool_rmvd_x,, drop = FALSE]
     }
 
     if (!is.null(q)) {
 
       if (inherits(list_init, "init")) {
         q_init_match <- length(bool_rmvd_z)
-        # remove the entries corresponding to the removed constant covariates in X
+        # remove the entries corresponding to the removed constant predictors in X
         # (if any)
-        list_init$mu_alpha_vb <- list_init$mu_alpha_vb[!bool_rmvd_z,, drop=F]
-        list_init$sig2_alpha_vb <- list_init$sig2_alpha_vb[!bool_rmvd_z,, drop=F]
+        list_init$mu_alpha_vb <- list_init$mu_alpha_vb[!bool_rmvd_z,, drop = FALSE]
+        list_init$sig2_alpha_vb <- list_init$sig2_alpha_vb[!bool_rmvd_z,, drop = FALSE]
       } else {
         q_init_match <- q
       }
@@ -344,11 +345,11 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init
                "is not consistent with those of the data.", sep=""))
 
   if (list_cv$p_cv != length(bool_rmvd_x))
-    stop(paste("The number of covariate p provided to the function set_cv ",
+    stop(paste("The number of candidate predictor p provided to the function set_cv ",
                "is not consistent with X.\n", sep=""))
 
   if (any(list_cv$p0_av_grid > p)) { # p has potentially been reduced because
-    # of constant covariates
+    # of constant candidate predictors
 
     list_cv$p0_av_grid <- create_grid_(p, list_cv$size_p0_av_grid)
 
@@ -360,7 +361,7 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init
     }
 
     message <- paste("The cross-validation grid has been readjusted because to ",
-                     "account for the removal of constant covariates. Grid used: ",
+                     "account for the removal of constant candidate predictors. Grid used: ",
                      list_cv$p0_av_grid, ". \n", sep = "")
 
     if (verbose) cat(message)
@@ -373,22 +374,24 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init
 
 
 
-prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper, list_init, list_cv, verbose) {
+prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper,
+                            list_init, list_cv, verbose) {
 
   if (!inherits(list_blocks, "blocks"))
     stop(paste("The provided list_blocks must be an object of class ``blocks''. \n",
                "*** you must either use the function set_blocks to give the settings ",
-               "for parallels applications of locus on blocks of covariates or set list_blocks to NULL to ",
-               "apply locus jointly on all the covariates (sufficient RAM required). ***",
+               "for parallels applications of locus on blocks of candidate ",
+               "predictors or set list_blocks to NULL to apply locus jointly on ",
+               "all the candidate predictors (sufficient RAM required). ***",
                sep=""))
 
   if (!is.null(list_cv))
     stop(paste("list_cv must be NULL if non NULL ",
-               "list_blocks is provided (parallel applications of locus on blocks of covariates).\n",
+               "list_blocks is provided (parallel applications of locus on blocks of candidate predictors).\n",
                "Cross-validation for block-wise applications will be enabled soon.",sep = ""))
 
   if (list_blocks$p_blocks != length(bool_rmvd_x))
-    stop(paste("The number of covariate p provided to the function set_blocks ",
+    stop(paste("The number of candidate predictors p provided to the function set_blocks ",
                "is not consistent with X.\n", sep=""))
 
   check_structure_(p0_av, "vector", "numeric", c(1, n_bl))
@@ -402,6 +405,7 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper, list_in
   # in case a block was removed due to the above because of bool_rmvd_x
   n_bl  <- sum(pres_bl)
   if(list_blocks$n_cpus > n_bl) n_cpus <- n_bl
+  else n_cpus <- list_blocks$n_cpus
 
   if (is.null(list_hyper) | is.null(list_init)) {
 
@@ -409,12 +413,12 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper, list_in
 
     if(length(p0_av) == 1) {
       min_max_sanity <- c(min(vec_p_bl), max(vec_p_bl))
-      p_star <- sapply(min_max_sanity, function(m_p_bl) convert_p0_av_(p0_av, m_p_bl, verbose = F))[1]
+      p_star <- sapply(min_max_sanity, function(m_p_bl) convert_p0_av_(p0_av, m_p_bl, verbose = FALSE))[1]
       p_star <- rep(p_star, length(vec_fac_bl))
     } else {
       p0_av <- p0_av[pres_bl]
       p_star <- sapply(1:n_bl, function(k) {
-        p_star_k <- convert_p0_av_(p0_av[k], vec_p_bl[k], verbose = F)
+        p_star_k <- convert_p0_av_(p0_av[k], vec_p_bl[k], verbose = FALSE)
         rep(p_star_k, vec_p_bl[k])
         })
     }
@@ -434,8 +438,43 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper, list_in
 
 #' Gather settings for parallel inference on partitioned predictor space.
 #'
+#' Parallel applications of the method on blocks of candidate predictors for
+#' large datasets allows faster and less RAM-greedy executions.
+#'
+#' @param p Number of candidate predictors.
+#' @param pos_bl Vector gathering the predictor block positions (first index of
+#'   each block).
+#' @param n_cpus Number of CPUs to be used. If large, one should ensure that
+#'   enough RAM will be available for parallel execution. Set to 1 for serial
+#'   execution.
+#' @param verbose If \code{TRUE}, messages are displayed when calling
+#'   \code{set_blocks}.
+#'
+#' @return An object of class "\code{blocks}" preparing the settings for parallel
+#'   inference in a form that can be passed to the \code{\link{locus}}
+#'   function.
+#'
+#' @examples
+#'
+#' user_seed <- 123; set.seed(user_seed)
+#' n <- 200; p <- 1200; p0 <- 200; d <- 50; d0 <- 40
+#' list_X <- generate_snps(n = n, p = p)
+#' list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
+#'
+#' dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+#'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+#'                            vec_prob_sh = 0.05, max_tot_pve = 0.9)
+#' n_bl <- 12
+#' pos_bl <- seq(1, p, by = ceiling(p/n_bl))
+#' list_blocks <- set_blocks(p, pos_bl, n_cpus = 2)
+#'
+#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = ceiling(p0 / n_bl),
+#'             list_blocks = list_blocks, user_seed = user_seed)
+#'
+#' @seealso \code{\link{locus}}
+#'
 #' @export
-set_blocks <- function(p, pos_bl, n_cpus, verbose = T) {
+set_blocks <- function(p, pos_bl, n_cpus, verbose = TRUE) {
 
   check_structure_(verbose, "vector", "logical", 1)
 
@@ -478,8 +517,8 @@ set_blocks <- function(p, pos_bl, n_cpus, verbose = T) {
       n_cpus <- n_bl
     }
 
-    if (verbose) cat(paste("locus applied in parallel on ", n_bl, " blocks of covariates, using ",
-                           n_cpus, " CPUs.\n",
+    if (verbose) cat(paste("locus applied in parallel on ", n_bl,
+                           " blocks of candidate predictors, using ", n_cpus, " CPUs.\n",
                            "Please make sure that enough RAM is available.", sep=""))
   }
 

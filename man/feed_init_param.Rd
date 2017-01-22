@@ -7,7 +7,78 @@
 feed_init_param(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, q = NULL,
   mu_alpha_vb = NULL, sig2_alpha_vb = NULL)
 }
+\arguments{
+\item{d}{Number of responses.}
+
+\item{p}{Number of candidate predictors.}
+
+\item{gam_vb}{Matrix of size p x d with initial values for the variational
+parameter yielding posterior probabilities of inclusion.}
+
+\item{mu_beta_vb}{Matrix of size p x d with initial values for the variational
+parameter yielding regression coefficient estimates for predictor-response
+pairs included in the model.}
+
+\item{sig2_beta_vb}{Vector of size d with initial values for the variational
+parameter yielding estimates of effect variances for predictor-response
+pairs included in the model. These values are the same for all predictors
+(as a result of the predictor variables being standardized before the
+variational algorithm).}
+
+\item{tau_vb}{Vector of size d with initial values for the variational
+parameter yielding estimates for the response residual precisions.}
+
+\item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
+\code{NULL}.}
+
+\item{mu_alpha_vb}{Matrix of size p x q with initial values for the
+variational parameter yielding regression coefficient estimates for
+covariate-response pairs. Default is \code{NULL}, for \code{Z}
+\code{NULL}.}
+
+\item{sig2_alpha_vb}{Matrix of size p x q with initial values for the
+variational parameter yielding estimates of effect variances for
+covariate-response pairs. Default is \code{NULL}, for \code{Z}
+\code{NULL}.}
+}
+\value{
+An object of class "\code{init}" preparing user initial values for
+  the variational parameters in a form that can be passed to the
+  \code{\link{locus}} function.
+}
 \description{
-Gather initial variational parameters provided by the user.
+This function must be used to provide initial values for the variational
+parameters used in \code{\link{locus}}.
+}
+\details{
+The \code{\link{locus}} function can also be used with default initial
+parameter choices (without using \code{\link{feed_init_param}}) by setting
+its argument \code{list_init} to \code{NULL}.
+}
+\examples{
+
+user_seed <- 123; set.seed(user_seed)
+n <- 200; p <- 400; p0 <- 100; d <- 25; d0 <- 20
+list_X <- generate_snps(n = n, p = p)
+list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
+
+dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+                           ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+                           vec_prob_sh = 0.1, max_tot_pve = 0.9)
+
+# gam_vb chosen so that each candidate predictor has a prior probability to
+# be included in the model of 1/4.
+gam_vb <- matrix(rbeta(p * d, shape1 = 1, shape2 = 4*d-1), nrow = p)
+mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
+tau_vb <- 1 / apply(dat$phenos, 2, var)
+sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
+
+list_init <- feed_init_param(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb)
+
+vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, list_init = list_init)
+
+}
+\seealso{
+\code{\link{feed_hyperparam}}, \code{\link{locus}}
 }
 

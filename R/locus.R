@@ -10,41 +10,51 @@
 #' @param X Input matrix of dimension n x p, where p is the number of candidate
 #'   predictors. \code{X} cannot contain NAs. No intercept must be supplied.
 #' @param p0_av Prior average number of predictors expected to be included in
-#'   the model. Must be \code{NULL} if \code{list_init} and \code{list_hyper}
-#'   are both non-\code{NULL} or if \code{list_cv} is non-\code{NULL}.
+#'   the model (if \code{list_blocks} is \code{TRUE}, average number per
+#'   predictor blocks). Must be \code{NULL} if \code{list_init} and
+#'   \code{list_hyper} are both non-\code{NULL} or if \code{list_cv} is
+#'   non-\code{NULL}. If \code{list_blocks} is \code{NULL}, can also be a vector
+#'   of length p with entry s corresponding to the prior probability that
+#'   candidate predictor s is associated with at least one response. If
+#'   \code{list_blocks} is non-\code{NULL}, can be a vector of size given by the
+#'   number of blocks, with each entry corresponding to the prior average number
+#'   of predictors from each block expected to be included in the model.
 #' @param Z Covariate matrix of dimension n x q, where q is the number of
 #'   covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 #'   after transformation to dummy coding. No intercept must be supplied.
-#' @param list_hyper List containing the model hyperparameters. Must be filled
-#'   using the \code{\link{feed_hyperparam}} function or must be \code{NULL} for
-#'   default hyperparameters.
-#' @param list_init List containing the variational initial parameters. Must be
-#'   be filled using the \code{\link{feed_init_param}} function or be
-#'   \code{NULL} for a default initialization.
-#' @param list_cv List containing settings for choosing the prior average number
-#'   of predictors expected to be included in the model, \code{p0_av}, by
-#'   cross-validation. Must be filled using the \code{\link{set_cv}} function or
-#'   must be \code{NULL} for no cross-validation. If non-\code{NULL},
-#'   \code{p0_av}, \code{list_init} and \code{list_hyper} must all be
-#'   \code{NULL}.
-#' @param list_blocks List containing setting for parallel inference on a
-#'   partitioned predictor space. Must be filled using the
-#'   \code{\link{set_blocks}} function or must be \code{NULL} for no
+#' @param list_hyper An object of class "\code{hyper}" containing the model
+#'   hyperparameters. Must be filled using the \code{\link{feed_hyperparam}}
+#'   function or must be \code{NULL} for default hyperparameters.
+#' @param list_init An object of class "\code{init}" containing the initial
+#'   variational parameters. Must be filled using the
+#'   \code{\link{feed_init_param}} function or be \code{NULL} for a default
+#'   initialization.
+#' @param list_cv An object of class "\code{cv}" containing settings for
+#'   choosing the prior average number of predictors expected to be included in
+#'   the model, \code{p0_av}, by cross-validation. Must be filled using the
+#'   \code{\link{set_cv}} function or must be \code{NULL} for no
+#'   cross-validation. If non-\code{NULL}, \code{p0_av}, \code{list_init} and
+#'   \code{list_hyper} must all be \code{NULL}.
+#' @param list_blocks An object of class "\code{blocks}" containing setting for
+#'   parallel inference on a partitioned predictor space. Must be filled using
+#'   the \code{\link{set_blocks}} function or must be \code{NULL} for no
 #'   partitioning.
 #' @param user_seed Seed set for reproducible default choices of hyperparameters
 #'   (if \code{list_hyper} is \code{NULL}) and inital variational parameters (if
 #'   \code{list_init} is \code{NULL}). Also used at the cross-validation stage
-#'   (if \code{list_cv} is non-\code{NULL}).
+#'   (if \code{list_cv} is non-\code{NULL}). Default is \code{NULL}, no seed set.
 #' @param tol Tolerance for the stopping criterion.
 #' @param maxit Maximum number of iterations allowed.
-#' @param batch If TRUE a fast batch updating scheme is used (recommended).
-#' @param save_hyper If TRUE, the hyperparameters used for the model are saved
-#'   as output.
-#' @param save_init If TRUE, the initial variational parameters used for the
-#'   inference are saved as output.
-#' @param verbose If TRUE, messages are displayed during execution.
+#' @param batch If \code{TRUE} a fast batch updating scheme is used
+#'   (recommended).
+#' @param save_hyper If \code{TRUE}, the hyperparameters used for the model are
+#'   saved as output.
+#' @param save_init If \code{TRUE}, the initial variational parameters used for
+#'   the inference are saved as output.
+#' @param verbose If \code{TRUE}, messages are displayed during execution.
 #'
-#' @return A list containing the following variational estimates and settings:
+#' @return An object of class "\code{vb}" containing the following variational
+#'   estimates and settings:
 #'  \item{lb_opt}{Optimized variational lower bound for the marginal
 #'                log-likelihood.}
 #'  \item{gam_vb}{Posterior inclusion probability matrix of dimension p x d.
@@ -70,19 +80,19 @@
 #'                                  analysis because collinear to other
 #'                                  variables.}
 #'  \item{list_hyper, list_init}{If \code{save_hyper}, resp. \code{save_init},
-#'                               TRUE, hyperparameters, resp. initial
+#'                               \code{TRUE}, hyperparameters, resp. initial
 #'                               variational parameters, used for inference are
 #'                               saved as output.}
 #' @examples
 #'
 #' user_seed <- 123; set.seed(user_seed)
-#' n <- 200; p <- 500; p0 <- 100; d <- 50; d0 <- 40
+#' n <- 200; p <- 300; p0 <- 50; d <- 40; d0 <- 30
 #' list_X <- generate_snps(n = n, p = p)
 #' list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
 #'
 #' dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 #'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                            vec_prob_sh = 0.1, pve_per_snp = 0.05)
+#'                            vec_prob_sh = 0.1, max_tot_pve = 0.9)
 #'
 #' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, user_seed = user_seed)
 #'
@@ -94,8 +104,8 @@
 #'
 locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, user_seed = NULL,
-                  tol = 1e-4, maxit = 1000, batch = T, save_hyper = F,
-                  save_init = F, verbose = T) { ##
+                  tol = 1e-4, maxit = 1000, batch = TRUE, save_hyper = FALSE,
+                  save_init = FALSE, verbose = TRUE) { ##
 
 
   if (verbose) cat("== Preparing the data ... \n")
@@ -128,7 +138,7 @@ locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
 
   if (!is.null(list_cv) & is.null(list_blocks)) { ## TODO: allow cross-validation when list_blocks is used.
 
-    if (verbose){
+    if (verbose) {
       cat("=============================== \n")
       cat("===== Cross-validation... ===== \n")
       cat("=============================== \n")
@@ -185,9 +195,9 @@ locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
   if (verbose) cat("... done. == \n\n")
 
   if (verbose){
-    cat(paste("========================================================== \n",
-              "== Variational algorithm sparse multivariate regression == \n",
-              "========================================================== \n\n",
+    cat(paste("============================================================== \n",
+              "== Variational inference for sparse multivariate regression == \n",
+              "============================================================== \n\n",
               sep = ""))
   }
 
@@ -217,8 +227,8 @@ locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
 
     split_bl_init <- lapply(list_pos_bl, function(pos_bl) {
       list_init$p_init <- length(pos_bl)
-      list_init$gam_vb <- list_init$gam_vb[pos_bl,, drop = F]
-      list_init$mu_beta_vb <- list_init$mu_beta_vb[pos_bl,, drop = F]
+      list_init$gam_vb <- list_init$gam_vb[pos_bl,, drop = FALSE]
+      list_init$mu_beta_vb <- list_init$mu_beta_vb[pos_bl,, drop = FALSE]
       list_init
     })
 

@@ -22,7 +22,7 @@ check_zero_one_ <- function(x){
 }
 
 check_structure_ <- function(x, struct, type, size = NULL,
-                             null_ok = F,  inf_ok = F, na_ok = F) {
+                             null_ok = FALSE,  inf_ok = FALSE, na_ok = FALSE) {
   if (type == "double") {
     bool_type <-  is.double(x)
     type_mess <- "a double-precision "
@@ -37,7 +37,7 @@ check_structure_ <- function(x, struct, type, size = NULL,
     type_mess <- "a boolean "
   }
 
-  bool_size <- T # for case size = NULL (no assertion on the size/dimension)
+  bool_size <- TRUE # for case size = NULL (no assertion on the size/dimension)
   size_mess <- ""
   if (struct == "vector") {
     bool_struct <- is.vector(x) & (length(x) > 0) # not an empty vector
@@ -65,8 +65,8 @@ check_structure_ <- function(x, struct, type, size = NULL,
 
   inf_mess <- ""
   if (!inf_ok) {
-    if (!bool_null) correct_obj <- correct_obj & all(is.finite(x))
-    inf_mess <- ", finite,"
+    if (!bool_null) correct_obj <- correct_obj & all(is.finite(x[!is.na(x)]))
+    inf_mess <- ", finite"
   }
 
   null_mess <- ""
@@ -133,7 +133,7 @@ rm_constant_ <- function(mat, verbose) {
                 "Removing corresponding column(s)... \n",
                 sep=""))
     rmvd_cst <- colnames(mat)[bool_cst]
-    mat <- mat[, !bool_cst, drop = F]
+    mat <- mat[, !bool_cst, drop = FALSE]
   } else {
     rmvd_cst <- NULL
   }
@@ -155,12 +155,12 @@ rm_collinear_ <- function(mat, verbose) {
     # associate to each removed replicate the name of the covariate with which
     # it is duplicated ant that is kept in the dataset
     bool_with_coll <- duplicated(tmat[nrow(tmat):1, ])[nrow(tmat):1] & !duplicated(tmat)
-    tmat_with_coll <- t(mat[,bool_with_coll, drop = F])
-    assoc_coll <- apply(mat[,bool_coll, drop = F], 2, function(x)
+    tmat_with_coll <- t(mat[,bool_with_coll, drop = FALSE])
+    assoc_coll <- apply(mat[,bool_coll, drop = FALSE], 2, function(x)
       rownames(tmat_with_coll)[duplicated(rbind(x, tmat_with_coll))[-1]])
     names(rmvd_coll) <- assoc_coll
 
-    mat <- mat[, !bool_coll, drop = F]
+    mat <- mat[, !bool_coll, drop = FALSE]
   } else {
     rmvd_coll <- NULL
   }

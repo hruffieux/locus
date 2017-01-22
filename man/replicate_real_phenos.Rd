@@ -5,9 +5,54 @@
 \title{Generate phenotypes emulating real phenotypic data at hand.}
 \usage{
 replicate_real_phenos(n, real_phenos, bl_lgth = NULL, d = NULL,
-  n_cpus = 1)
+  n_cpus = 1, user_seed = NULL)
+}
+\arguments{
+\item{n}{Number of observations.}
+
+\item{real_phenos}{Matrix of real phenotypes (rows observations, columns
+phenotypic variables), without missing values.}
+
+\item{bl_lgth}{Number of variables per block for reproducing the dependence
+structure of real phenotypes. Must be between 2 and d. Must be small enough
+(e.g. 1000) for tractability reasons. Default is \code{NULL} for a single
+block.}
+
+\item{d}{Number of phenotypes. If \code{NULL}, the total number of phenotypes
+available in the real_phenos matrix is used (default).}
+
+\item{n_cpus}{Number of CPUs used when simulating phenotypes by blocks. Set
+to 1 for serial execution.}
+
+\item{user_seed}{Seed set for reproducibility. Default is \code{NULL}, no
+seed set.}
+}
+\value{
+An object of class "\code{sim_phenos}".
+ \item{phenos}{Matrix containing the generated phenotypic data.}
+ \item{var_err}{Vector containing the sample phenotypic variances.}
+ \item{ind_bl}{List of length given by the number of blocks, containing the
+               indices of the phenotypes in each block. Is \code{NULL} if
+               \code{cor_type} is \code{NULL}.}
 }
 \description{
-Generate phenotypes emulating real phenotypic data at hand.
+This function simulates phenotypes from real phenotypic data based on their
+sample correlation structure.
+}
+\examples{
+
+user_seed <- 123; set.seed(user_seed)
+n <- 500; d <- 1000; var_err <- runif(d, min = 0.1, max = 0.4)
+cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
+list_fake_real_phenos <- generate_phenos(n, d, var_err, cor_type, vec_rho,
+                                         n_cpus = 2, user_seed = user_seed)
+list_phenos <- replicate_real_phenos(n, list_fake_real_phenos$phenos,
+                                     bl_lgth = 100, n_cpus = 2,
+                                     user_seed = user_seed)
+
+}
+\seealso{
+\code{\link{generate_snps}}, \code{\link{replicate_real_snps}},
+  \code{\link{generate_phenos}}, \code{\link{generate_dependence}}
 }
 

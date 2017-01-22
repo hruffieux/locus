@@ -1,7 +1,7 @@
 ## with covariates.
 locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
                           sig2_beta_vb, tau_vb, mu_alpha_vb, sig2_alpha_vb, tol,
-                          maxit, batch, verbose, full_output = F) {
+                          maxit, batch, verbose, full_output = FALSE) {
 
   # Y must have been centered, and X, standardized.
 
@@ -17,7 +17,7 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
 
     lambda_vb <- nu_vb <- eta_vb <- kappa_vb <- a_vb <- b_vb <- phi_vb <- xi_vb <- NULL ###
 
-    converged <- F
+    converged <- FALSE
     lb_old <- -Inf
     it <- 1
 
@@ -250,7 +250,7 @@ update_kappa_z_vb_ <- function(Y_mat, X_mat, Z_mat, d, n, p, q, sig2_inv_vb,
   if (q > 1) {
 
     mat_z_list <- lapply(q:1, function(i) {
-      Z_mat[, i, drop = F] %*% mu_alpha_vb[i,, drop = F]
+      Z_mat[, i, drop = FALSE] %*% mu_alpha_vb[i,, drop = FALSE]
     }
     )
 
@@ -273,7 +273,7 @@ update_kappa_z_vb_ <- function(Y_mat, X_mat, Z_mat, d, n, p, q, sig2_inv_vb,
   if (p > 1) {
 
     mat_x_list <- lapply(p:1, function(j) {
-      X_mat[, j, drop = F] %*% m1_beta[j,, drop = F]
+      X_mat[, j, drop = FALSE] %*% m1_beta[j,, drop = FALSE]
     }
     )
 
