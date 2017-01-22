@@ -4,7 +4,7 @@
  
 ## Overview
 
-*locus* is a R package providing efficient variational algorithms for
+*locus* is an R package providing efficient variational algorithms for
 simultaneous variable selection of predictors and associated outcomes based
 on multivariate regression models. Dependence across outcomes linked to the 
 same predictors is captured through the model hierarchical structure 
