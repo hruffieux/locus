@@ -1,14 +1,14 @@
-# locus - large-scale variational inference for combined predictor and outcome selection
+# locus – large-scale variational inference for combined predictor and outcome selection
 
 [![Travis-CI Build Status](https://travis-ci.org/hruffieux/locus.svg?branch=master)](https://travis-ci.org/hruffieux/locus)
  
 ## Overview
 
-*locus* is an R package providing efficient variational algorithms for
+**locus** is an R package providing efficient variational algorithms for
 simultaneous variable selection of predictors and associated outcomes based
 on multivariate regression models. Dependence across outcomes linked to the 
 same predictors is captured through the model hierarchical structure 
-(Helene Ruffieux, Anthony C. Davison, Jorg Hager, Irina Irincheeva, 2016, 
+(Hélène Ruffieux, Anthony C. Davison, Jörg Hager, Irina Irincheeva, 2016, 
 arXiv:1609.03400). 
 
 ## License
