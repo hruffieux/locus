@@ -17,15 +17,11 @@ number of observations and d is the number of response variables.}
 predictors. \code{X} cannot contain NAs. No intercept must be supplied.}
 
 \item{p0_av}{Prior average number of predictors expected to be included in
-the model (if \code{list_blocks} is \code{TRUE}, average number per
-predictor blocks). Must be \code{NULL} if \code{list_init} and
+the model. Must be \code{NULL} if \code{list_init} and
 \code{list_hyper} are both non-\code{NULL} or if \code{list_cv} is
-non-\code{NULL}. If \code{list_blocks} is \code{NULL}, can also be a vector
-of length p with entry s corresponding to the prior probability that
-candidate predictor s is associated with at least one response. If
-\code{list_blocks} is non-\code{NULL}, can be a vector of size given by the
-number of blocks, with each entry corresponding to the prior average number
-of predictors from each block expected to be included in the model.}
+non-\code{NULL}. Can also be a vector of length p with entry s
+corresponding to the prior probability that candidate predictor s is
+associated with at least one response.}
 
 \item{Z}{Covariate matrix of dimension n x q, where q is the number of
 covariates. \code{NULL} if no covariate. Factor covariates must be supplied

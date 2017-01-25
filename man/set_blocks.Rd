@@ -37,11 +37,11 @@ list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
 dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
                            vec_prob_sh = 0.05, max_tot_pve = 0.9)
-n_bl <- 12
+n_bl <- 6
 pos_bl <- seq(1, p, by = ceiling(p/n_bl))
 list_blocks <- set_blocks(p, pos_bl, n_cpus = 2)
 
-vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = ceiling(p0 / n_bl),
+vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0,
             list_blocks = list_blocks, user_seed = user_seed)
 
 }
