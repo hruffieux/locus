@@ -400,8 +400,7 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init
 
 
 
-prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper,
-                            list_init, list_cv, verbose) {
+prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv) {
 
   if (!inherits(list_blocks, "blocks"))
     stop(paste("The provided list_blocks must be an object of class ``blocks''. \n",
@@ -420,9 +419,6 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper,
     stop(paste("The number of candidate predictors p provided to the function set_blocks ",
                "is not consistent with X.\n", sep=""))
 
-  check_structure_(p0_av, "vector", "numeric", c(1, n_bl))
-
-
   vec_fac_bl <- list_blocks$vec_fac_bl[!bool_rmvd_x]
 
   tab_bl <- table(list_blocks$vec_fac_bl)
@@ -433,32 +429,7 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper,
   if(list_blocks$n_cpus > n_bl) n_cpus <- n_bl
   else n_cpus <- list_blocks$n_cpus
 
-  if (is.null(list_hyper) | is.null(list_init)) {
-
-    check_structure_(p0_av, "vector", "numeric", c(1, length(pres_bl)))
-
-    if(length(p0_av) == 1) {
-      min_max_sanity <- c(min(vec_p_bl), max(vec_p_bl))
-      p_star <- sapply(min_max_sanity, function(m_p_bl) convert_p0_av_(p0_av, m_p_bl, verbose = FALSE))[1]
-      p_star <- rep(p_star, length(vec_fac_bl))
-    } else {
-      p0_av <- p0_av[pres_bl]
-      p_star <- sapply(1:n_bl, function(k) {
-        p_star_k <- convert_p0_av_(p0_av[k], vec_p_bl[k], verbose = FALSE)
-        rep(p_star_k, vec_p_bl[k])
-        })
-    }
-  } else {
-
-    if (!is.null(p0_av))
-      warning(paste("Provided argument p0_av not used, as both list_hyper ",
-                    "and list_init were provided.", sep = ""))
-
-    p_star <- NULL
-
-  }
-
-  create_named_list_(p_star, n_bl, n_cpus, vec_fac_bl, vec_p_bl)
+  create_named_list_(n_bl, n_cpus, vec_fac_bl, vec_p_bl)
 
 }
 
@@ -489,11 +460,11 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper,
 #' dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 #'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
 #'                            vec_prob_sh = 0.05, max_tot_pve = 0.9)
-#' n_bl <- 12
+#' n_bl <- 6
 #' pos_bl <- seq(1, p, by = ceiling(p/n_bl))
 #' list_blocks <- set_blocks(p, pos_bl, n_cpus = 2)
 #'
-#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = ceiling(p0 / n_bl),
+#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0,
 #'             family = "gaussian", list_blocks = list_blocks,
 #'             user_seed = user_seed)
 #'

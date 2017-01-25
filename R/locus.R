@@ -10,15 +10,11 @@
 #' @param X Input matrix of dimension n x p, where p is the number of candidate
 #'   predictors. \code{X} cannot contain NAs. No intercept must be supplied.
 #' @param p0_av Prior average number of predictors expected to be included in
-#'   the model (if \code{list_blocks} is \code{TRUE}, average number per
-#'   predictor blocks). Must be \code{NULL} if \code{list_init} and
+#'   the model. Must be \code{NULL} if \code{list_init} and
 #'   \code{list_hyper} are both non-\code{NULL} or if \code{list_cv} is
-#'   non-\code{NULL}. If \code{list_blocks} is \code{NULL}, can also be a vector
-#'   of length p with entry s corresponding to the prior probability that
-#'   candidate predictor s is associated with at least one response. If
-#'   \code{list_blocks} is non-\code{NULL}, can be a vector of size given by the
-#'   number of blocks, with each entry corresponding to the prior average number
-#'   of predictors from each block expected to be included in the model.
+#'   non-\code{NULL}. Can also be a vector of length p with entry s
+#'   corresponding to the prior probability that candidate predictor s is
+#'   associated with at least one response.
 #' @param Z Covariate matrix of dimension n x q, where q is the number of
 #'   covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 #'   after transformation to dummy coding. No intercept must be supplied.
@@ -150,19 +146,18 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
 
     p_star <- cross_validate_(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose)
 
-  } else if (!is.null(list_blocks)) {
+  } else {
 
-    list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, p0_av, list_hyper,
-                                   list_init, list_cv)
+    if (!is.null(list_blocks)) {
 
-    p_star <- list_blocks$p_star
+    list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, list_cv)
+
     n_bl <- list_blocks$n_bl
     n_cpus <- list_blocks$n_cpus
     vec_fac_bl <- list_blocks$vec_fac_bl
     vec_p_bl <- list_blocks$vec_p_bl
 
-
-  } else {
+    }
 
     if (is.null(list_hyper) | is.null(list_init)) {
 
@@ -182,7 +177,6 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
     }
 
   }
-
 
   if (verbose) cat("== Preparing the hyperparameters ... \n")
   list_hyper <- prepare_list_hyper_(list_hyper, Y, d, p, p_star, q, family,
