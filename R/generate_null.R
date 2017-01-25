@@ -74,13 +74,15 @@
 #'                            max_tot_pve = 0.5)
 #'
 #' list_perm <- generate_null(n_perm = 10, dat$phenos, dat$snps, p0_av = p0,
-#'                            user_seed = user_seed, verbose = FALSE)
+#'                            family = "gaussian", user_seed = user_seed,
+#'                            verbose = FALSE)
 #'
 #' @export
 #'
-generate_null <- function(n_perm, Y, X, p0_av, Z = NULL, list_hyper = NULL,
-                          list_init = NULL, list_blocks = NULL, user_seed = NULL,
-                          tol = 1e-3, maxit = 1000, batch = TRUE, verbose = TRUE,
+generate_null <- function(n_perm, Y, X, p0_av, Z = NULL, family = "gaussian",
+                          list_hyper = NULL, list_init = NULL,
+                          list_blocks = NULL, user_seed = NULL, tol = 1e-3,
+                          maxit = 1000, batch = TRUE, verbose = TRUE,
                           results_dir = NULL, n_cpus = 1) {
 
   if (!is.null(user_seed)){
@@ -97,8 +99,9 @@ generate_null <- function(n_perm, Y, X, p0_av, Z = NULL, list_hyper = NULL,
 
     # user_seed must be NULL here otherwise always the same permutation
     res_perm <- locus(Y = Y[ind_perm, ], X = X, p0_av = p0_av, Z = Z,
-                      list_hyper = list_hyper, list_init = list_init,
-                      list_cv = NULL, list_blocks = list_blocks, user_seed = NULL,
+                      family = family, list_hyper = list_hyper,
+                      list_init = list_init, list_cv = NULL,
+                      list_blocks = list_blocks, user_seed = NULL,
                       tol = tol, maxit = maxit, batch = batch, verbose = verbose)
 
     om_vb <- res_perm$om_vb

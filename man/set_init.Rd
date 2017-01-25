@@ -4,8 +4,8 @@
 \alias{set_init}
 \title{Gather initial variational parameters provided by the user.}
 \usage{
-set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, q = NULL,
-  mu_alpha_vb = NULL, sig2_alpha_vb = NULL)
+set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, family = "gaussian",
+  n = NULL, q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL)
 }
 \arguments{
 \item{d}{Number of responses.}
@@ -19,14 +19,23 @@ parameter yielding posterior probabilities of inclusion.}
 parameter yielding regression coefficient estimates for predictor-response
 pairs included in the model.}
 
-\item{sig2_beta_vb}{Vector of size d with initial values for the variational
-parameter yielding estimates of effect variances for predictor-response
-pairs included in the model. These values are the same for all predictors
+\item{sig2_beta_vb}{Vector of size d, for \code{family = "gaussian"}, or
+matrix of size p x d, for \code{family = "binomial"}, with initial values
+forthe variational parameter yielding estimates of effect variances for
+predictor-response pairs included in the model. For
+\code{family = "gaussian"}, these values are the same for all predictors
 (as a result of the predictor variables being standardized before the
 variational algorithm).}
 
-\item{tau_vb}{Vector of size d with initial values for the variational
-parameter yielding estimates for the response residual precisions.}
+\item{tau_vb}{Vector of size d with initial values, for
+\code{family = "gaussian"}, for the variational parameter yielding
+estimates for the response residual precisions. Must be \code{NULL} for
+\code{family = "binomial"}.}
+
+\item{family}{Response type. Must be either \code{gaussian} for linear
+regression or \code{binomial} for logistic regression.}
+
+\item{n}{Number of observations. Used only when \code{family = "binomial"}.}
 
 \item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
@@ -72,9 +81,11 @@ mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
 tau_vb <- 1 / apply(dat$phenos, 2, var)
 sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
 
-list_init <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb)
+list_init <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+                      family = "gaussian")
 
-vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, list_init = list_init)
+vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0,  family = "gaussian",
+            list_init = list_init)
 
 }
 \seealso{

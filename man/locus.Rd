@@ -4,10 +4,10 @@
 \alias{locus}
 \title{Fit a sparse multivariate regression model using variational inference.}
 \usage{
-locus(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
-  list_cv = NULL, list_blocks = NULL, user_seed = NULL, tol = 1e-04,
-  maxit = 1000, batch = TRUE, save_hyper = FALSE, save_init = FALSE,
-  verbose = TRUE)
+locus(Y, X, p0_av, Z = NULL, family = "gaussian", list_hyper = NULL,
+  list_init = NULL, list_cv = NULL, list_blocks = NULL,
+  user_seed = NULL, tol = 1e-04, maxit = 1000, batch = TRUE,
+  save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{Y}{Continuous response data matrix of dimension n x d, where n is the
@@ -30,6 +30,9 @@ of predictors from each block expected to be included in the model.}
 \item{Z}{Covariate matrix of dimension n x q, where q is the number of
 covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 after transformation to dummy coding. No intercept must be supplied.}
+
+\item{family}{Response type. Must be either \code{gaussian} for linear
+regression or \code{binomial} for logistic regression.}
 
 \item{list_hyper}{An object of class "\code{hyper}" containing the model
 hyperparameters. Must be filled using the \code{\link{set_hyper}}
@@ -120,7 +123,8 @@ dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
                            vec_prob_sh = 0.1, max_tot_pve = 0.9)
 
-vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, user_seed = user_seed)
+vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, family = "gaussian",
+            user_seed = user_seed)
 
 }
 \seealso{

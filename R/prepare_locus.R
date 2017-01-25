@@ -1,4 +1,6 @@
-prepare_data_ <- function(Y, X, Z, user_seed, tol, maxit, batch, verbose) {
+prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose) {
+
+  stopifnot(family %in% c("gaussian", "binomial"))
 
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
 
@@ -13,8 +15,11 @@ prepare_data_ <- function(Y, X, Z, user_seed, tol, maxit, batch, verbose) {
   check_structure_(verbose, "vector", "logical", 1)
 #
   check_structure_(X, "matrix", "numeric")
-  check_structure_(Y, "matrix", "double")
-
+  if (family == "gaussian") check_structure_(Y, "matrix", "double")
+  else { check_structure_(Y, "matrix", "numeric")
+    if(!identical(as.vector(x),as.numeric(as.logical(x))))
+      stop("Y must be a binary matrix for logistic regression.")
+  }
   n <- nrow(X)
   p <- ncol(X)
   d <- ncol(Y)
@@ -32,6 +37,9 @@ prepare_data_ <- function(Y, X, Z, user_seed, tol, maxit, batch, verbose) {
   if (is.null(colnames(Y))) colnames(Y) <- paste("Resp_", 1:d, sep="")
 
   if (!is.null(Z)) {
+
+    if (family == "binomial")
+      stop("Logistic regression with covariates Z not implemented yet.")
 
     if (verbose) cat(paste("Each factor variables must be provided by adding ",
                            "to Z (nb levels - 1) variables representing their ",
@@ -91,7 +99,8 @@ prepare_data_ <- function(Y, X, Z, user_seed, tol, maxit, batch, verbose) {
   bool_rmvd_x <- bool_cst_x
   bool_rmvd_x[!bool_cst_x] <- bool_coll_x
 
-  Y <- scale(Y, center = TRUE, scale = FALSE)
+  if (family == "gaussian") Y <- scale(Y, center = TRUE, scale = FALSE)
+  else Y <- Y - 1 / 2
 
   if (p < 1) stop(paste("There must be at least 1 non-constant candidate predictor ",
                         " stored in X.", sep=""))
@@ -162,7 +171,7 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
 }
 
 
-prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
+prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q, family,
                                 bool_rmvd_x, bool_rmvd_z,
                                 names_x, names_y, names_z, verbose) {
 
@@ -170,7 +179,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
 
     if (verbose) cat("- list_hyper set automatically. \n")
 
-    list_hyper <- auto_set_hyper_(Y, p, p_star, q)
+    list_hyper <- auto_set_hyper_(Y, p, p_star, family, d, q)
 
   } else {
 
@@ -190,12 +199,16 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
 
 
     if (list_hyper$d_hyper != d)
-      stop(paste("The dimensions of the provided hyperparameters ",
+      stop(paste("The dimensions (d) of the provided hyperparameters ",
                  "(list_hyper) are not consistent with that of Y.\n", sep=""))
 
     if (list_hyper$p_hyper != p_hyper_match)
-      stop(paste("The dimensions of the provided hyperparameters ",
+      stop(paste("The dimensions (p) of the provided hyperparameters ",
                  "(list_hyper) are not consistent with that of X.\n", sep=""))
+
+    if (list_hyper$family_hyper != family)
+      stop(paste("The argument family is not consistent with the variable
+                 family_hyper in list_hyper", sep=""))
 
     if (inherits(list_hyper, "hyper")) {
       # remove the entries corresponding to the removed constant predictors in X
@@ -210,12 +223,13 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
     if (!is.null(names(list_hyper$b)) && names(list_hyper$b) != names_x)
       stop("Provided names for the entries of b do not match the colnames of X")
 
-    if (!is.null(names(list_hyper$eta)) && names(list_hyper$eta) != names_y)
-      stop("Provided names for the entries of eta do not match the colnames of Y")
+    if (family == "gaussian") {
+      if (!is.null(names(list_hyper$eta)) && names(list_hyper$eta) != names_y)
+        stop("Provided names for the entries of eta do not match the colnames of Y")
 
-    if (!is.null(names(list_hyper$kappa)) && names(list_hyper$kappa) != names_y)
-      stop("Provided names for the entries of kappa do not match the colnames of Y")
-
+      if (!is.null(names(list_hyper$kappa)) && names(list_hyper$kappa) != names_y)
+        stop("Provided names for the entries of kappa do not match the colnames of Y")
+    }
 
 
     if (!is.null(q)) {
@@ -252,9 +266,9 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q,
 
 
 
-prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x,
-                               bool_rmvd_z, names_x, names_y, names_z,
-                               user_seed, verbose) {
+prepare_list_init_ <- function(list_init, Y, d, n, p, p_star, q, family,
+                               bool_rmvd_x, bool_rmvd_z, names_x, names_y,
+                               names_z, user_seed, verbose) {
 
   if (is.null(list_init)) {
 
@@ -263,7 +277,7 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x,
 
     if (verbose) cat(paste("list_init set automatically. \n", sep=""))
 
-    list_init <- auto_set_init_(Y, p, p_star, user_seed, q)
+    list_init <- auto_set_init_(Y, p, p_star, user_seed, family, q)
 
   } else {
 
@@ -287,18 +301,30 @@ prepare_list_init_ <- function(list_init, Y, d, p, p_star, q, bool_rmvd_x,
 
 
     if (list_init$d_init != d)
-      stop(paste("The dimensions of the provided initial parameters ",
+      stop(paste("The dimensions (d) of the provided initial parameters ",
                  "(list_init) are not consistent with that of Y.\n", sep=""))
 
     if (list_init$p_init != p_init_match)
-      stop(paste("The dimensions of the provided initial parameters ",
+      stop(paste("The dimensions (p) of the provided initial parameters ",
                  "(list_init) are not consistent with that of X.\n", sep=""))
+
+    if (family == "binomial" && list_init$n_init != n)
+      stop(paste("The number of observations provided when setting the initial ",
+                 "parameters (list_init) is not consistent with that of X.\n", sep=""))
+
+    if (list_init$family_init != family)
+      stop(paste("The argument family is not consistent with the variable
+                 family_init in list_init", sep=""))
 
     if (inherits(list_init, "init")) {
       # remove the entries corresponding to the removed constant predictors in X
       # (if any)
       list_init$gam_vb <- list_init$gam_vb[!bool_rmvd_x,, drop = FALSE]
       list_init$mu_beta_vb <- list_init$mu_beta_vb[!bool_rmvd_x,, drop = FALSE]
+
+      if (family == "binomial")
+        list_init$sig2_beta_vb <- list_init$sig2_beta_vb[!bool_rmvd_x,, drop = FALSE]
+
     }
 
     if (!is.null(q)) {
@@ -468,7 +494,8 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, p0_av, list_hyper,
 #' list_blocks <- set_blocks(p, pos_bl, n_cpus = 2)
 #'
 #' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = ceiling(p0 / n_bl),
-#'             list_blocks = list_blocks, user_seed = user_seed)
+#'             family = "gaussian", list_blocks = list_blocks,
+#'             user_seed = user_seed)
 #'
 #' @seealso \code{\link{locus}}
 #'

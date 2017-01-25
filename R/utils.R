@@ -93,8 +93,8 @@ log_sum_exp_ <- function(x) { # avoid numerical underflow or overflow
   log(sum(exp(x - offset))) + offset
 }
 
-log_sum_exp_vec_ <- function(list_vec) { # avoid numerical underflow or overflow
-  # for a list of two vectors only
+log_sum_exp_mat_ <- function(list_vec) { # avoid numerical underflow or overflow
+                                         # for a list of two matrices (or vectors)
   stopifnot(length(list_vec) == 2)
 
   a <- list_vec[[1]]

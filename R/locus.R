@@ -22,6 +22,8 @@
 #' @param Z Covariate matrix of dimension n x q, where q is the number of
 #'   covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 #'   after transformation to dummy coding. No intercept must be supplied.
+#' @param family Response type. Must be either \code{gaussian} for linear
+#'   regression or \code{binomial} for logistic regression.
 #' @param list_hyper An object of class "\code{hyper}" containing the model
 #'   hyperparameters. Must be filled using the \code{\link{set_hyper}}
 #'   function or must be \code{NULL} for default hyperparameters.
@@ -93,21 +95,23 @@
 #'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
 #'                            vec_prob_sh = 0.1, max_tot_pve = 0.9)
 #'
-#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, user_seed = user_seed)
+#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, family = "gaussian",
+#'             user_seed = user_seed)
 #'
 #' @seealso \code{\link{set_hyper}}, \code{\link{set_init}},
 #'   \code{\link{set_cv}}, \code{\link{set_blocks}}
 #'
 #' @export
 #'
-locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
+locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
+                  list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, user_seed = NULL,
                   tol = 1e-4, maxit = 1000, batch = TRUE, save_hyper = FALSE,
                   save_init = FALSE, verbose = TRUE) { ##
 
 
   if (verbose) cat("== Preparing the data ... \n")
-  dat <- prepare_data_(Y, X, Z, user_seed, tol, maxit, batch, verbose)
+  dat <- prepare_data_(Y, X, Z, family, user_seed, tol, maxit, batch, verbose)
 
   bool_rmvd_x <- dat$bool_rmvd_x
   bool_rmvd_z <- dat$bool_rmvd_z
@@ -181,14 +185,15 @@ locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
 
 
   if (verbose) cat("== Preparing the hyperparameters ... \n")
-  list_hyper <- prepare_list_hyper_(list_hyper, Y, d, p, p_star, q, bool_rmvd_x,
-                                    bool_rmvd_z, names_x, names_y, names_z, verbose)
+  list_hyper <- prepare_list_hyper_(list_hyper, Y, d, p, p_star, q, family,
+                                    bool_rmvd_x, bool_rmvd_z, names_x, names_y,
+                                    names_z, verbose)
   if (verbose) cat("... done. == \n\n")
 
   if (verbose) cat("== Preparing the parameter initialization ... \n")
-  list_init <- prepare_list_init_(list_init, Y, d, p, p_star, q, bool_rmvd_x,
-                                  bool_rmvd_z, names_x, names_y, names_z,
-                                  user_seed, verbose)
+  list_init <- prepare_list_init_(list_init, Y, d, n, p, p_star, q, family,
+                                  bool_rmvd_x, bool_rmvd_z, names_x, names_y,
+                                  names_z, user_seed, verbose)
 
   if (verbose) cat("... done. == \n\n")
 
@@ -201,15 +206,24 @@ locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
 
   if (is.null(list_blocks)) {
 
-    if (is.null(q))
-      vb <- locus_core_(Y, X, d, n, p, list_hyper, list_init$gam_vb,
-                        list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                        list_init$tau_vb, tol, maxit, batch, verbose)
-    else
-      vb <- locus_z_core_(Y, X, Z, d, n, p, q, list_hyper, list_init$gam_vb,
+    if (family == "gaussian") {
+
+      if (is.null(q))
+        vb <- locus_core_(Y, X, d, n, p, list_hyper, list_init$gam_vb,
                           list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                          list_init$tau_vb, list_init$mu_alpha_vb,
-                          list_init$sig2_alpha_vb, tol, maxit, batch, verbose)
+                          list_init$tau_vb, tol, maxit, batch, verbose)
+      else
+        vb <- locus_z_core_(Y, X, Z, d, n, p, q, list_hyper, list_init$gam_vb,
+                            list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                            list_init$tau_vb, list_init$mu_alpha_vb,
+                            list_init$sig2_alpha_vb, tol, maxit, batch, verbose)
+    } else {
+
+      vb <- locus_bin_core_(Y, X, d, n, p, list_hyper, list_init$chi_vb,
+                                  list_init$gam_vb, list_init$mu_beta_vb,
+                                  list_init$sig2_beta_vb, tol, maxit, batch,
+                                  verbose)
+    }
 
   } else {
 
@@ -227,6 +241,9 @@ locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
       list_init$p_init <- length(pos_bl)
       list_init$gam_vb <- list_init$gam_vb[pos_bl,, drop = FALSE]
       list_init$mu_beta_vb <- list_init$mu_beta_vb[pos_bl,, drop = FALSE]
+      if (family == "binomial")
+        list_init$sig2_beta_vb <- list_init$sig2_beta_vb[pos_bl,, drop = FALSE]
+
       list_init
     })
 
@@ -237,19 +254,27 @@ locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
       list_hyper_bl <- split_bl_hyper[[k]]
       list_init_bl <- split_bl_init[[k]]
 
-      if (is.null(q))
-
-        vb_bl <- locus_core_(Y, X_bl, d, n, vec_p_bl[k], list_hyper_bl,
-                             list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
-                             list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                             tol, maxit, batch, verbose)
-      else
-        vb_bl <- locus_z_core_(Y, X_bl, Z, d, n, vec_p_bl[k], q, list_hyper_bl,
+      if (family == "gaussian") {
+        if (is.null(q))
+          vb_bl <- locus_core_(Y, X_bl, d, n, vec_p_bl[k], list_hyper_bl,
                                list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
                                list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                               list_init_bl$mu_alpha_vb, list_init_bl$sig2_alpha_vb,
                                tol, maxit, batch, verbose)
-      vb_bl
+        else
+          vb_bl <- locus_z_core_(Y, X_bl, Z, d, n, vec_p_bl[k], q, list_hyper_bl,
+                                 list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
+                                 list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
+                                 list_init_bl$mu_alpha_vb, list_init_bl$sig2_alpha_vb,
+                                 tol, maxit, batch, verbose)
+      } else {
+
+        vb <- locus_bin_core_(Y, X_bl, d, n, vec_p_bl[k], list_hyper_bl,
+                              list_init_bl$chi_vb, list_init_bl$gam_vb,
+                              list_init_bl$mu_beta_vb, list_init_bl$sig2_beta_vb,
+                              tol, maxit, batch, verbose)
+
+      }
+        vb_bl
     }
 
     list_vb <- parallel::mclapply(1:n_bl, function(k) locus_bl_(k), mc.cores = n_cpus)

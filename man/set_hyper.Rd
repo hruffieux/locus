@@ -4,31 +4,27 @@
 \alias{set_hyper}
 \title{Gather model hyperparameters provided by the user.}
 \usage{
-set_hyper(d, p, eta, kappa, lambda, nu, a, b, q = NULL, phi = NULL,
-  xi = NULL)
+set_hyper(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian", q = NULL,
+  phi = NULL, xi = NULL)
 }
 \arguments{
 \item{d}{Number of responses.}
 
 \item{p}{Number of candidate predictors.}
 
-\item{eta}{Vector of length 1 or d providing the values of hyperparameter
-\eqn{\eta} for the prior distributions of the response residual precisions,
-\eqn{\tau} (vector of size d). If of length 1, the provided value is
-repeated d times.}
-
-\item{kappa}{Vector of length 1 or d providing the values of hyperparameter
-\eqn{\kappa} for the prior distributions of the response residual
-precisions, \eqn{\tau} (vector of size d). If of length 1, the provided
-value is repeated d times.}
-
-\item{lambda}{Value of hyperparameter \eqn{\lambda} for the prior
-distribution of \eqn{\sigma^{-2}}. \eqn{\sigma^2} represents the typical
+\item{lambda}{Vector of length 1 for \code{family = "gaussian"} and of length
+1 or d for \code{family = "binomial"} providing the values of
+hyperparameter \eqn{\lambda} for the prior distribution of
+\eqn{\sigma^{-2}}. If of length 1 for \code{family = "binomial"}, the
+provided value is repeated p times.\eqn{\sigma^2} represents the typical
 size of nonzero effects.}
 
-\item{nu}{Value of hyperparameter \eqn{\nu} for the prior distribution of
-\eqn{\sigma^{-2}}. \eqn{\sigma^2} represents the typical size of nonzero
-effects.}
+\item{nu}{Vector of length 1 for \code{family = "gaussian"} and of length
+1 or d for \code{family = "binomial"} providing the values of
+hyperparameter \eqn{\nu} for the prior distribution of
+\eqn{\sigma^{-2}}. If of length 1 for \code{family = "binomial"}, the
+provided value is repeated p times.\eqn{\sigma^2} represents the typical
+size of nonzero effects.}
 
 \item{a}{Vector of length 1 or p providing the values of hyperparameter
 \eqn{a} for the prior distributions for the proportion of responses
@@ -39,6 +35,21 @@ If of length 1, the provided value is repeated p times.}
 \eqn{b} for the prior distributions for the proportion of responses
 associated with each candidate predictor, \eqn{\omega} (vector of size p).
 If of length 1, the provided value is repeated p times.}
+
+\item{eta}{Vector of length 1 or d for \code{family = "gaussian"},
+providing the values of hyperparameter \eqn{\eta} for the prior
+distributions of the response residual precisions, \eqn{\tau}
+(vector of size d). If of length 1, the provided value is repeated d times.
+Must be \code{NULL} for \code{family = "binomial"}.}
+
+\item{kappa}{Vector of length 1 or d for \code{family = "gaussian"},
+providing the values of hyperparameter \eqn{\kappa} for the prior
+distributions of the response residual precisions, \eqn{\tau}
+(vector of size d). If of length 1, the provided value is repeated d times.
+Must be \code{NULL} for \code{family = "binomial"}.}
+
+\item{family}{Response type. Must be either \code{gaussian} for linear
+regression or \code{binomial} for logistic regression.}
 
 \item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
@@ -81,11 +92,11 @@ dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 
 # a and b chosen so that each candidate predictor has a prior probability to
 # be included in the model of 1/4.
-list_hyper <- set_hyper(d, p, eta = 1, kappa = apply(dat$phenos, 2, var),
-                              lambda = 1, nu = 1, a = 1, b = 4*d-1)
+list_hyper <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1, eta = 1,
+                       kappa = apply(dat$phenos, 2, var), family = "gaussian")
 
-vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, list_hyper = list_hyper,
-            user_seed = user_seed)
+vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, family = "gaussian",
+            list_hyper = list_hyper, user_seed = user_seed)
 
 }
 \seealso{

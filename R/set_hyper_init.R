@@ -9,20 +9,18 @@
 #'
 #' @param d Number of responses.
 #' @param p Number of candidate predictors.
-#' @param eta Vector of length 1 or d providing the values of hyperparameter
-#'   \eqn{\eta} for the prior distributions of the response residual precisions,
-#'   \eqn{\tau} (vector of size d). If of length 1, the provided value is
-#'   repeated d times.
-#' @param kappa Vector of length 1 or d providing the values of hyperparameter
-#'   \eqn{\kappa} for the prior distributions of the response residual
-#'   precisions, \eqn{\tau} (vector of size d). If of length 1, the provided
-#'   value is repeated d times.
-#' @param lambda Value of hyperparameter \eqn{\lambda} for the prior
-#'   distribution of \eqn{\sigma^{-2}}. \eqn{\sigma^2} represents the typical
+#' @param lambda Vector of length 1 for \code{family = "gaussian"} and of length
+#'   1 or d for \code{family = "binomial"} providing the values of
+#'   hyperparameter \eqn{\lambda} for the prior distribution of
+#'   \eqn{\sigma^{-2}}. If of length 1 for \code{family = "binomial"}, the
+#'   provided value is repeated p times.\eqn{\sigma^2} represents the typical
 #'   size of nonzero effects.
-#' @param nu Value of hyperparameter \eqn{\nu} for the prior distribution of
-#'   \eqn{\sigma^{-2}}. \eqn{\sigma^2} represents the typical size of nonzero
-#'   effects.
+#' @param nu Vector of length 1 for \code{family = "gaussian"} and of length
+#'   1 or d for \code{family = "binomial"} providing the values of
+#'   hyperparameter \eqn{\nu} for the prior distribution of
+#'   \eqn{\sigma^{-2}}. If of length 1 for \code{family = "binomial"}, the
+#'   provided value is repeated p times.\eqn{\sigma^2} represents the typical
+#'   size of nonzero effects.
 #' @param a Vector of length 1 or p providing the values of hyperparameter
 #'   \eqn{a} for the prior distributions for the proportion of responses
 #'   associated with each candidate predictor, \eqn{\omega} (vector of size p).
@@ -31,6 +29,18 @@
 #'   \eqn{b} for the prior distributions for the proportion of responses
 #'   associated with each candidate predictor, \eqn{\omega} (vector of size p).
 #'   If of length 1, the provided value is repeated p times.
+#' @param eta Vector of length 1 or d for \code{family = "gaussian"},
+#'   providing the values of hyperparameter \eqn{\eta} for the prior
+#'   distributions of the response residual precisions, \eqn{\tau}
+#'   (vector of size d). If of length 1, the provided value is repeated d times.
+#'   Must be \code{NULL} for \code{family = "binomial"}.
+#' @param kappa Vector of length 1 or d for \code{family = "gaussian"},
+#'   providing the values of hyperparameter \eqn{\kappa} for the prior
+#'   distributions of the response residual precisions, \eqn{\tau}
+#'   (vector of size d). If of length 1, the provided value is repeated d times.
+#'   Must be \code{NULL} for \code{family = "binomial"}.
+#' @param family Response type. Must be either \code{gaussian} for linear
+#'   regression or \code{binomial} for logistic regression.
 #' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
 #'   \code{NULL}.
 #' @param phi Vector of length 1 or q providing the values of hyperparameter
@@ -60,32 +70,20 @@
 #'
 #' # a and b chosen so that each candidate predictor has a prior probability to
 #' # be included in the model of 1/4.
-#' list_hyper <- set_hyper(d, p, eta = 1, kappa = apply(dat$phenos, 2, var),
-#'                               lambda = 1, nu = 1, a = 1, b = 4*d-1)
+#' list_hyper <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1, eta = 1,
+#'                        kappa = apply(dat$phenos, 2, var), family = "gaussian")
 #'
-#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, list_hyper = list_hyper,
-#'             user_seed = user_seed)
+#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, family = "gaussian",
+#'             list_hyper = list_hyper, user_seed = user_seed)
 #'
 #' @seealso  \code{\link{set_init}}, \code{\link{locus}}
 #'
 #' @export
 #'
-set_hyper <- function(d, p, eta, kappa, lambda, nu, a, b,
-                            q = NULL, phi = NULL, xi = NULL) {
+set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
+                      q = NULL, phi = NULL, xi = NULL) {
 
-  check_structure_(eta, "vector", "double", c(1, d))
-  check_positive_(eta)
-  if (length(eta) == 1) eta <- rep(eta, d)
-
-  check_structure_(kappa, "vector", "double", c(1,d))
-  check_positive_(kappa)
-  if (length(kappa) == 1) kappa <- rep(kappa, d)
-
-  check_structure_(lambda, "vector", "double", 1)
-  check_positive_(lambda)
-
-  check_structure_(nu, "vector", "double", 1)
-  check_positive_(nu)
+  stopifnot(family %in% c("gaussian", "binomial"))
 
   check_structure_(a, "vector", "double", c(1, p))
   check_positive_(a)
@@ -95,7 +93,40 @@ set_hyper <- function(d, p, eta, kappa, lambda, nu, a, b,
   check_positive_(b)
   if (length(b) == 1) b <- rep(b, p)
 
+  if (family == "gaussian") {
+
+    check_structure_(lambda, "vector", "double", 1)
+    check_positive_(lambda)
+
+    check_structure_(nu, "vector", "double", 1)
+    check_positive_(nu)
+
+    check_structure_(eta, "vector", "double", c(1, d))
+    check_positive_(eta)
+    if (length(eta) == 1) eta <- rep(eta, d)
+
+    check_structure_(kappa, "vector", "double", c(1, d))
+    check_positive_(kappa)
+    if (length(kappa) == 1) kappa <- rep(kappa, d)
+
+  } else {
+
+    check_structure_(lambda, "vector", "double", c(1, d))
+    check_positive_(lambda)
+    if (length(lambda) == 1) lambda <- rep(lambda, d)
+
+    check_structure_(nu, "vector", "double", c(1, d))
+    check_positive_(nu)
+    if (length(nu) == 1) nu <- rep(nu, d)
+
+    if (!is.null(eta) | !is.null(kappa))
+      stop("Both eta and kappa must be NULL for logistic regression.")
+  }
+
   if (!is.null(q)) {
+
+    if (family == "binomial")
+      stop("Logistic regression with covariates Z not implemented yet.")
 
     check_structure_(phi, "vector", "double", c(1, q))
     check_positive_(phi)
@@ -113,8 +144,10 @@ set_hyper <- function(d, p, eta, kappa, lambda, nu, a, b,
   p_hyper <- p
   q_hyper <- q
 
-  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, eta, kappa, lambda,
-                                   nu, a, b, phi, xi)
+  family_hyper <- family
+
+  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, family_hyper, eta,
+                                   kappa, lambda, nu, a, b, phi, xi)
 
   class(list_hyper) <- "hyper"
 
@@ -123,15 +156,25 @@ set_hyper <- function(d, p, eta, kappa, lambda, nu, a, b,
 }
 
 
-auto_set_hyper_ <- function(Y, p, p_star, q = NULL) {
+auto_set_hyper_ <- function(Y, p, p_star, family = "gaussian", d = NULL, q = NULL) {
 
   d <- ncol(Y)
 
-  # hyperparameter set using the data Y
-  eta <- 1 / median(apply(Y, 2, var)) #median to be consistent when doing permutations
-  if (!is.finite(eta)) eta <- 1e3
-  eta <- rep(eta, d)
-  kappa <- rep(1, d)
+  lambda <- 1e-2
+  nu <- 1
+
+  if (family == "gaussian") {
+    # hyperparameter set using the data Y
+    eta <- 1 / median(apply(Y, 2, var)) #median to be consistent when doing permutations
+    if (!is.finite(eta)) eta <- 1e3
+    eta <- rep(eta, d)
+    kappa <- rep(1, d)
+  } else {
+    eta <- kappa <- NULL
+
+    lambda <- rep(lambda, d)
+    nu <- rep(nu, d)
+  }
 
   # if p_star is of length 1, p_star is the prior average number of active
   # predictors else (p_star is of length p), p_star / p is the vector containg
@@ -139,9 +182,6 @@ auto_set_hyper_ <- function(Y, p, p_star, q = NULL) {
   # entries is the corresponding prior average number of active predictors
   if (length(p_star) == 1) p0 <- p_star
   else p0 <- sum(p_star / p)
-
-  lambda <- 1e-2
-  nu <- 1
 
   a <- rep(1, p)
   b <- d * (p - p_star) / p_star
@@ -163,8 +203,10 @@ auto_set_hyper_ <- function(Y, p, p_star, q = NULL) {
   p_hyper <- p
   q_hyper <- q
 
-  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, eta, kappa, lambda,
-                                   nu, a, b, phi, xi)
+  family_hyper <- family
+
+  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, family_hyper, eta,
+                                   kappa, lambda, nu, a, b, phi, xi)
 
   class(list_hyper) <- "out_hyper"
 
@@ -188,13 +230,20 @@ auto_set_hyper_ <- function(Y, p, p_star, q = NULL) {
 #' @param mu_beta_vb Matrix of size p x d with initial values for the variational
 #'   parameter yielding regression coefficient estimates for predictor-response
 #'   pairs included in the model.
-#' @param sig2_beta_vb Vector of size d with initial values for the variational
-#'   parameter yielding estimates of effect variances for predictor-response
-#'   pairs included in the model. These values are the same for all predictors
+#' @param sig2_beta_vb Vector of size d, for \code{family = "gaussian"}, or
+#'   matrix of size p x d, for \code{family = "binomial"}, with initial values
+#'   forthe variational parameter yielding estimates of effect variances for
+#'   predictor-response pairs included in the model. For
+#'   \code{family = "gaussian"}, these values are the same for all predictors
 #'   (as a result of the predictor variables being standardized before the
 #'   variational algorithm).
-#' @param tau_vb  Vector of size d with initial values for the variational
-#'   parameter yielding estimates for the response residual precisions.
+#' @param tau_vb  Vector of size d with initial values, for
+#'   \code{family = "gaussian"}, for the variational parameter yielding
+#'   estimates for the response residual precisions. Must be \code{NULL} for
+#'   \code{family = "binomial"}.
+#' @param family Response type. Must be either \code{gaussian} for linear
+#'   regression or \code{binomial} for logistic regression.
+#' @param n Number of observations. Used only when \code{family = "binomial"}.
 #' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
 #'   \code{NULL}.
 #' @param mu_alpha_vb Matrix of size p x q with initial values for the
@@ -227,31 +276,56 @@ auto_set_hyper_ <- function(Y, p, p_star, q = NULL) {
 #' tau_vb <- 1 / apply(dat$phenos, 2, var)
 #' sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
 #'
-#' list_init <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb)
+#' list_init <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+#'                       family = "gaussian")
 #'
-#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, list_init = list_init)
+#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0,  family = "gaussian",
+#'             list_init = list_init)
 #'
 #' @seealso  \code{\link{set_hyper}}, \code{\link{locus}}
 #'
 #' @export
 #'
 set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-                            q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL) {
+                     family = "gaussian", n = NULL, q = NULL,
+                     mu_alpha_vb = NULL, sig2_alpha_vb = NULL) {
+
+  stopifnot(family %in% c("gaussian", "binomial"))
 
   check_structure_(gam_vb, "matrix", "double", c(p, d))
   check_zero_one_(gam_vb)
 
   check_structure_(mu_beta_vb, "matrix", "double", c(p, d))
 
-  check_structure_(sig2_beta_vb, "vector", "double", d)
+  if (family == "gaussian") {
 
+    check_structure_(sig2_beta_vb, "vector", "double", d)
+
+    check_structure_(tau_vb, "vector", "double", d)
+    check_positive_(tau_vb)
+
+    chi_vb <- NULL
+
+  } else {
+
+    check_structure_(sig2_beta_vb, "matrix", "double", c(p, d))
+
+    if (!is.null(tau_vb))
+      stop("tau_vb must be NULL for logistic regression.")
+
+    if (is.null(n))
+      stop("The number of observations, n, must be provided for logistic regression.")
+    chi_vb <- matrix(1 / 2, nrow = n, ncol = d)
+
+  }
   check_positive_(sig2_beta_vb)
 
-  check_structure_(tau_vb, "vector", "double", d)
-  check_positive_(tau_vb)
 
 
   if (!is.null(q)) {
+
+    if (family == "binomial")
+      stop("Logistic regression with covariates Z not implemented yet.")
 
     check_structure_(mu_alpha_vb, "matrix", "double", c(q, d))
 
@@ -266,9 +340,13 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   d_init <- d
   p_init <- p
   q_init <- q
+  n_init <- n
 
-  list_init <- create_named_list_(d_init, p_init, q_init, gam_vb, mu_beta_vb,
-                                  sig2_beta_vb, tau_vb, mu_alpha_vb, sig2_alpha_vb)
+  family_init <- family
+
+  list_init <- create_named_list_(d_init, n_init, p_init, q_init, family_init,
+                                  gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+                                  chi_vb, mu_alpha_vb, sig2_alpha_vb)
 
   class(list_init) <- "init"
 
@@ -276,9 +354,10 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 }
 
 
-auto_set_init_ <- function(Y, p, p_star, user_seed, q = NULL) {
+auto_set_init_ <- function(Y, p, p_star, user_seed, family = "gaussian", q = NULL) {
 
   d <- ncol(Y)
+  n <- nrow(Y)
 
   if (!is.null(user_seed)) set.seed(user_seed)
 
@@ -297,12 +376,28 @@ auto_set_init_ <- function(Y, p, p_star, user_seed, q = NULL) {
   mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
 
 
-  tau_vb <- 1 / median(apply(Y, 2, var))
-  if (!is.finite(tau_vb)) tau_vb <- 1e3
-  tau_vb <- rep(tau_vb, d)
-
   sig2_inv_vb <- 1e-2
-  sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / (sig2_inv_vb * tau_vb))
+
+  if (family == "gaussian") {
+
+   tau_vb <- 1 / median(apply(Y, 2, var))
+   if (!is.finite(tau_vb)) tau_vb <- 1e3
+   tau_vb <- rep(tau_vb, d)
+
+   sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / (sig2_inv_vb * tau_vb))
+
+   chi_vb <- NULL
+
+  } else {
+
+   tau_vb <- NULL
+
+   sig2_beta_vb <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1 / sig2_inv_vb)))
+
+   chi_vb <- matrix(1 / 2, nrow = n, ncol = d)
+
+  }
+
 
 
   if (!is.null(q)) {
@@ -322,9 +417,14 @@ auto_set_init_ <- function(Y, p, p_star, user_seed, q = NULL) {
   d_init <- d
   p_init <- p
   q_init <- q
+  n_init <- n
 
-  list_init <- create_named_list_(d_init, p_init, q_init, gam_vb, mu_beta_vb,
-                                  sig2_beta_vb, tau_vb, mu_alpha_vb, sig2_alpha_vb)
+
+  family_init <- family
+
+  list_init <- create_named_list_(d_init, n_init, p_init, q_init, family_init,
+                                  gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+                                  chi_vb, mu_alpha_vb, sig2_alpha_vb)
 
   class(list_init) <- "out_init"
 

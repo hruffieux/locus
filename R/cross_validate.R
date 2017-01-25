@@ -40,8 +40,8 @@
 #'
 #' list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 2)
 #'
-#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = NULL, list_cv = list_cv,
-#'             user_seed = user_seed)
+#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = NULL, family = "gaussian",
+#'             list_cv = list_cv, user_seed = user_seed)
 #'
 #' @seealso \code{\link{locus}}
 #'
@@ -142,7 +142,8 @@ create_grid_ <- function(p, size_p0_av_grid) {
 }
 
 
-cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
+cross_validate_ <- function(Y, X, Z, family, d, n, p, q, list_cv, user_seed,
+                            verbose) {
 
   with(list_cv, {
 
@@ -201,37 +202,51 @@ cross_validate_ <- function(Y, X, Z, d, n, p, q, list_cv, user_seed, verbose) {
 
         if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
 
-        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q)
-        list_init_pg <- auto_set_init_(Y_tr, p, pg, user_seed, q)
+        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, family, d, q)
+        list_init_pg <- auto_set_init_(Y_tr, p, pg, user_seed, family, q)
 
-        if (is.null(q)) {
-          vb_tr <- locus_core_(Y_tr, X_tr, d, n_tr, p, list_hyper_pg,
-                               list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
-                               list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
-                               tol_cv, maxit_cv, batch_cv, verbose = FALSE,
-                               full_output = TRUE)
-
-          lb_vec[ind_pg] <- with(vb_tr, {
-            lower_bound_(Y_test, X_test, d, n_test, p, sig2_beta_vb, sig2_inv_vb,
-                         tau_vb, gam_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb,
-                         m1_beta, m2_beta, sum_gam)
-          })
-        } else {
-          vb_tr <- locus_z_core_(Y_tr, X_tr, Z_tr, d, n_tr, p, q, list_hyper_pg,
+        if (family == "gaussian") {
+          if (is.null(q)) {
+            vb_tr <- locus_core_(Y_tr, X_tr, d, n_tr, p, list_hyper_pg,
                                  list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
                                  list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
-                                 list_init_pg$mu_alpha_vb,
-                                 list_init_pg$sig2_alpha_vb, tol_cv, maxit_cv,
-                                 batch_cv, verbose = FALSE, full_output = TRUE)
+                                 tol_cv, maxit_cv, batch_cv, verbose = FALSE,
+                                 full_output = TRUE)
+
+            lb_vec[ind_pg] <- with(vb_tr, {
+              lower_bound_(Y_test, X_test, d, n_test, p, sig2_beta_vb, sig2_inv_vb,
+                           tau_vb, gam_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb,
+                           m1_beta, m2_beta, sum_gam)
+            })
+          } else {
+            vb_tr <- locus_z_core_(Y_tr, X_tr, Z_tr, d, n_tr, p, q, list_hyper_pg,
+                                   list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
+                                   list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
+                                   list_init_pg$mu_alpha_vb,
+                                   list_init_pg$sig2_alpha_vb, tol_cv, maxit_cv,
+                                   batch_cv, verbose = FALSE, full_output = TRUE)
+
+            lb_vec[ind_pg] <- with(vb_tr, {
+              lower_bound_z_(Y_test, X_test, Z_test, d, n_test, p, q, mu_alpha_vb,
+                             sig2_alpha_vb, zeta2_inv_vb, sig2_beta_vb, sig2_inv_vb,
+                             tau_vb, gam_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb,
+                             phi, phi_vb, xi, m2_alpha, m1_beta, m2_beta, sum_gam)
+            })
+          }
+        } else {
+
+          vb_tr <- locus_bin_core_(Y_tr, X_tr, d, n_tr, p, list_hyper_pg,
+                                   list_init_pg$chi_vb, list_init_pg$gam_vb,
+                                   list_init_pg$mu_beta_vb,
+                                   list_init_pg$sig2_beta_vb, tol_cv, maxit_cv,
+                                   batch_cv, verbose, full_output = TRUE)
 
           lb_vec[ind_pg] <- with(vb_tr, {
-            lower_bound_z_(Y_test, X_test, Z_test, d, n_test, p, q, mu_alpha_vb,
-                           sig2_alpha_vb, zeta2_inv_vb, sig2_beta_vb, sig2_inv_vb,
-                           tau_vb, gam_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb,
-                           phi, phi_vb, xi, m2_alpha, m1_beta, m2_beta, sum_gam)
+            lower_bound_bin_(Y_test, X_test, chi_vb, psi_vb, sig2_beta_vb,
+                             sig2_inv_vb, gam_vb, lambda, nu, a, b, a_vb, b_vb,
+                             m1_beta, m2_beta, m3_beta)
           })
         }
-
         if (verbose) { cat(paste("Lower bound on test set, fold ", k, ", p0_av ",
                                  pg, ": ", lb_vec[ind_pg], ". \n", sep = ""))
           cat("-------------------------\n") }

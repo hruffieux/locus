@@ -4,10 +4,10 @@
 \alias{generate_null}
 \title{Generate empirical null distribution using permuted data.}
 \usage{
-generate_null(n_perm, Y, X, p0_av, Z = NULL, list_hyper = NULL,
-  list_init = NULL, list_blocks = NULL, user_seed = NULL, tol = 0.001,
-  maxit = 1000, batch = TRUE, verbose = TRUE, results_dir = NULL,
-  n_cpus = 1)
+generate_null(n_perm, Y, X, p0_av, Z = NULL, family = "gaussian",
+  list_hyper = NULL, list_init = NULL, list_blocks = NULL,
+  user_seed = NULL, tol = 0.001, maxit = 1000, batch = TRUE,
+  verbose = TRUE, results_dir = NULL, n_cpus = 1)
 }
 \arguments{
 \item{n_perm}{Number of permuted datasets on which \code{\link{locus}} is run.}
@@ -98,7 +98,8 @@ dat <- generate_dependence(list_X, list_Y, ind_d0 = sample(1:d, d0),
                            max_tot_pve = 0.5)
 
 list_perm <- generate_null(n_perm = 10, dat$phenos, dat$snps, p0_av = p0,
-                           user_seed = user_seed, verbose = FALSE)
+                           family = "gaussian", user_seed = user_seed,
+                           verbose = FALSE)
 
 }
 \seealso{

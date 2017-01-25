@@ -87,7 +87,7 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
           log_part2_gam_vb <- log_1_min_om_vb[j] - log_tau_vb / 2 -
             log_sig2_inv_vb / 2
 
-          gam_vb[j, ] <- exp(log_part_gam_vb - log_sum_exp_vec_(list(log_part_gam_vb, log_part2_gam_vb)))
+          gam_vb[j, ] <- exp(log_part_gam_vb - log_sum_exp_mat_(list(log_part_gam_vb, log_part2_gam_vb)))
           m1_beta[j, ] <- mu_beta_vb[j, ] * gam_vb[j, ]
 
           mat_x_m1_j <- mat_x_m1_j +  tcrossprod(X[, j], m1_beta[j, ])
@@ -191,10 +191,10 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
 
 
     if (full_output) { # for internal use only
-      create_named_list_(mu_alpha_vb, sig2_alpha_vb, zeta2_inv_vb, mu_beta_vb,
-                         sig2_beta_vb, sig2_inv_vb, tau_vb, gam_vb, om_vb, eta,
-                         kappa, lambda, nu, a, b, a_vb, b_vb, phi, phi_vb, xi,
-                         m2_alpha, m1_beta, m2_beta, sum_gam)
+      create_named_list_(mu_alpha_vb, sig2_alpha_vb, zeta2_inv_vb, sig2_beta_vb,
+                         sig2_inv_vb, tau_vb, gam_vb, eta, kappa, lambda, nu,
+                         a, b, a_vb, b_vb, phi, phi_vb, xi, m2_alpha, m1_beta,
+                         m2_beta, sum_gam)
     } else {
       names_x <- colnames(X)
       names_y <- colnames(Y)

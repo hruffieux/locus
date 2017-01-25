@@ -58,8 +58,8 @@ dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 
 list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 2)
 
-vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = NULL, list_cv = list_cv,
-            user_seed = user_seed)
+vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = NULL, family = "gaussian",
+            list_cv = list_cv, user_seed = user_seed)
 
 }
 \seealso{

@@ -65,7 +65,7 @@ locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb, mu_beta_vb,
             log_sig2_inv_vb / 2
 
           gam_vb[j, ] <- exp(log_part_gam_vb -
-                               log_sum_exp_vec_(list(log_part_gam_vb, log_part2_gam_vb)))
+                               log_sum_exp_mat_(list(log_part_gam_vb, log_part2_gam_vb)))
 
           m1_beta[j, ] <- mu_beta_vb[j, ] * gam_vb[j, ]
 
@@ -150,8 +150,8 @@ locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb, mu_beta_vb,
 
 
     if (full_output) { # for internal use only
-      create_named_list_(mu_beta_vb, sig2_beta_vb, sig2_inv_vb, tau_vb, gam_vb,
-                         om_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb, m1_beta,
+      create_named_list_(sig2_beta_vb, sig2_inv_vb, tau_vb, gam_vb,
+                         eta, kappa, lambda, nu, a, b, a_vb, b_vb, m1_beta,
                          m2_beta, sum_gam)
     } else {
       names_x <- colnames(X)
