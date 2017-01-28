@@ -535,7 +535,7 @@ replicate_real_phenos <- function(n, real_phenos, bl_lgth = NULL, d = NULL,
 }
 
 
-set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph){
+set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph) {
 
   if (is.null(chunks_ph)) { # no imposed correlation block structure (either indep
     # or correlation from real phenotypes). creates artificial chunks.
@@ -556,7 +556,7 @@ set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph){
   check_structure_(vec_prob_sh, "vector", "numeric")
   check_zero_one_(vec_prob_sh)
 
-  pat <- matrix(FALSE, nrow=p, ncol=d)
+  pat <- matrix(FALSE, nrow = p, ncol = d)
 
   for(ind_j in ind_p0) {
 
@@ -588,8 +588,6 @@ generate_eff_sizes_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
                                 pve_per_snp, max_tot_pve, var_err, chunks_ph) {
 
   # pve_per_snp average variance explained per snp
-  check_structure_(ind_d0, "vector", "numeric", null_ok = TRUE)
-  check_structure_(ind_p0, "vector", "numeric", null_ok = TRUE)
 
   d0 <- length(ind_d0)
   p0 <- length(ind_p0)
@@ -789,15 +787,26 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
 
   with(c(list_snps, list_phenos), {
 
+    d <- ncol(phenos)
     n <- nrow(snps)
     p <- ncol(snps)
+
+    check_structure_(ind_d0, "vector", "numeric")
+    check_natural_(ind_d0)
+    if (max(ind_d0) > d)
+      stop("All indices provided in ind_d0 must be smaller or equal to d.")
+
+    check_structure_(ind_p0, "vector", "numeric")
+    check_natural_(ind_p0)
+    if (max(ind_p0) > p)
+      stop("All indices provided in ind_p0 must be smaller or equal to p.")
+
 
     if(n != nrow(phenos))
       stop("The number of observations used for list_snps and for list_phenos does not match.")
 
-    d <- ncol(phenos)
-
-    bool_cst <- is.nan(colSums(snps[, ind_p0]))
+    snps_sc <- scale(snps, center = TRUE, scale = TRUE)
+    bool_cst <- is.nan(colSums(snps_sc[, ind_p0, drop = FALSE]))
     if (any(bool_cst)) {
       ind_p0 <- ind_p0[!bool_cst]
       if (length(ind_p0) == 0)

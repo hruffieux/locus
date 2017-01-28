@@ -83,6 +83,15 @@
 set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
                       q = NULL, phi = NULL, xi = NULL) {
 
+  check_structure_(d, "vector", "numeric", 1)
+  check_natural_(d)
+
+  check_structure_(p, "vector", "numeric", 1)
+  check_natural_(p)
+
+  check_structure_(q, "vector", "numeric", 1, null_ok = TRUE)
+  if (!is.null(q)) check_natural_(q)
+
   stopifnot(family %in% c("gaussian", "binomial"))
 
   check_structure_(a, "vector", "double", c(1, p))
@@ -290,6 +299,18 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
                      family = "gaussian", n = NULL, q = NULL,
                      mu_alpha_vb = NULL, sig2_alpha_vb = NULL) {
 
+  check_structure_(d, "vector", "numeric", 1)
+  check_natural_(d)
+
+  check_structure_(p, "vector", "numeric", 1)
+  check_natural_(p)
+
+  check_structure_(n, "vector", "numeric", 1, null_ok = TRUE)
+  if (!is.null(n)) check_natural_(n)
+
+  check_structure_(q, "vector", "numeric", 1, null_ok = TRUE)
+  if (!is.null(q)) check_natural_(q)
+
   stopifnot(family %in% c("gaussian", "binomial"))
 
   check_structure_(gam_vb, "matrix", "double", c(p, d))
@@ -319,8 +340,6 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
   }
   check_positive_(sig2_beta_vb)
-
-
 
   if (!is.null(q)) {
 
