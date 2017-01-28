@@ -27,8 +27,8 @@ associated with at least one response.}
 covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 after transformation to dummy coding. No intercept must be supplied.}
 
-\item{family}{Response type. Must be either \code{gaussian} for linear
-regression or \code{binomial} for logistic regression.}
+\item{family}{Response type. Must be either "\code{gaussian}" for linear
+regression or "\code{binomial}" for logistic regression.}
 
 \item{list_hyper}{An object of class "\code{hyper}" containing the model
 hyperparameters. Must be filled using the \code{\link{set_hyper}}

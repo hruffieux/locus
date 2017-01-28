@@ -752,9 +752,9 @@ generate_eff_sizes_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
 #'
 #' @export
 #'
-generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0, vec_prob_sh,
-                                pve_per_snp = NULL, max_tot_pve = NULL,
-                                user_seed = NULL) {
+generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
+                                vec_prob_sh, pve_per_snp = NULL,
+                                max_tot_pve = NULL, user_seed = NULL) {
 
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(user_seed)){

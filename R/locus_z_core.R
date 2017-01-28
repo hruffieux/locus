@@ -1,7 +1,12 @@
-## with covariates.
-locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
-                          sig2_beta_vb, tau_vb, mu_alpha_vb, sig2_alpha_vb, tol,
-                          maxit, batch, verbose, full_output = FALSE) {
+## with covariates
+locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
+                          sig2_alpha_vb, sig2_beta_vb, tau_vb, tol, maxit, batch,
+                          verbose, full_output = FALSE) {
+
+  d <- ncol(Y)
+  n <- nrow(Y)
+  p <- ncol(X)
+  q <- ncol(Z)
 
   # Y must have been centered, and X, standardized.
 
@@ -35,16 +40,16 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
       # % #
 
       # % #
-      lambda_vb <- update_lambda_vb_(sum_gam, lambda)
-      nu_vb <- update_nu_vb_(tau_vb, m2_beta, nu)
+      lambda_vb <- update_lambda_vb_(lambda, sum_gam)
+      nu_vb <- update_nu_vb_(nu, m2_beta, tau_vb)
 
       sig2_inv_vb <- lambda_vb / nu_vb
       # % #
 
       # % #
-      eta_vb <- update_eta_z_vb_(gam_vb, eta, q, n)
-      kappa_vb <- update_kappa_z_vb_(Y, X, Z, d, n, p, q, sig2_inv_vb, zeta2_inv_vb,
-                                     mu_alpha_vb, m2_alpha, m1_beta, m2_beta, kappa)
+      eta_vb <- update_eta_z_vb_(n, q, eta, gam_vb)
+      kappa_vb <- update_kappa_z_vb_(Y, X, Z, kappa, mu_alpha_vb, sig2_inv_vb,
+                                     zeta2_inv_vb, m2_alpha, m1_beta, m2_beta)
 
       tau_vb <- eta_vb / kappa_vb
       # % #
@@ -145,7 +150,7 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
 
       }
 
-      m2_alpha <- (sig2_alpha_vb + mu_alpha_vb ^ 2) ####
+      m2_alpha <- (sig2_alpha_vb + mu_alpha_vb ^ 2)
       m2_beta <- sweep(mu_beta_vb ^ 2, 2, sig2_beta_vb, `+`) * gam_vb
 
       a_vb <- a + rowsums_gam
@@ -154,10 +159,11 @@ locus_z_core_ <- function(Y, X, Z, d, n, p, q, list_hyper, gam_vb, mu_beta_vb,
 
       sum_gam <- sum(rowsums_gam)
 
-      lb_new <- lower_bound_z_(Y, X, Z, d, n, p, q, mu_alpha_vb, sig2_alpha_vb,
-                               zeta2_inv_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
-                               gam_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb,
-                               phi, phi_vb, xi, m2_alpha, m1_beta, m2_beta, sum_gam)
+      lb_new <- lower_bound_z_(Y, X, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa,
+                               lambda, mu_alpha_vb, nu, phi, phi_vb,
+                               sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
+                               xi, zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
+                               sum_gam)
 
 
       if (verbose & (it == 1 | it %% 5 == 0))
@@ -225,15 +231,21 @@ update_xi_z_vb_ <- function(xi, tau_vb, m2_alpha) {
 
 }
 
-update_eta_z_vb_ <- function(gam_vb, eta, q, n) {
+update_eta_z_vb_ <- function(n, q, eta, gam_vb) {
 
   eta + n / 2 + colSums(gam_vb) / 2 + q / 2
 
 }
 
-update_kappa_z_vb_ <- function(Y_mat, X_mat, Z_mat, d, n, p, q, sig2_inv_vb,
-                               zeta2_inv_vb, mu_alpha_vb, m2_alpha, m1_beta,
-                               m2_beta, kappa) {
+update_kappa_z_vb_ <- function(Y_mat, X_mat, Z_mat, kappa, mu_alpha_vb,
+                               sig2_inv_vb, zeta2_inv_vb, m2_alpha, m1_beta,
+                               m2_beta) {
+
+  d <- ncol(Y_mat)
+  n <- nrow(Y_mat)
+  p <- ncol(X_mat)
+  q <- ncol(Z_mat)
+
   # put X_mat and Y_mat instead of X and Y to avoid conflicts with the function sapply,
   # which has also an "X" argument with different meaning...
 
@@ -296,19 +308,22 @@ update_kappa_z_vb_ <- function(Y_mat, X_mat, Z_mat, d, n, p, q, sig2_inv_vb,
   kappa_vb
 }
 
-lower_bound_z_ <- function(Y, X, Z, d, n, p, q, mu_alpha_vb, sig2_alpha_vb,
-                           zeta2_inv_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
-                           gam_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb,
-                           phi, phi_vb, xi, m2_alpha, m1_beta, m2_beta, sum_gam) {
+lower_bound_z_ <- function(Y, X, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
+                           mu_alpha_vb, nu, phi, phi_vb, sig2_alpha_vb,
+                           sig2_beta_vb, sig2_inv_vb, tau_vb, xi, zeta2_inv_vb,
+                           m2_alpha, m1_beta, m2_beta, sum_gam) {
+
+  n <- nrow(Y)
+  q <- ncol(Z)
 
   xi_vb <- update_xi_z_vb_(xi, tau_vb, m2_alpha)
 
-  eta_vb <- update_eta_z_vb_(gam_vb, eta, q, n)
-  kappa_vb <- update_kappa_z_vb_(Y, X, Z, d, n, p, q, sig2_inv_vb, zeta2_inv_vb,
-                                 mu_alpha_vb, m2_alpha, m1_beta, m2_beta, kappa)
+  eta_vb <- update_eta_z_vb_(n, q, eta, gam_vb)
+  kappa_vb <- update_kappa_z_vb_(Y, X, Z, kappa, mu_alpha_vb, sig2_inv_vb,
+                                 zeta2_inv_vb, m2_alpha, m1_beta, m2_beta)
 
-  lambda_vb <- update_lambda_vb_(sum_gam, lambda)
-  nu_vb <- update_nu_vb_(tau_vb, m2_beta, nu)
+  lambda_vb <- update_lambda_vb_(lambda, sum_gam)
+  nu_vb <- update_nu_vb_(nu, m2_beta, tau_vb)
 
   log_tau_vb <- digamma(eta_vb) - log(kappa_vb)
   log_zeta2_inv_vb <- digamma(phi_vb) - log(xi_vb)

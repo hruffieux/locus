@@ -17,7 +17,7 @@ prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose
   check_structure_(X, "matrix", "numeric")
   if (family == "gaussian") check_structure_(Y, "matrix", "double")
   else { check_structure_(Y, "matrix", "numeric")
-    if(!identical(as.vector(x),as.numeric(as.logical(x))))
+    if(!identical(as.vector(Y), as.numeric(as.logical(Y))))
       stop("Y must be a binary matrix for logistic regression.")
   }
   n <- nrow(X)
@@ -171,15 +171,17 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
 }
 
 
-prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q, family,
+prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family,
                                 bool_rmvd_x, bool_rmvd_z,
                                 names_x, names_y, names_z, verbose) {
+
+  d <- ncol(Y)
 
   if (is.null(list_hyper)) {
 
     if (verbose) cat("- list_hyper set automatically. \n")
 
-    list_hyper <- auto_set_hyper_(Y, p, p_star, family, d, q)
+    list_hyper <- auto_set_hyper_(Y, p, p_star, q, family)
 
   } else {
 
@@ -266,9 +268,11 @@ prepare_list_hyper_ <- function(list_hyper, Y, d, p, p_star, q, family,
 
 
 
-prepare_list_init_ <- function(list_init, Y, d, n, p, p_star, q, family,
-                               bool_rmvd_x, bool_rmvd_z, names_x, names_y,
-                               names_z, user_seed, verbose) {
+prepare_list_init_ <- function(list_init, Y, p, p_star, q, family,
+                               bool_rmvd_x, bool_rmvd_z, user_seed, verbose) {
+
+  d <- ncol(Y)
+  n <- nrow(Y)
 
   if (is.null(list_init)) {
 
@@ -277,7 +281,7 @@ prepare_list_init_ <- function(list_init, Y, d, n, p, p_star, q, family,
 
     if (verbose) cat(paste("list_init set automatically. \n", sep=""))
 
-    list_init <- auto_set_init_(Y, p, p_star, user_seed, family, q)
+    list_init <- auto_set_init_(Y, p, p_star, q, user_seed, family)
 
   } else {
 
@@ -423,13 +427,13 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv) {
 
   tab_bl <- table(list_blocks$vec_fac_bl)
   pres_bl <- tab_bl > 0
-  vec_p_bl <- as.vector(tab_bl[pres_bl])
+
   # in case a block was removed due to the above because of bool_rmvd_x
   n_bl  <- sum(pres_bl)
   if(list_blocks$n_cpus > n_bl) n_cpus <- n_bl
   else n_cpus <- list_blocks$n_cpus
 
-  create_named_list_(n_bl, n_cpus, vec_fac_bl, vec_p_bl)
+  create_named_list_(n_bl, n_cpus, vec_fac_bl)
 
 }
 

@@ -39,8 +39,8 @@
 #'   distributions of the response residual precisions, \eqn{\tau}
 #'   (vector of size d). If of length 1, the provided value is repeated d times.
 #'   Must be \code{NULL} for \code{family = "binomial"}.
-#' @param family Response type. Must be either \code{gaussian} for linear
-#'   regression or \code{binomial} for logistic regression.
+#' @param family Response type. Must be either "\code{gaussian}" for linear
+#'   regression or "\code{binomial}" for logistic regression.
 #' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
 #'   \code{NULL}.
 #' @param phi Vector of length 1 or q providing the values of hyperparameter
@@ -156,7 +156,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
 }
 
 
-auto_set_hyper_ <- function(Y, p, p_star, family = "gaussian", d = NULL, q = NULL) {
+auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 
   d <- ncol(Y)
 
@@ -241,8 +241,8 @@ auto_set_hyper_ <- function(Y, p, p_star, family = "gaussian", d = NULL, q = NUL
 #'   \code{family = "gaussian"}, for the variational parameter yielding
 #'   estimates for the response residual precisions. Must be \code{NULL} for
 #'   \code{family = "binomial"}.
-#' @param family Response type. Must be either \code{gaussian} for linear
-#'   regression or \code{binomial} for logistic regression.
+#' @param family Response type. Must be either "\code{gaussian}" for linear
+#'   regression or "\code{binomial}" for logistic regression.
 #' @param n Number of observations. Used only when \code{family = "binomial"}.
 #' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
 #'   \code{NULL}.
@@ -354,7 +354,7 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 }
 
 
-auto_set_init_ <- function(Y, p, p_star, user_seed, family = "gaussian", q = NULL) {
+auto_set_init_ <- function(Y, p, p_star, q, user_seed, family) {
 
   d <- ncol(Y)
   n <- nrow(Y)

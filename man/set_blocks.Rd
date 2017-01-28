@@ -44,6 +44,7 @@ list_blocks <- set_blocks(p, pos_bl, n_cpus = 2)
 vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0,
             family = "gaussian", list_blocks = list_blocks,
             user_seed = user_seed)
+
 }
 \seealso{
 \code{\link{locus}}

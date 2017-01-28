@@ -48,8 +48,8 @@ distributions of the response residual precisions, \eqn{\tau}
 (vector of size d). If of length 1, the provided value is repeated d times.
 Must be \code{NULL} for \code{family = "binomial"}.}
 
-\item{family}{Response type. Must be either \code{gaussian} for linear
-regression or \code{binomial} for logistic regression.}
+\item{family}{Response type. Must be either "\code{gaussian}" for linear
+regression or "\code{binomial}" for logistic regression.}
 
 \item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}

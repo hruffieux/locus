@@ -32,8 +32,8 @@ variational algorithm).}
 estimates for the response residual precisions. Must be \code{NULL} for
 \code{family = "binomial"}.}
 
-\item{family}{Response type. Must be either \code{gaussian} for linear
-regression or \code{binomial} for logistic regression.}
+\item{family}{Response type. Must be either "\code{gaussian}" for linear
+regression or "\code{binomial}" for logistic regression.}
 
 \item{n}{Number of observations. Used only when \code{family = "binomial"}.}
 

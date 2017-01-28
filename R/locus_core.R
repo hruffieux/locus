@@ -1,6 +1,9 @@
-locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb, mu_beta_vb,
-                        sig2_beta_vb, tau_vb, tol, maxit, batch, verbose,
-                        full_output = FALSE) {
+locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
+                        tau_vb, tol, maxit, batch, verbose, full_output = FALSE) {
+
+  d <- ncol(Y)
+  n <- nrow(Y)
+  p <- ncol(X)
 
   # Y must have been centered, and X, standardized.
 
@@ -24,16 +27,15 @@ locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb, mu_beta_vb,
         cat(paste("Iteration ", format(it), "... \n", sep = ""))
 
       # % #
-      lambda_vb <- update_lambda_vb_(sum_gam, lambda)
-      nu_vb <- update_nu_vb_(tau_vb, m2_beta, nu)
+      lambda_vb <- update_lambda_vb_(lambda, sum_gam)
+      nu_vb <- update_nu_vb_(nu, m2_beta, tau_vb)
 
       sig2_inv_vb <- lambda_vb / nu_vb
       # % #
 
       # % #
-      eta_vb <- update_eta_vb_(gam_vb, eta, n)
-      kappa_vb <- update_kappa_vb_(Y, X, d, n, p, sig2_inv_vb, m1_beta, m2_beta,
-                                   kappa)
+      eta_vb <- update_eta_vb_(n, eta, gam_vb)
+      kappa_vb <- update_kappa_vb_(Y, X, kappa, sig2_inv_vb, m1_beta, m2_beta)
 
       tau_vb <- eta_vb / kappa_vb
       # % #
@@ -118,9 +120,10 @@ locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb, mu_beta_vb,
 
       sum_gam <- sum(rowsums_gam)
 
-      lb_new <- lower_bound_(Y, X, d, n, p, sig2_beta_vb, sig2_inv_vb, tau_vb,
-                             gam_vb, eta, kappa, lambda, nu, a, b, a_vb, b_vb,
-                             m1_beta, m2_beta, sum_gam)
+      lb_new <- lower_bound_(Y, X, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
+                             nu, sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta,
+                             m2_beta, sum_gam)
+
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
@@ -170,28 +173,31 @@ locus_core_ <- function(Y, X, d, n, p, list_hyper, gam_vb, mu_beta_vb,
 }
 
 
-update_lambda_vb_ <- function(sum_gam, lambda) {
+update_lambda_vb_ <- function(lambda, sum_gam) {
 
   lambda + sum_gam / 2
 
 }
 
-update_nu_vb_ <- function(tau_vb, m2_beta, nu) {
+update_nu_vb_ <- function(nu, m2_beta, tau_vb) {
 
   as.numeric(nu + crossprod(tau_vb, colSums(m2_beta)) / 2)
 
 }
 
-update_eta_vb_ <- function(gam_vb, eta, n) {
+update_eta_vb_ <- function(n, eta, gam_vb) {
 
   eta + n / 2 + colSums(gam_vb) / 2
 
 }
 
-update_kappa_vb_ <- function(Y_mat, X_mat, d, n, p, sig2_inv_vb, m1_beta,
-                             m2_beta, kappa) {
+update_kappa_vb_ <- function(Y_mat, X_mat, kappa, sig2_inv_vb, m1_beta, m2_beta) {
   # put X_mat and Y_mat instead of X and Y to avoid conflicts with the function sapply,
   # which has also an "X" argument with different meaning...
+
+  d <- ncol(Y_mat)
+  n <- nrow(Y_mat)
+  p <- ncol(X_mat)
 
   # X must be standardized as we use (X \hadamard X)^T \one_n = (n-1)\one_p
   kappa_vb <- kappa + colSums(Y_mat ^ 2) / 2 - colSums(Y_mat * (X_mat %*% m1_beta)) +
@@ -223,15 +229,17 @@ update_kappa_vb_ <- function(Y_mat, X_mat, d, n, p, sig2_inv_vb, m1_beta,
 
 }
 
-lower_bound_ <- function(Y, X, d, n, p, sig2_beta_vb, sig2_inv_vb, tau_vb, gam_vb,
-                         eta, kappa, lambda, nu, a, b, a_vb, b_vb, m1_beta,
-                         m2_beta, sum_gam) {
+lower_bound_ <- function(Y, X, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, nu,
+                         sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta, m2_beta,
+                         sum_gam) {
 
-  eta_vb <- update_eta_vb_(gam_vb, eta, n)
-  kappa_vb <- update_kappa_vb_(Y, X, d, n, p, sig2_inv_vb, m1_beta, m2_beta, kappa)
+  n <- nrow(Y)
 
-  lambda_vb <- update_lambda_vb_(sum_gam, lambda)
-  nu_vb <- update_nu_vb_(tau_vb, m2_beta, nu)
+  eta_vb <- update_eta_vb_(n, eta, gam_vb)
+  kappa_vb <- update_kappa_vb_(Y, X, kappa, sig2_inv_vb, m1_beta, m2_beta)
+
+  lambda_vb <- update_lambda_vb_(lambda, sum_gam)
+  nu_vb <- update_nu_vb_(nu, m2_beta, tau_vb)
 
   log_tau_vb <- digamma(eta_vb) - log(kappa_vb)
   log_sig2_inv_vb <- digamma(lambda_vb) - log(nu_vb)
