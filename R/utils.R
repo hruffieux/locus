@@ -35,6 +35,9 @@ check_structure_ <- function(x, struct, type, size = NULL,
   } else if (type == "logical") {
     bool_type <- is.logical(x)
     type_mess <- "a boolean "
+  } else if (type == "string") {
+    bool_type <- is.character(x)
+    type_mess <- "string "
   }
 
   bool_size <- TRUE # for case size = NULL (no assertion on the size/dimension)
@@ -57,16 +60,21 @@ check_structure_ <- function(x, struct, type, size = NULL,
 
   bool_null <- is.null(x)
 
-  na_mess <- ""
-  if (!na_ok) {
-    if (!bool_null) correct_obj <- correct_obj & !any(is.na(x))
-    na_mess <- " without missing value"
-  }
+  if (type != "string") {
+    na_mess <- ""
+    if (!na_ok) {
+      if (!bool_null) correct_obj <- correct_obj & !any(is.na(x))
+      na_mess <- " without missing value"
+    }
 
-  inf_mess <- ""
-  if (!inf_ok) {
-    if (!bool_null) correct_obj <- correct_obj & all(is.finite(x[!is.na(x)]))
-    inf_mess <- ", finite"
+    inf_mess <- ""
+    if (!inf_ok) {
+      if (!bool_null) correct_obj <- correct_obj & all(is.finite(x[!is.na(x)]))
+      inf_mess <- ", finite"
+    }
+  } else {
+    na_mess <- ""
+    inf_mess <- ""
   }
 
   null_mess <- ""

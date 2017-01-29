@@ -89,6 +89,26 @@ generate_null <- function(n_perm, Y, X, p0_av, Z = NULL, list_hyper = NULL,
     if (verbose) cat(paste("Seed set to ", user_seed, ". \n", sep = ""))
   }
 
+  check_structure_(n_perm, "vector", "numeric", 1)
+  check_natural_(n_perm)
+
+  check_structure_(n_cpus, "vector", "numeric", 1)
+  check_natural_(n_cpus)
+
+  if (n_cpus > 1) {
+
+    n_cpus_avail <- parallel::detectCores()
+    if (n_cpus > n_cpus_avail) {
+      n_cpus <- n_cpus_avail
+      warning(paste("The number of CPUs specified exceeds the number of CPUs ",
+                    "available on the machine. The latter has been used instead.", sep=""))
+    }
+    if (verbose) cat(paste("Permutations with ", n_cpus, " CPUs.\n",
+                           "Please make sure that enough RAM is available. \n", sep=""))
+  }
+
+  check_structure_(results_dir, "vector", "string", 1, null_ok = TRUE)
+
   n <- nrow(Y)
 
   permute <- function(i) {
