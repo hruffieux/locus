@@ -129,6 +129,9 @@ generate_snps <- function(n, p, cor_type = NULL, vec_rho = NULL, vec_maf = NULL,
     snps <- do.call(cbind, snps)
   }
 
+  snps <- as.matrix(snps)
+  if (n == 1) snps <- t(snps)
+
   rownames(snps) <- paste("ind_", 1:n, sep = "")
   colnames(snps) <- paste("snp_", 1:p, sep = "")
 
@@ -399,6 +402,9 @@ generate_phenos <- function(n, d, var_err, cor_type = NULL, vec_rho = NULL,
     phenos <- do.call(cbind, phenos)
   }
 
+  phenos <- as.matrix(phenos)
+  if (n == 1) phenos <- t(phenos)
+
   rownames(phenos) <- paste("ind_", 1:n, sep = "")
   colnames(phenos) <- paste("pheno_", 1:d, sep = "")
 
@@ -545,14 +551,6 @@ set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph) {
     n_chunks_ph <- length(chunks_ph)
   }
 
-  ind_d0 <- unique(ind_d0)
-  if(!all(ind_d0 %in% 1:d))
-    stop("All indices provided in ind_d0 must be integers between 1 and d.")
-
-  ind_p0 <- unique(ind_p0)
-  if(!all(ind_p0 %in% 1:p))
-    stop("All indices provided in ind_p0 must be integers between 1 and p.")
-
   check_structure_(vec_prob_sh, "vector", "numeric")
   check_zero_one_(vec_prob_sh)
 
@@ -563,6 +561,7 @@ set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph) {
     # random permutation, so that two different SNPs can be associated with a given
     # block with different probabilities
     vec_prob_sh_perm <- sample(vec_prob_sh, n_chunks_ph, replace = TRUE)
+
     for(ch in 1:n_chunks_ph) {
       ind_ch_d0 <- intersect(ind_d0, chunks_ph[[ch]])
       pat[ind_j, ind_ch_d0] <- sample(c(TRUE, FALSE),
@@ -584,85 +583,72 @@ set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph) {
 }
 
 
-generate_eff_sizes_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
+generate_eff_sizes_ <- function(d, snps_act, ind_d0, ind_p0, vec_prob_sh, vec_maf,
                                 pve_per_snp, max_tot_pve, var_err, chunks_ph) {
 
   # pve_per_snp average variance explained per snp
+  p <- length(vec_maf)
 
-  d0 <- length(ind_d0)
-  p0 <- length(ind_p0)
-
-  if (xor(d0 < 1, p0 < 1))
-    stop("ind_d0 and ind_p0 must either have both length 0 (no association) or both length >= 1.")
-
-  if (d0 < 1 & p0 < 1) {
-
-    pat <- matrix(FALSE, nrow = p, ncol = d)
-    beta <- matrix(0.0, nrow = p, ncol = d)
-
-  } else {
-
-    bool_cst <- vec_maf[ind_p0] %in% c(0.0, 1.0) # there may be remaining constant snps! rm them after.
-    if (any(bool_cst)) {
-      ind_p0 <- ind_p0[!bool_cst]
-      if (length(ind_p0) == 0)
-        stop(paste("SNP(s) number ", ind_p0[bool_cst], " constant. Effect(s) on ",
-                   "the responses removed.\n No remaining ``active'' snps, change ",
-                   "ind_p0 (now empty).\n", sep = ""))
-      warning(paste("SNP(s) number ", ind_p0[bool_cst], " constant. Effect(s) on",
-                    "the responses removed.", sep = ""))
-    }
-
-    pat <- set_pattern_(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph)
-
-    check_structure_(vec_maf, "vector", "numeric", p)
-    check_zero_one_(vec_maf)
-
-    check_structure_(var_err, "vector", "numeric", d)
-    check_positive_(var_err)
-
-    max_per_resp <- max(colSums(pat))
-    eps <- .Machine$double.eps^0.75
-    if (is.null(pve_per_snp)) {
-      # sets pve_per_snp to the max possible so that the tot_pve for all responses are below 1.
-      if (is.null(max_tot_pve)) max_tot_pve <- 1 - eps
-
-      pve_per_snp <- max_tot_pve / max_per_resp
-    } else {
-      check_structure_(pve_per_snp, "vector", "numeric", 1)
-      check_zero_one_(pve_per_snp)
-
-      if (max_per_resp * pve_per_snp > 1 - eps)
-        stop(paste("Provided average proportion of variance explained per SNP too ",
-                   "high, would lead to a total genetic variance explained above ",
-                   "100% for at least one response. \n Setting pve_per_snp < 1 / length(ind_p0) ",
-                   "will work for any pattern. \n", sep = ""))
-    }
-
-    beta <- matrix(0.0, nrow = p, ncol = d)
-
-    beta[, ind_d0] <- sapply(ind_d0, function(k) {
-
-      p0_k <- sum(pat[,k])
-      vec_pve_per_snp <- rbeta(p0_k, shape1 = 2, shape2 = 5) # positively skewed Beta distribution,
-      # to give more weight to smaller effect sizes
-      vec_pve_per_snp <- vec_pve_per_snp / sum(vec_pve_per_snp) * pve_per_snp * p0_k
-
-      tot_var_expl <- pve_per_snp * p0_k * var_err[k] / (1 - pve_per_snp * p0_k)
-
-      vec_maf_act <- vec_maf[pat[,k]]
-      vec_var_act <- 2 * vec_maf_act * (1 - vec_maf_act)
-
-      beta_k <- rep(0.0, p)
-      beta_k[pat[,k]] <- sqrt((tot_var_expl + var_err[k]) * vec_pve_per_snp / vec_var_act)
-
-      # switches signs with probabilty 0.5
-      beta_k[pat[,k]] <- sample(c(1, -1), p0_k, replace = TRUE) * beta_k[pat[,k]]
-
-      beta_k
-    })
-
+  snps_act_sc <- scale(snps_act, center = TRUE, scale = TRUE)
+  bool_cst <- is.nan(colSums(snps_act_sc))
+  if (any(bool_cst)) {
+    if (all(bool_cst))
+      stop(paste("SNP(s) with id ", paste(ind_p0, collapse = " "), " constant. Effect(s) on ",
+                 "the responses removed.\n No remaining ``active'' SNPs, please ",
+                 "change ind_p0 (now empty).\n", sep = ""))
+    warning(paste("SNP(s) with id ", paste(ind_p0[bool_cst], collapse = " "), " constant. Effect(s) on ",
+                  "the responses removed.", sep = ""))
+    ind_p0 <- ind_p0[!bool_cst]
   }
+
+  pat <- set_pattern_(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph)
+
+  check_structure_(vec_maf, "vector", "numeric", p)
+  check_zero_one_(vec_maf)
+
+  check_structure_(var_err, "vector", "numeric", d)
+  check_positive_(var_err)
+
+  max_per_resp <- max(colSums(pat))
+  eps <- .Machine$double.eps^0.75
+  if (is.null(pve_per_snp)) {
+    # sets pve_per_snp to the max possible so that the tot_pve for all responses are below 1.
+    if (is.null(max_tot_pve)) max_tot_pve <- 1 - eps
+
+    pve_per_snp <- max_tot_pve / max_per_resp
+  } else {
+    check_structure_(pve_per_snp, "vector", "numeric", 1)
+    check_zero_one_(pve_per_snp)
+
+    if (max_per_resp * pve_per_snp > 1 - eps)
+      stop(paste("Provided average proportion of variance explained per SNP too ",
+                 "high, would lead to a total genetic variance explained above ",
+                 "100% for at least one response. \n Setting pve_per_snp < 1 / length(ind_p0) ",
+                 "will work for any pattern. \n", sep = ""))
+  }
+
+  beta <- matrix(0.0, nrow = p, ncol = d)
+
+  beta[, ind_d0] <- sapply(ind_d0, function(k) {
+
+    p0_k <- sum(pat[,k])
+    vec_pve_per_snp <- rbeta(p0_k, shape1 = 2, shape2 = 5) # positively skewed Beta distribution,
+    # to give more weight to smaller effect sizes
+    vec_pve_per_snp <- vec_pve_per_snp / sum(vec_pve_per_snp) * pve_per_snp * p0_k
+
+    tot_var_expl <- pve_per_snp * p0_k * var_err[k] / (1 - pve_per_snp * p0_k)
+
+    vec_maf_act <- vec_maf[pat[,k]]
+    vec_var_act <- 2 * vec_maf_act * (1 - vec_maf_act)
+
+    beta_k <- rep(0.0, p)
+    beta_k[pat[,k]] <- sqrt((tot_var_expl + var_err[k]) * vec_pve_per_snp / vec_var_act)
+
+    # switches signs with probabilty 0.5
+    beta_k[pat[,k]] <- sample(c(1, -1), p0_k, replace = TRUE) * beta_k[pat[,k]]
+
+    beta_k
+  })
 
   create_named_list_(beta, pat, pve_per_snp)
 
@@ -792,30 +778,22 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
     p <- ncol(snps)
 
     check_structure_(ind_d0, "vector", "numeric")
-    check_natural_(ind_d0)
-    if (max(ind_d0) > d)
-      stop("All indices provided in ind_d0 must be smaller or equal to d.")
-
     check_structure_(ind_p0, "vector", "numeric")
-    check_natural_(ind_p0)
-    if (max(ind_p0) > p)
-      stop("All indices provided in ind_p0 must be smaller or equal to p.")
+
+    ind_d0 <- sort(unique(ind_d0))
+    if(!all(ind_d0 %in% 1:d))
+      stop("All indices provided in ind_d0 must be integers between 1 and d.")
+
+    ind_p0 <- sort(unique(ind_p0))
+    if(!all(ind_p0 %in% 1:p))
+      stop("All indices provided in ind_p0 must be integers between 1 and p.")
 
 
     if(n != nrow(phenos))
       stop("The number of observations used for list_snps and for list_phenos does not match.")
 
-    snps_sc <- scale(snps, center = TRUE, scale = TRUE)
-    bool_cst <- is.nan(colSums(snps_sc[, ind_p0, drop = FALSE]))
-    if (any(bool_cst)) {
-      ind_p0 <- ind_p0[!bool_cst]
-      if (length(ind_p0) == 0)
-        stop(paste("SNP(s) number ", ind_p0[bool_cst], " constant. Effect(s) on the ",
-                   "responses removed.\n No remaining ``active'' snps, change ",
-                   "ind_p0 (now empty).", sep = ""))
-    }
-
-    list_eff <- generate_eff_sizes_(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
+    snps_act <- snps[, ind_p0, drop = FALSE]
+    list_eff <- generate_eff_sizes_(d, snps_act, ind_d0, ind_p0, vec_prob_sh, vec_maf,
                                     pve_per_snp, max_tot_pve, var_err,
                                     chunks_ph = ind_bl)
     with(list_eff, {
