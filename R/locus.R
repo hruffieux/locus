@@ -74,7 +74,10 @@
 #'  \item{rmvd_coll_x, rmvd_coll_z}{Vectors containing the indices of variables
 #'                                  in X (resp. Z) removed prior to the
 #'                                  analysis because collinear to other
-#'                                  variables.}
+#'                                  variables. The entry name indicates the
+#'                                  corresponding variable kept in the analysis
+#'                                  (i.e., that causing the collinearity for the
+#'                                  entry in question).}
 #'  \item{list_hyper, list_init}{If \code{save_hyper}, resp. \code{save_init},
 #'                               \code{TRUE}, hyperparameters, resp. initial
 #'                               variational parameters, used for inference are
@@ -102,7 +105,7 @@ locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
                   save_init = FALSE, verbose = TRUE) { ##
 
 
-  if (verbose) cat("== Preparing the data ... \n")
+  if (verbose) cat("== Preparing the data ... \n\n")
   dat <- prepare_data_(Y, X, Z, user_seed, tol, maxit, batch, verbose)
 
   bool_rmvd_x <- dat$bool_rmvd_x
@@ -135,7 +138,7 @@ locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
     if (verbose) {
       cat("=============================== \n")
       cat("===== Cross-validation... ===== \n")
-      cat("=============================== \n")
+      cat("=============================== \n\n")
     }
     list_cv <- prepare_cv_(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper,
                            list_init, verbose)
@@ -174,12 +177,12 @@ locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
 
   }
 
-  if (verbose) cat("== Preparing the hyperparameters ... \n")
+  if (verbose) cat("== Preparing the hyperparameters ... \n\n")
   list_hyper <- prepare_list_hyper_(list_hyper, Y, d, p, p_star, q, bool_rmvd_x,
                                     bool_rmvd_z, names_x, names_y, names_z, verbose)
   if (verbose) cat("... done. == \n\n")
 
-  if (verbose) cat("== Preparing the parameter initialization ... \n")
+  if (verbose) cat("== Preparing the parameter initialization ... \n\n")
   list_init <- prepare_list_init_(list_init, Y, d, p, p_star, q, bool_rmvd_x,
                                   bool_rmvd_z, names_x, names_y, names_z,
                                   user_seed, verbose)

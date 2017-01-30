@@ -94,7 +94,10 @@ An object of class "\code{vb}" containing the following variational
  \item{rmvd_coll_x, rmvd_coll_z}{Vectors containing the indices of variables
                                  in X (resp. Z) removed prior to the
                                  analysis because collinear to other
-                                 variables.}
+                                 variables. The entry name indicates the
+                                 corresponding variable kept in the analysis
+                                 (i.e., that causing the collinearity for the
+                                 entry in question).}
  \item{list_hyper, list_init}{If \code{save_hyper}, resp. \code{save_init},
                               \code{TRUE}, hyperparameters, resp. initial
                               variational parameters, used for inference are

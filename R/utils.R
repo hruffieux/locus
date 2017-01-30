@@ -135,11 +135,20 @@ rm_constant_ <- function(mat, verbose) {
 
   if (any(bool_cst)) {
 
-    if (verbose)
-      cat(paste("- Covariate(s) ", paste(colnames(mat)[bool_cst], collapse=", "),
-                " constant across subjects. \n",
-                "Removing corresponding column(s)... \n",
-                sep=""))
+    if (verbose) {
+      if (sum(bool_cst) < 50) {
+        cat(paste("Variable(s) ", paste(colnames(mat)[bool_cst], collapse=", "),
+                  " constant across subjects. \n",
+                  "Removing corresponding column(s) and saving its/their id(s) ",
+                  "in the function output ... \n\n",
+                  sep=""))
+      } else {
+        cat(paste(sum(bool_cst), " variables constant across subjects. \n",
+                  "Removing corresponding column(s) and saving their ids ",
+                  "in the function output ... \n\n",
+                  sep=""))
+      }
+    }
     rmvd_cst <- colnames(mat)[bool_cst]
     mat <- mat[, !bool_cst, drop = FALSE]
   } else {
@@ -155,13 +164,26 @@ rm_collinear_ <- function(mat, verbose) {
   bool_coll <- duplicated(tmat)
 
   if (any(bool_coll)) {
-    if (verbose)
-      cat(paste("- Presence of collinear covariate(s). Removing corresponding column(s): ",
-                paste(colnames(mat)[bool_coll], collapse=", "), "\n", sep=""))
+
+    if (verbose) {
+      if (sum(bool_coll) < 50) {
+        cat(paste("Presence of collinear variable(s). ",
+                  paste(colnames(mat)[bool_coll], collapse=", "), " redundant. \n",
+                  "Removing corresponding column(s) and saving its/their id(s) ",
+                  "in the function output ... \n",
+                  sep=""))
+      } else {
+        cat(paste("Presence of collinear variables. ", sum(bool_coll),
+                  " redundant.\n Removing corresponding column(s) and saving ",
+                  "their ids in the function output ... \n",
+                  sep=""))
+      }
+    }
+
     rmvd_coll <- colnames(mat)[bool_coll]
 
     # associate to each removed replicate the name of the covariate with which
-    # it is duplicated ant that is kept in the dataset
+    # it is duplicated and that is kept in the dataset
     bool_with_coll <- duplicated(tmat[nrow(tmat):1, ])[nrow(tmat):1] & !duplicated(tmat)
     tmat_with_coll <- t(mat[,bool_with_coll, drop = FALSE])
     assoc_coll <- apply(mat[,bool_coll, drop = FALSE], 2, function(x)
