@@ -5,7 +5,8 @@
 \title{Generate pleiotropic associations between SNPs and phenotypes.}
 \usage{
 generate_dependence(list_snps, list_phenos, ind_d0, ind_p0, vec_prob_sh,
-  pve_per_snp = NULL, max_tot_pve = NULL, user_seed = NULL)
+  family = "gaussian", pve_per_snp = NULL, max_tot_pve = NULL,
+  user_seed = NULL)
 }
 \arguments{
 \item{list_snps}{An object of class "sim_snps" containing simulated SNP data
@@ -30,6 +31,9 @@ range between 1 and \code{ncol(list_snps$snps)}.}
 active SNP is associated with an additional active phenotype in a given
 phenotypic block. See Details section.}
 
+\item{family}{Distribution used to generate the phenotypes. Must be either
+"\code{gaussian}" or "\code{binomial}" for binary phenotypes.}
+
 \item{pve_per_snp}{Average proportion of phenotypic variance explained by
 each active SNP (for an active phenotype). Must be \code{NULL} if
 \code{max_tot_pve} is provided. See Details section.}
@@ -38,7 +42,8 @@ each active SNP (for an active phenotype). Must be \code{NULL} if
 active SNPs across all phenotypes. Must be \code{NULL} if
 \code{pve_per_snp} is provided. See Details section.}
 
-\item{user_seed}{Bla.}
+\item{user_seed}{Seed set for reproducibility. Default is \code{NULL}, no
+seed set.}
 }
 \value{
 An object of class "\code{sim_data}".
@@ -81,6 +86,10 @@ set to its maximum value so that the total proportion of variance explained
 for the phenotypes are all below 1. Individual proportions of variance
 explained are drawn from a Beta distribution with shape parameters 2 and 5,
 putting more weights on smaller effects.
+
+If family is "\code{binary}", the phenotypes are generated from a probit
+model, and the phenotypic variance explained by the SNPs is with respect to
+the latent Gaussian variables involved in the probit model.
 }
 \examples{
 user_seed <- 123; set.seed(user_seed)
@@ -88,13 +97,20 @@ n <- 500; p <- 5000; p0 <- 200; d <- 500; d0 <- 400
 
 list_snps <- generate_snps(n = n, p = p)
 
-# Gaussian phenotypes
-list_phenos <- generate_phenos(n = n, d = d, var_err = 0.25,
-                               family = "gaussian")
+cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
 
+list_phenos <- generate_phenos(n, d, var_err = 1, cor_type = cor_type,
+                               vec_rho = vec_rho, n_cpus = 2)
+
+# Gaussian phenotypes
 dat <- generate_dependence(list_snps, list_phenos, ind_d0 = sample(1:d, d0),
                            ind_p0 = sample(1:p, p0), vec_prob_sh = 0.05,
-                           max_tot_pve = 0.5)
+                           family = "gaussian", max_tot_pve = 0.5)
+
+# Binary phenotypes
+dat <- generate_dependence(list_snps, list_phenos, ind_d0 = sample(1:d, d0),
+                           ind_p0 = sample(1:p, p0), vec_prob_sh = 0.05,
+                           family = "binomial", max_tot_pve = 0.5)
 
 }
 \seealso{

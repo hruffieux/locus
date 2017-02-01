@@ -4,8 +4,8 @@
 \alias{replicate_real_phenos}
 \title{Generate phenotypes emulating real phenotypic data at hand.}
 \usage{
-replicate_real_phenos(n, real_phenos, family = "gaussian", bl_lgth = NULL,
-  d = NULL, n_cpus = 1, user_seed = NULL)
+replicate_real_phenos(n, real_phenos, input_family = "gaussian",
+  bl_lgth = NULL, d = NULL, n_cpus = 1, user_seed = NULL)
 }
 \arguments{
 \item{n}{Number of observations.}
@@ -13,9 +13,9 @@ replicate_real_phenos(n, real_phenos, family = "gaussian", bl_lgth = NULL,
 \item{real_phenos}{Matrix of real phenotypes (rows observations, columns
 phenotypic variables), without missing values.}
 
-\item{family}{Outcome distribution assumption for the phenotypes provided in
-real_phenos. Must be either "\code{gaussian}" or "\code{binomial}" for
-binary outcomes.}
+\item{input_family}{Phenotype distribution assumption for the phenotypes
+provided in real_phenos. Must be either "\code{gaussian}" or
+"\code{binomial}" for binary phenotypes.}
 
 \item{bl_lgth}{Number of variables per block for reproducing the dependence
 structure of real phenotypes. Must be between 2 and d. Must be small enough
@@ -41,7 +41,9 @@ An object of class "\code{sim_phenos}".
 }
 \description{
 This function simulates phenotypes from real phenotypic data based on their
-sample correlation structure.
+sample correlation structure. If binary data are provided, will simulate
+latent Gaussian data from them (binary data can then be obtained using the
+\code{\link{generate_dependence}} function).
 }
 \examples{
 user_seed <- 123; set.seed(user_seed)
@@ -50,23 +52,11 @@ cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
 
 # Provided phenotypes assumed to be normally distributed
 var_err <- runif(d, min = 0.1, max = 0.4)
-list_fake_real_phenos <- generate_phenos(n, d, var_err, family = "gaussian",
-                                         cor_type = cor_type,
+list_fake_real_phenos <- generate_phenos(n, d, var_err, cor_type = cor_type,
                                          vec_rho = vec_rho, n_cpus = 2,
                                          user_seed = user_seed)
 list_phenos <- replicate_real_phenos(n, list_fake_real_phenos$phenos,
-                                     family = "gaussian", bl_lgth = 100,
-                                     n_cpus = 2, user_seed = user_seed)
-
-# Provided phenotypes assumed to follow binomal distributions
-prob <- runif(d, min = 0, max = 1)
-list_fake_real_phenos <- generate_phenos(n, d, var_err = NULL, prob = prob,
-                                         family = "binomial",
-                                         cor_type = cor_type,
-                                         vec_rho = vec_rho, n_cpus = 2,
-                                         user_seed = user_seed)
-list_phenos <- replicate_real_phenos(n, list_fake_real_phenos$phenos,
-                                     family = "binomial", bl_lgth = 100,
+                                     input_family = "gaussian", bl_lgth = 100,
                                      n_cpus = 2, user_seed = user_seed)
 
 }

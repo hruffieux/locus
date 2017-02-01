@@ -4,26 +4,19 @@
 \alias{generate_phenos}
 \title{Generate phenotypic data with prespecified block-wise correlation structure.}
 \usage{
-generate_phenos(n, d, var_err, prob = NULL, family = "gaussian",
-  cor_type = NULL, vec_rho = NULL, n_cpus = 1, user_seed = NULL)
+generate_phenos(n, d, var_err, cor_type = NULL, vec_rho = NULL,
+  n_cpus = 1, user_seed = NULL)
 }
 \arguments{
 \item{n}{Number of observations.}
 
 \item{d}{Number of phenos.}
 
-\item{var_err}{If \code{family = "gaussian"}, vector of length 1 or d
-containing the variances of the Gaussian distributions used to generate the
-phenotypes. If of length 1, the value is repeated d times. Must be
-\code{NULL} if \code{family = "binomial"}.}
-
-\item{prob}{If \code{family = "binomial"}, vector of length 1 or d
-containing the probability parameters for the binomial distributions used
-to generate the phenotypes. If of length 1, the value is repeated d times.
-Must be \code{NULL} if \code{family = "gaussian"}.}
-
-\item{family}{Outcome type. Must be either "\code{gaussian}" or
-"\code{binomial}" for binary outcomes.}
+\item{var_err}{Vector of length 1 or d containing the variances of the
+(latent) Gaussian distributions used to generate the phenotypes. If of
+length 1, the value is repeated d times. If binary data are targeted
+(using the probit modelling within the \code{\link{generate_dependence}}
+function), var_err is usually set to 1 (no impact on inference).}
 
 \item{cor_type}{String describing the type of dependence structure. The
 phenotypes can \code{autocorrelated}, \code{equicorrelated}. Set to
@@ -49,23 +42,19 @@ An object of class "\code{sim_phenos}".
 }
 \description{
 This function generates Gaussian phenotypes with specific block correlation
-structure.
+structure. If binary phenotypes are wanted, must be used in conjunction with
+the \code{\link{generate_dependence}} function: the present function
+simulates latent Gaussian phenotypes which will be used in
+\code{\link{generate_dependence}} to generate binary phenotypes associated
+with SNPs from a probit model.
 }
 \examples{
 user_seed <- 123; set.seed(user_seed)
 n <- 500; d <- 10000
 cor_type <- "equicorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
-
-# Gaussian outcomes
 var_err <- runif(d, min = 0.1, max = 0.4)
-list_phenos <- generate_phenos(n, d, var_err, family = "gaussian",
-                               cor_type = cor_type, vec_rho = vec_rho,
-                               n_cpus = 2, user_seed = user_seed)
 
-# Binary outcomes
-prob <- runif(d, min = 0, max = 1)
-list_phenos <- generate_phenos(n, d, var_err = NULL, prob = prob,
-                               family = "binomial", cor_type = cor_type,
+list_phenos <- generate_phenos(n, d, var_err, cor_type = cor_type,
                                vec_rho = vec_rho, n_cpus = 2,
                                user_seed = user_seed)
 
