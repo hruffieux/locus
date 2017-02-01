@@ -85,8 +85,12 @@ putting more weights on smaller effects.
 \examples{
 user_seed <- 123; set.seed(user_seed)
 n <- 500; p <- 5000; p0 <- 200; d <- 500; d0 <- 400
+
 list_snps <- generate_snps(n = n, p = p)
-list_phenos <- generate_phenos(n = n, d = d, var_err = 0.25)
+
+# Gaussian phenotypes
+list_phenos <- generate_phenos(n = n, d = d, var_err = 0.25,
+                               family = "gaussian")
 
 dat <- generate_dependence(list_snps, list_phenos, ind_d0 = sample(1:d, d0),
                            ind_p0 = sample(1:p, p0), vec_prob_sh = 0.05,
