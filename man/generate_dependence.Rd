@@ -38,7 +38,8 @@ each active SNP (for an active phenotype). Must be \code{NULL} if
 active SNPs across all phenotypes. Must be \code{NULL} if
 \code{pve_per_snp} is provided. See Details section.}
 
-\item{user_seed}{Bla.}
+\item{user_seed}{Seed set for reproducibility. Default is \code{NULL}, no
+seed set.}
 }
 \value{
 An object of class "\code{sim_data}".

@@ -394,7 +394,7 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv) {
 
   vec_fac_bl <- list_blocks$vec_fac_bl[!bool_rmvd_x]
 
-  tab_bl <- table(list_blocks$vec_fac_bl)
+  tab_bl <- table(vec_fac_bl)
   pres_bl <- tab_bl > 0
   vec_p_bl <- as.vector(tab_bl[pres_bl])
   # in case a block was removed due to the above because of bool_rmvd_x

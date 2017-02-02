@@ -229,7 +229,7 @@ locus <- function(Y, X, p0_av, Z = NULL, list_hyper = NULL, list_init = NULL,
 
     locus_bl_ <- function(k) {
 
-      X_bl <- X[, list_pos_bl[[k]]]
+      X_bl <- X[, list_pos_bl[[k]], drop = FALSE]
 
       list_hyper_bl <- split_bl_hyper[[k]]
       list_init_bl <- split_bl_init[[k]]

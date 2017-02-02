@@ -723,7 +723,8 @@ generate_eff_sizes_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, vec_maf,
 #' @param max_tot_pve Maximum proportion of phenotypic variance explained by the
 #'   active SNPs across all phenotypes. Must be \code{NULL} if
 #'   \code{pve_per_snp} is provided. See Details section.
-#' @param user_seed Bla.
+#' @param user_seed Seed set for reproducibility. Default is \code{NULL}, no
+#'   seed set.
 #'
 #' @return An object of class "\code{sim_data}".
 #'  \item{phenos}{Matrix containing the updated phenotypic data (whose variance

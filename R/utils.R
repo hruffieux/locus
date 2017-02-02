@@ -135,9 +135,11 @@ rm_constant_ <- function(mat, verbose) {
 
   if (any(bool_cst)) {
 
+    rmvd_cst <- colnames(mat)[bool_cst]
+
     if (verbose) {
       if (sum(bool_cst) < 50) {
-        cat(paste("Variable(s) ", paste(colnames(mat)[bool_cst], collapse=", "),
+        cat(paste("Variable(s) ", paste(rmvd_cst, collapse=", "),
                   " constant across subjects. \n",
                   "Removing corresponding column(s) and saving its/their id(s) ",
                   "in the function output ... \n\n",
@@ -149,7 +151,7 @@ rm_constant_ <- function(mat, verbose) {
                   sep=""))
       }
     }
-    rmvd_cst <- colnames(mat)[bool_cst]
+
     mat <- mat[, !bool_cst, drop = FALSE]
   } else {
     rmvd_cst <- NULL
@@ -160,37 +162,39 @@ rm_constant_ <- function(mat, verbose) {
 
 rm_collinear_ <- function(mat, verbose) {
 
-  tmat <- t(mat)
-  bool_coll <- duplicated(tmat)
+  bool_coll <- duplicated(mat, MARGIN = 2)
 
   if (any(bool_coll)) {
 
+    mat_coll <- mat[, bool_coll, drop = FALSE]
+    rmvd_coll <- colnames(mat_coll)
+
     if (verbose) {
-      if (sum(bool_coll) < 50) {
+      if (length(rmvd_coll) < 50) {
         cat(paste("Presence of collinear variable(s). ",
-                  paste(colnames(mat)[bool_coll], collapse=", "), " redundant. \n",
+                  paste(rmvd_coll, collapse=", "), " redundant. \n",
                   "Removing corresponding column(s) and saving its/their id(s) ",
                   "in the function output ... \n",
                   sep=""))
       } else {
-        cat(paste("Presence of collinear variables. ", sum(bool_coll),
-                  " redundant.\n Removing corresponding column(s) and saving ",
+        cat(paste("Presence of collinear variables. ", length(rmvd_coll),
+                  " redundant.\n", "Removing corresponding columns and saving ",
                   "their ids in the function output ... \n",
                   sep=""))
       }
     }
 
-    rmvd_coll <- colnames(mat)[bool_coll]
-
     # associate to each removed replicate the name of the covariate with which
     # it is duplicated and that is kept in the dataset
-    bool_with_coll <- duplicated(tmat[nrow(tmat):1, ])[nrow(tmat):1] & !duplicated(tmat)
-    tmat_with_coll <- t(mat[,bool_with_coll, drop = FALSE])
-    assoc_coll <- apply(mat[,bool_coll, drop = FALSE], 2, function(x)
-      rownames(tmat_with_coll)[duplicated(rbind(x, tmat_with_coll))[-1]])
+    bool_with_coll <- duplicated(mat, MARGIN = 2, fromLast = TRUE) & !bool_coll
+    mat_with_coll <- mat[, bool_with_coll, drop = FALSE]
+
+    assoc_coll <- colnames(mat_with_coll)[match(data.frame(mat_coll),
+                                                data.frame(mat_with_coll))]
     names(rmvd_coll) <- assoc_coll
 
     mat <- mat[, !bool_coll, drop = FALSE]
+
   } else {
     rmvd_coll <- NULL
   }
