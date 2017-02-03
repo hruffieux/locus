@@ -356,8 +356,8 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family,
 }
 
 
-prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init,
-                        verbose) {
+prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, family, list_hyper,
+                        list_init, verbose) {
 
   if (!inherits(list_cv, "cv"))
     stop(paste("The provided list_cv must be an object of class ``cv''. \n",
@@ -365,6 +365,10 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper, list_init
                "for the cross-validation or set list_cv to NULL to skip the ",
                "cross-validation step. ***",
                sep=""))
+
+  if (family == "binomial") {
+    stop("Cross-validation not implemented for logistic regression. Please, set list_cv to NULL.")
+  }
 
   if (!is.null(p0_av) | !is.null(list_hyper) | !is.null(list_init))
     stop(paste("p0_av, list_hyper and list_init must all be NULL if non NULL ",

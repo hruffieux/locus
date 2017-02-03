@@ -142,7 +142,7 @@ create_grid_ <- function(p, size_p0_av_grid) {
 }
 
 
-cross_validate_ <- function(Y, X, Z, family, list_cv, user_seed, verbose) {
+cross_validate_ <- function(Y, X, Z, list_cv, user_seed, verbose) {
 
 
   d <- ncol(Y)
@@ -181,8 +181,8 @@ cross_validate_ <- function(Y, X, Z, family, list_cv, user_seed, verbose) {
       }
 
       Y_tr <- scale(Y_tr, center = TRUE, scale = FALSE)
-      if (family == "gaussian") Y_test <- scale(Y_test, center = TRUE, scale = FALSE)
-
+      #if (family == "gaussian") Y_test <- scale(Y_test, center = TRUE, scale = FALSE)
+      Y_test <- scale(Y_test, center = TRUE, scale = FALSE)
 
       if (!is.null(Z)) {
         Z_tr <- Z[-current,, drop = FALSE]
@@ -206,10 +206,10 @@ cross_validate_ <- function(Y, X, Z, family, list_cv, user_seed, verbose) {
 
         if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
 
-        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, family)
-        list_init_pg <- auto_set_init_(Y_tr, p, pg, q, user_seed, family)
+        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, family = "gaussian")
+        list_init_pg <- auto_set_init_(Y_tr, p, pg, q, user_seed, family = "gaussian")
 
-        if (family == "gaussian") {
+        #if (family == "gaussian") {
           if (is.null(q)) {
             vb_tr <- locus_core_(Y_tr, X_tr, list_hyper_pg,
                                  list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
@@ -238,20 +238,21 @@ cross_validate_ <- function(Y, X, Z, family, list_cv, user_seed, verbose) {
                              xi, zeta2_inv_vb, m2_alpha, m1_beta, m2_beta, sum_gam)
             })
           }
-        } else {
-
-          vb_tr <- locus_bin_core_(Y_tr, X_tr, list_hyper_pg,
-                                   list_init_pg$chi_vb, list_init_pg$gam_vb,
-                                   list_init_pg$mu_beta_vb,
-                                   list_init_pg$sig2_beta_vb, tol_cv, maxit_cv,
-                                   batch_cv, verbose, full_output = TRUE)
-
-          lb_vec[ind_pg] <- with(vb_tr, {
-            lower_bound_bin_(Y_test, X_test, a, a_vb, b, b_vb, chi_vb, gam_vb,
-                             lambda, nu, psi_vb, sig2_beta_vb, sig2_inv_vb,
-                             m1_beta, m2_beta, m3_beta)
-          })
-        }
+        # } else {
+        #
+        #   vb_tr <- locus_bin_core_(Y_tr, X_tr, list_hyper_pg,
+        #                            list_init_pg$chi_vb, list_init_pg$gam_vb,
+        #                            list_init_pg$mu_beta_vb,
+        #                            list_init_pg$sig2_beta_vb, tol_cv, maxit_cv,
+        #                            batch_cv, verbose, full_output = TRUE)
+        #
+        # # issue: hi_vb should be restriced to the test set.
+        #   lb_vec[ind_pg] <- with(vb_tr, {
+        #     lower_bound_bin_(Y_test, X_test, X_test^2, a, a_vb, b, b_vb, chi_vb,
+        #                      gam_vb, lambda, nu, psi_vb, sig2_beta_vb,
+        #                      sig2_inv_vb, m1_beta, m2_beta)
+        #   })
+        # }
         if (verbose) { cat(paste("Lower bound on test set, fold ", k, ", p0_av ",
                                  pg, ": ", lb_vec[ind_pg], ". \n", sep = ""))
           cat("-------------------------\n") }

@@ -113,13 +113,24 @@ predictors is captured through the model hierarchical structure.
 user_seed <- 123; set.seed(user_seed)
 n <- 200; p <- 300; p0 <- 50; d <- 40; d0 <- 30
 list_X <- generate_snps(n = n, p = p)
-list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
+list_Y <- generate_phenos(n = n, d = d, var_err = 1)
 
-dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+# Gaussian outcomes
+dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-                           vec_prob_sh = 0.1, max_tot_pve = 0.9)
+                           vec_prob_sh = 0.1, family = "gaussian",
+                           max_tot_pve = 0.9)
 
-vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, family = "gaussian",
+vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, family = "gaussian",
+            user_seed = user_seed)
+
+# Binary outcomes
+dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+                           ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+                           vec_prob_sh = 0.1, family = "binomial",
+                           max_tot_pve = 0.9)
+
+vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial",
             user_seed = user_seed)
 
 }

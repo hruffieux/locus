@@ -85,13 +85,24 @@
 #' user_seed <- 123; set.seed(user_seed)
 #' n <- 200; p <- 300; p0 <- 50; d <- 40; d0 <- 30
 #' list_X <- generate_snps(n = n, p = p)
-#' list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
+#' list_Y <- generate_phenos(n = n, d = d, var_err = 1)
 #'
-#' dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+#' # Gaussian outcomes
+#' dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 #'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                            vec_prob_sh = 0.1, max_tot_pve = 0.9)
+#'                            vec_prob_sh = 0.1, family = "gaussian",
+#'                            max_tot_pve = 0.9)
 #'
-#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, family = "gaussian",
+#' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, family = "gaussian",
+#'             user_seed = user_seed)
+#'
+#' # Binary outcomes
+#' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+#'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+#'                            vec_prob_sh = 0.1, family = "binomial",
+#'                            max_tot_pve = 0.9)
+#'
+#' vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial",
 #'             user_seed = user_seed)
 #'
 #' @seealso \code{\link{set_hyper}}, \code{\link{set_init}},
@@ -136,25 +147,25 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
 
   if (!is.null(list_cv) & is.null(list_blocks)) { ## TODO: allow cross-validation when list_blocks is used.
 
-    if (verbose) {
-      cat("=============================== \n")
-      cat("===== Cross-validation... ===== \n")
-      cat("=============================== \n")
-    }
-    list_cv <- prepare_cv_(list_cv, n, p, bool_rmvd_x, p0_av, list_hyper,
-                           list_init, verbose)
+      if (verbose) {
+        cat("=============================== \n")
+        cat("===== Cross-validation... ===== \n")
+        cat("=============================== \n")
+      }
+      list_cv <- prepare_cv_(list_cv, n, p, bool_rmvd_x, p0_av, family,
+                             list_hyper, list_init, verbose)
 
-    p_star <- cross_validate_(Y, X, Z, family, list_cv, user_seed, verbose)
+      p_star <- cross_validate_(Y, X, Z, list_cv, user_seed, verbose)
 
   } else {
 
     if (!is.null(list_blocks)) {
 
-    list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, list_cv)
+      list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, list_cv)
 
-    n_bl <- list_blocks$n_bl
-    n_cpus <- list_blocks$n_cpus
-    vec_fac_bl <- list_blocks$vec_fac_bl
+      n_bl <- list_blocks$n_bl
+      n_cpus <- list_blocks$n_cpus
+      vec_fac_bl <- list_blocks$vec_fac_bl
 
     }
 
@@ -264,7 +275,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
                               tol, maxit, batch, verbose)
 
       }
-        vb_bl
+      vb_bl
     }
 
     list_vb <- parallel::mclapply(1:n_bl, function(k) locus_bl_(k), mc.cores = n_cpus)
