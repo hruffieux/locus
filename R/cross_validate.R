@@ -248,7 +248,7 @@ cross_validate_ <- function(Y, X, Z, list_cv, user_seed, verbose) {
         #
         # # issue: hi_vb should be restriced to the test set.
         #   lb_vec[ind_pg] <- with(vb_tr, {
-        #     lower_bound_bin_(Y_test, X_test, X_test^2, a, a_vb, b, b_vb, chi_vb,
+        #     lower_bound_bin_(Y_test, X_test, a, a_vb, b, b_vb, chi_vb,
         #                      gam_vb, lambda, nu, psi_vb, sig2_beta_vb,
         #                      sig2_inv_vb, m1_beta, m2_beta)
         #   })

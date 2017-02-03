@@ -6,8 +6,6 @@ locus_bin_core_ <- function(Y, X, list_hyper, chi_vb, gam_vb, mu_beta_vb,
   n <- nrow(Y)
   p <- ncol(X)
 
-  X_sq <- X^2
-
   # 1/2 must have been substracted from Y, and X must be standardized.
 
   with(list_hyper, { # list_init not used with the with() function to avoid
@@ -119,7 +117,7 @@ locus_bin_core_ <- function(Y, X, list_hyper, chi_vb, gam_vb, mu_beta_vb,
 
       psi_vb <- update_psi_bin_vb_(chi_vb)
 
-      lb_new <- lower_bound_bin_(Y, X, X_sq, a, a_vb, b, b_vb, chi_vb, gam_vb,
+      lb_new <- lower_bound_bin_(Y, X, a, a_vb, b, b_vb, chi_vb, gam_vb,
                                  lambda, nu, psi_vb, sig2_beta_vb, sig2_inv_vb,
                                  m1_beta, m2_beta)
 
@@ -197,7 +195,7 @@ update_nu_bin_vb_ <- function(nu, m2_beta) {
 
 }
 
-lower_bound_bin_ <- function(Y, X, X_sq, a, a_vb, b, b_vb, chi_vb, gam_vb,
+lower_bound_bin_ <- function(Y, X, a, a_vb, b, b_vb, chi_vb, gam_vb,
                              lambda, nu, psi_vb, sig2_beta_vb, sig2_inv_vb,
                              m1_beta, m2_beta) {
 
@@ -208,6 +206,7 @@ lower_bound_bin_ <- function(Y, X, X_sq, a, a_vb, b, b_vb, chi_vb, gam_vb,
   log_om_vb <- digamma(a_vb) - digamma(a_vb + b_vb)
   log_1_min_om_vb <- digamma(b_vb) - digamma(a_vb + b_vb)
 
+  X_sq <- X^2
   A <- sum(chi_vb / 2 - log_sum_exp_mat_(list(-chi_vb/2, chi_vb/2)) +
              (X %*% m1_beta) * Y -  chi_vb / 2 -
              psi_vb * (X_sq %*% m2_beta + (X %*% m1_beta)^2 -
