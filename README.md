@@ -11,10 +11,11 @@ same predictors is captured through the model hierarchical structure
 (Hélène Ruffieux, Anthony C. Davison, Jörg Hager, Irina Irincheeva, 2016, 
 arXiv:1609.03400). 
 
-## License
+## License and authors
 
-This project uses the GPL v2 license, see [LICENSE](LICENSE).
-
+This software uses the GPL v2 license, see [LICENSE](LICENSE).
+Authors and copyright are provided in [DESCRIPTION](DESCRIPTION). Loris Michel
+has also contributed to the development of this project.
 
 ## Issues
 
