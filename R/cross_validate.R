@@ -8,7 +8,8 @@
 #' @param n Number of observations.
 #' @param p Number of candidate predictors.
 #' @param n_folds Number of number of folds. Large folds are not recommended for
-#'   large datasets as the procedure may become computationally expensive.
+#'   large datasets as the procedure may become computationally expensive. Must
+#'   be greater than 2 and smaller than the number of observations.
 #' @param size_p0_av_grid Number of possible values of p0_av to be compared.
 #'   Large numbers are not recommended for large datasets as the procedure may
 #'   become computationally expensive.
@@ -52,7 +53,9 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
 
   check_structure_(n_folds, "vector", "numeric", 1)
   check_natural_(n_folds)
-  if (n_folds > n) stop("n_folds must not exceed the number of observations.")
+
+  if (!(n_folds %in% 2:n))
+    stop("n_folds must be a natural number greater than 2 and smaller than the number of observations.")
 
   # 16 may correspond to (a multiple of) the number of cores available
   if (n_folds > 16) warning("n_folds is large and may induce expensive computations.")
@@ -104,7 +107,7 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
                     "available on the machine. The latter has been used instead.", sep=""))
     }
     if (verbose) cat(paste("Cross-validation with ", n_cpus, " CPUs.\n",
-                           "Please make sure that enough RAM is available.", sep=""))
+                           "Please make sure that enough RAM is available. \n", sep=""))
   }
 
   n_cv <- n

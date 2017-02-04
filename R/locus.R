@@ -77,7 +77,10 @@
 #'  \item{rmvd_coll_x, rmvd_coll_z}{Vectors containing the indices of variables
 #'                                  in X (resp. Z) removed prior to the
 #'                                  analysis because collinear to other
-#'                                  variables.}
+#'                                  variables. The entry name indicates the
+#'                                  corresponding variable kept in the analysis
+#'                                  (i.e., that causing the collinearity for the
+#'                                  entry in question).}
 #'  \item{list_hyper, list_init}{If \code{save_hyper}, resp. \code{save_init},
 #'                               \code{TRUE}, hyperparameters, resp. initial
 #'                               variational parameters, used for inference are
@@ -126,7 +129,6 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
                   list_cv = NULL, list_blocks = NULL, user_seed = NULL,
                   tol = 1e-4, maxit = 1000, batch = TRUE, save_hyper = FALSE,
                   save_init = FALSE, verbose = TRUE) { ##
-
 
   if (verbose) cat("== Preparing the data ... \n")
   dat <- prepare_data_(Y, X, Z, family, user_seed, tol, maxit, batch, verbose)
@@ -199,16 +201,15 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
 
   }
 
-  if (verbose) cat("== Preparing the hyperparameters ... \n")
+  if (verbose) cat("== Preparing the hyperparameters ... \n\n")
   list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, family,
                                     bool_rmvd_x, bool_rmvd_z, names_x, names_y,
                                     names_z, verbose)
   if (verbose) cat("... done. == \n\n")
 
-  if (verbose) cat("== Preparing the parameter initialization ... \n")
+  if (verbose) cat("== Preparing the parameter initialization ... \n\n")
   list_init <- prepare_list_init_(list_init, Y, p, p_star, q, family,
                                   bool_rmvd_x, bool_rmvd_z, user_seed, verbose)
-
   if (verbose) cat("... done. == \n\n")
 
 
@@ -292,7 +293,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
 
     locus_bl_ <- function(k) {
 
-      X_bl <- X[, list_pos_bl[[k]]]
+      X_bl <- X[, list_pos_bl[[k]], drop = FALSE]
 
       list_hyper_bl <- split_bl_hyper[[k]]
       list_init_bl <- split_bl_init[[k]]

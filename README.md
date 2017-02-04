@@ -11,6 +11,15 @@ same predictors is captured through the model hierarchical structure
 (Hélène Ruffieux, Anthony C. Davison, Jörg Hager, Irina Irincheeva, 2016, 
 arXiv:1609.03400). 
 
+## Installation
+
+To install, run the following commands in R:
+
+``` r
+install.packages("devtools")
+devtools::install_github("hruffieux/locus")
+```
+
 ## License and authors
 
 This software uses the GPL v2 license, see [LICENSE](LICENSE).

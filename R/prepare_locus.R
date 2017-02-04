@@ -40,7 +40,7 @@ prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose
 
     if (verbose) cat(paste("Each factor variables must be provided by adding ",
                            "to Z (nb levels - 1) variables representing their ",
-                           "levels.", sep=""))
+                           "levels. \n", sep=""))
 
     check_structure_(Z, "matrix", "numeric")
 
@@ -122,25 +122,25 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
                  "invalid provided value of p0_av.\n",
                  "The prior sparsity level, p0_av / p, must be larger than ",
                  "zero. \n",
-                 "Please increase p0_av. \n",
+                 "Please increase p0_av.",
                  sep = ""))
 
     if (p0_av / p > 0.95)
       stop(paste("p0_av = ", p0_av, ": \n",
                  "invalid provided value of p0_av.\n",
-                 "Induces a non-sparse formulation. Please decrease p0_av. \n",
+                 "Induces a non-sparse formulation. Please decrease p0_av.",
                  sep = ""))
 
     if (p0_av > ceiling(4 * p / 5))
       warning(paste("Prior model size p0_av = ", p0_av, ": \n",
                     "p0_av / p is large, so multiplicity control may be weak. ",
-                    "You may want to consider a smaller p0_av. \n", sep=""))
+                    "You may want to consider a smaller p0_av.", sep=""))
 
     p_star <- p0_av
 
   } else {
 
-    if (verbose) cat(paste("- The sth entry of the provided p0_av ",
+    if (verbose) cat(paste("The sth entry of the provided p0_av ",
                            "interpreted as the prior probability that ",
                            "predictor s is associated with at least one ",
                            "response. \n\n",
@@ -148,14 +148,14 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
 
     if (any(p0_av) < eps | any(p0_av) > 1 - eps)
       stop(paste("Invalid provided vector of p0_av.\n",
-                 "All entries must lie between 0 and 1 (strictly). \n",
+                 "All entries must lie between 0 and 1 (strictly).",
                  sep = ""))
 
     if (median(p0_av) > 1 / 2)
       warning(paste("The number of predictors with large prior inclusion ",
                     "probability is large, so multiplicity control may be weak. \n",
                     "You may want to decrease the values of several ",
-                    "entries of p0_av. \n",
+                    "entries of p0_av.",
                     sep=""))
 
     p_star <- p0_av * p
@@ -174,7 +174,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family,
 
   if (is.null(list_hyper)) {
 
-    if (verbose) cat("- list_hyper set automatically. \n")
+    if (verbose) cat("list_hyper set automatically. \n")
 
     list_hyper <- auto_set_hyper_(Y, p, p_star, q, family)
 
@@ -215,10 +215,10 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family,
     }
 
     if (!is.null(names(list_hyper$a)) && names(list_hyper$a) != names_x)
-      stop("Provided names for the entries of a do not match the colnames of X")
+      stop("Provided names for the entries of a do not match the colnames of X.")
 
     if (!is.null(names(list_hyper$b)) && names(list_hyper$b) != names_x)
-      stop("Provided names for the entries of b do not match the colnames of X")
+      stop("Provided names for the entries of b do not match the colnames of X.")
 
     if (family == "gaussian") {
       if (!is.null(names(list_hyper$eta)) && names(list_hyper$eta) != names_y)
@@ -227,7 +227,6 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family,
       if (!is.null(names(list_hyper$kappa)) && names(list_hyper$kappa) != names_y)
         stop("Provided names for the entries of kappa do not match the colnames of Y")
     }
-
 
     if (!is.null(q)) {
 
@@ -248,14 +247,13 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family,
 
       if (list_hyper$q_hyper != q_hyper_match)
         stop(paste("The dimensions of the provided hyperparameters ",
-                   "(list_hyper) are not consistent with that of Z.\n", sep=""))
+                   "(list_hyper) are not consistent with that of Z.", sep=""))
 
       if (!is.null(names(list_hyper$phi)) && names(list_hyper$phi) != names_z)
-        stop("Provided names for the entries of phi do not match the colnames of Z")
+        stop("Provided names for the entries of phi do not match the colnames of Z.")
 
       if (!is.null(names(list_hyper$xi)) && names(list_hyper$xi) != names_z)
-        stop("Provided names for the entries of xi do not match the colnames of Z")
-
+        stop("Provided names for the entries of xi do not match the colnames of Z.")
 
     }
 
@@ -276,7 +274,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family,
 
   if (is.null(list_init)) {
 
-    if (!is.null(user_seed) & verbose) cat(paste("- Seed set to user_seed ",
+    if (!is.null(user_seed) & verbose) cat(paste("Seed set to user_seed ",
                                                  user_seed,". \n", sep=""))
 
     if (verbose) cat(paste("list_init set automatically. \n", sep=""))
@@ -345,7 +343,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family,
 
       if (list_init$q_init != q_init_match)
         stop(paste("The dimensions of the provided initial parameters ",
-                   "(list_init) are not consistent with that of Z.\n", sep=""))
+                   "(list_init) are not consistent with that of Z.", sep=""))
     }
 
   }
@@ -379,7 +377,7 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, family, list_hyper,
 
   if (list_cv$p_cv != length(bool_rmvd_x))
     stop(paste("The number of candidate predictor p provided to the function set_cv ",
-               "is not consistent with X.\n", sep=""))
+               "is not consistent with X.", sep=""))
 
   if (any(list_cv$p0_av_grid > p)) { # p has potentially been reduced because
     # of constant candidate predictors
@@ -428,7 +426,7 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv) {
 
   vec_fac_bl <- list_blocks$vec_fac_bl[!bool_rmvd_x]
 
-  tab_bl <- table(list_blocks$vec_fac_bl)
+  tab_bl <- table(vec_fac_bl)
   pres_bl <- tab_bl > 0
 
   # in case a block was removed due to the above because of bool_rmvd_x
@@ -523,7 +521,7 @@ set_blocks <- function(p, pos_bl, n_cpus, verbose = TRUE) {
 
     if (verbose) cat(paste("locus applied in parallel on ", n_bl,
                            " blocks of candidate predictors, using ", n_cpus, " CPUs.\n",
-                           "Please make sure that enough RAM is available.", sep=""))
+                           "Please make sure that enough RAM is available. \n", sep=""))
   }
 
   p_blocks <- p

@@ -35,6 +35,9 @@ check_structure_ <- function(x, struct, type, size = NULL,
   } else if (type == "logical") {
     bool_type <- is.logical(x)
     type_mess <- "a boolean "
+  } else if (type == "string") {
+    bool_type <- is.character(x)
+    type_mess <- "string "
   }
 
   bool_size <- TRUE # for case size = NULL (no assertion on the size/dimension)
@@ -57,16 +60,21 @@ check_structure_ <- function(x, struct, type, size = NULL,
 
   bool_null <- is.null(x)
 
-  na_mess <- ""
-  if (!na_ok) {
-    if (!bool_null) correct_obj <- correct_obj & !any(is.na(x))
-    na_mess <- " without missing value"
-  }
+  if (type != "string") {
+    na_mess <- ""
+    if (!na_ok) {
+      if (!bool_null) correct_obj <- correct_obj & !any(is.na(x))
+      na_mess <- " without missing value"
+    }
 
-  inf_mess <- ""
-  if (!inf_ok) {
-    if (!bool_null) correct_obj <- correct_obj & all(is.finite(x[!is.na(x)]))
-    inf_mess <- ", finite"
+    inf_mess <- ""
+    if (!inf_ok) {
+      if (!bool_null) correct_obj <- correct_obj & all(is.finite(x[!is.na(x)]))
+      inf_mess <- ", finite"
+    }
+  } else {
+    na_mess <- ""
+    inf_mess <- ""
   }
 
   null_mess <- ""
@@ -127,12 +135,23 @@ rm_constant_ <- function(mat, verbose) {
 
   if (any(bool_cst)) {
 
-    if (verbose)
-      cat(paste("- Covariate(s) ", paste(colnames(mat)[bool_cst], collapse=", "),
-                " constant across subjects. \n",
-                "Removing corresponding column(s)... \n",
-                sep=""))
     rmvd_cst <- colnames(mat)[bool_cst]
+
+    if (verbose) {
+      if (sum(bool_cst) < 50) {
+        cat(paste("Variable(s) ", paste(rmvd_cst, collapse=", "),
+                  " constant across subjects. \n",
+                  "Removing corresponding column(s) and saving its/their id(s) ",
+                  "in the function output ... \n\n",
+                  sep=""))
+      } else {
+        cat(paste(sum(bool_cst), " variables constant across subjects. \n",
+                  "Removing corresponding column(s) and saving their ids ",
+                  "in the function output ... \n\n",
+                  sep=""))
+      }
+    }
+
     mat <- mat[, !bool_cst, drop = FALSE]
   } else {
     rmvd_cst <- NULL
@@ -143,24 +162,39 @@ rm_constant_ <- function(mat, verbose) {
 
 rm_collinear_ <- function(mat, verbose) {
 
-  tmat <- t(mat)
-  bool_coll <- duplicated(tmat)
+  bool_coll <- duplicated(mat, MARGIN = 2)
 
   if (any(bool_coll)) {
-    if (verbose)
-      cat(paste("- Presence of collinear covariate(s). Removing corresponding column(s): ",
-                paste(colnames(mat)[bool_coll], collapse=", "), "\n", sep=""))
-    rmvd_coll <- colnames(mat)[bool_coll]
+
+    mat_coll <- mat[, bool_coll, drop = FALSE]
+    rmvd_coll <- colnames(mat_coll)
+
+    if (verbose) {
+      if (length(rmvd_coll) < 50) {
+        cat(paste("Presence of collinear variable(s). ",
+                  paste(rmvd_coll, collapse=", "), " redundant. \n",
+                  "Removing corresponding column(s) and saving its/their id(s) ",
+                  "in the function output ... \n",
+                  sep=""))
+      } else {
+        cat(paste("Presence of collinear variables. ", length(rmvd_coll),
+                  " redundant.\n", "Removing corresponding columns and saving ",
+                  "their ids in the function output ... \n",
+                  sep=""))
+      }
+    }
 
     # associate to each removed replicate the name of the covariate with which
-    # it is duplicated ant that is kept in the dataset
-    bool_with_coll <- duplicated(tmat[nrow(tmat):1, ])[nrow(tmat):1] & !duplicated(tmat)
-    tmat_with_coll <- t(mat[,bool_with_coll, drop = FALSE])
-    assoc_coll <- apply(mat[,bool_coll, drop = FALSE], 2, function(x)
-      rownames(tmat_with_coll)[duplicated(rbind(x, tmat_with_coll))[-1]])
+    # it is duplicated and that is kept in the dataset
+    bool_with_coll <- duplicated(mat, MARGIN = 2, fromLast = TRUE) & !bool_coll
+    mat_with_coll <- mat[, bool_with_coll, drop = FALSE]
+
+    assoc_coll <- colnames(mat_with_coll)[match(data.frame(mat_coll),
+                                                data.frame(mat_with_coll))]
     names(rmvd_coll) <- assoc_coll
 
     mat <- mat[, !bool_coll, drop = FALSE]
+
   } else {
     rmvd_coll <- NULL
   }

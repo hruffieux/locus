@@ -13,7 +13,8 @@ set_cv(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 0.001,
 \item{p}{Number of candidate predictors.}
 
 \item{n_folds}{Number of number of folds. Large folds are not recommended for
-large datasets as the procedure may become computationally expensive.}
+large datasets as the procedure may become computationally expensive. Must
+be greater than 2 and smaller than the number of observations.}
 
 \item{size_p0_av_grid}{Number of possible values of p0_av to be compared.
 Large numbers are not recommended for large datasets as the procedure may
