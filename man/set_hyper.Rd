@@ -83,7 +83,7 @@ setting its argument \code{list_hyper} to \code{NULL}.
 }
 \examples{
 user_seed <- 123
-n <- 200; p <- 250; p0 <- 70; d <- 25; d0 <- 20
+n <- 200; p <- 200; p0 <- 50; d <- 25; d0 <- 20
 list_X <- generate_snps(n = n, p = p, user_seed = user_seed)
 list_Y <- generate_phenos(n = n, d = d, var_err = 1, user_seed = user_seed)
 

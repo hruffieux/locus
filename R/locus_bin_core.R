@@ -146,9 +146,11 @@ locus_bin_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
         mat_z_mu <- Z %*% mu_alpha_vb
       }
 
-      chi_vb <- sqrt(apply(sig2_beta_vb * gam_vb, 2,
-                           function(sg_beta_k) rowSums(sweep(X, 2, sqrt(sg_beta_k), `*`)^2) ) +
-                       mat_x_m1 ^ 2 +
+      chi_vb <- sqrt(apply(m2_beta, 2,
+                           function(m2_beta_k) rowSums(sweep(X, 2, sqrt(m2_beta_k), `*`)^2) ) +
+                       mat_x_m1 ^ 2 -
+                       apply(m1_beta^2, 2,
+                             function(m1_beta_sq_k) rowSums(sweep(X, 2, sqrt(m1_beta_sq_k), `*`)^2) ) +
                        apply(sig2_alpha_vb, 2,
                              function(s_alpha_k) rowSums(sweep(Z, 2, sqrt(s_alpha_k), `*`)^2) ) +
                        mat_z_mu ^ 2 +
@@ -165,7 +167,7 @@ locus_bin_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
 
       if (verbose & (it == 1 | it %% 5 == 0))
-       cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
 
       converged <- (abs(lb_new - lb_old) < tol)
 
