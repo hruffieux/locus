@@ -43,38 +43,80 @@
 #'   regression or "\code{binomial}" for logistic regression.
 #' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
 #'   \code{NULL}.
-#' @param phi Vector of length 1 or q providing the values of hyperparameter
-#'   \eqn{\phi} for the prior distributions for the sizes of the nonzero
-#'   covariate effects, \eqn{\zeta} (vector of size q). If of length 1, the
-#'   provided value is repeated q times. Default is \code{NULL}, for \code{Z}
-#'   \code{NULL}.
-#' @param xi Vector of length 1 or q providing the values of hyperparameter
-#'   \eqn{\xi} for the prior distributions for the sizes of the nonzero
-#'   covariate effects, \eqn{\zeta} (vector of size q). If of length 1, the
-#'   provided value is repeated q times. Default is \code{NULL}, for \code{Z}
-#'   \code{NULL}.
+#' @param phi For \code{family = "gaussian"}, vector of length 1 or q providing
+#'   the values of hyperparameter \eqn{\phi} for the prior distributions for the
+#'   sizes of the nonzero covariate effects, \eqn{\zeta}. If of length 1, the
+#'   provided value is repeated q times. For \code{family = "binomial"}, matrix
+#'   of dimension q x d as the values are also specific to the responses.
+#'   Default is \code{NULL}, for \code{Z} \code{NULL}.
+#' @param xi For \code{family = "gaussian"}, vector of length 1 or q providing
+#'   the values of hyperparameter \eqn{\xi} for the prior distributions for the
+#'   sizes of the nonzero covariate effects, \eqn{\zeta}. If of length 1, the
+#'   provided value is repeated q times. For \code{family = "binomial"}, matrix
+#'   of dimension q x d as the values are also specific to the responses.
+#'   Default is \code{NULL}, for \code{Z} \code{NULL}.
 #'
 #' @return An object of class "\code{hyper}" preparing user hyperparameter in a
 #'   form that can be passed to the \code{\link{locus}} function.
 #'
 #' @examples
 #' user_seed <- 123
-#' n <- 200; p <- 400; p0 <- 100; d <- 25; d0 <- 20
+#' n <- 200; p <- 250; p0 <- 70; d <- 25; d0 <- 20
 #' list_X <- generate_snps(n = n, p = p, user_seed = user_seed)
-#' list_Y <- generate_phenos(n = n, d = d, var_err = 0.25, user_seed = user_seed)
+#' list_Y <- generate_phenos(n = n, d = d, var_err = 1, user_seed = user_seed)
 #'
-#' dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-#'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                            vec_prob_sh = 0.1, max_tot_pve = 0.9,
-#'                            user_seed = user_seed)
+#' # Gaussian outcomes
+#' dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+#'                             ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+#'                             vec_prob_sh = 0.1, family = "gaussian",
+#'                             max_tot_pve = 0.9, user_seed = user_seed)
 #'
 #' # a and b chosen so that each candidate predictor has a prior probability to
 #' # be included in the model of 1/4.
-#' list_hyper <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1, eta = 1,
-#'                        kappa = apply(dat$phenos, 2, var), family = "gaussian")
+#' list_hyper_g <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1, eta = 1,
+#'                        kappa = apply(dat_g$phenos, 2, var), family = "gaussian")
 #'
-#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, family = "gaussian",
-#'             list_hyper = list_hyper, user_seed = user_seed)
+#' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, family = "gaussian",
+#'             list_hyper = list_hyper_g, user_seed = user_seed)
+#'
+#' # Gaussian outcomes with covariates
+#' q <- 4
+#' Z <- matrix(rnorm(n * q), nrow = n)
+#'
+#' phi <- xi <- rep(1, q)
+#'
+#' list_hyper_g_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1, eta = 1,
+#'                        kappa = apply(dat_g$phenos, 2, var), family = "gaussian",
+#'                        q = q, phi = phi, xi = xi)
+#'
+#' vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
+#'                 family = "gaussian", list_hyper = list_hyper_g_z,
+#'                 user_seed = user_seed)
+#'
+#' # Binary outcomes
+#' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+#'                              ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+#'                              vec_prob_sh = 0.1, family = "binomial",
+#'                              max_tot_pve = 0.9, user_seed = user_seed)
+#'
+#' # a and b chosen so that each candidate predictor has a prior probability to
+#' # be included in the model of 1/4.
+#' list_hyper_b <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
+#'                           eta = NULL, kappa = NULL, family = "binomial")
+#'
+#' vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial",
+#'               list_hyper = list_hyper_b, user_seed = user_seed)
+#'
+#' # Binary outcomes with covariates
+#' phi <- xi <- matrix(1, nrow = q, ncol = d)
+#'
+#' list_hyper_b_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
+#'                           eta = NULL, kappa = NULL, family = "binomial",
+#'                           q = q, phi = phi, xi = xi)
+#'
+#' vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
+#'                 family = "binomial", list_hyper = list_hyper_b_z,
+#'                 user_seed = user_seed)
 #'
 #' @seealso  \code{\link{set_init}}, \code{\link{locus}}
 #'
@@ -134,16 +176,26 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
 
   if (!is.null(q)) {
 
-    if (family == "binomial")
-      stop("Logistic regression with covariates Z not implemented yet.")
+    if (family == "gaussian") {
 
-    check_structure_(phi, "vector", "double", c(1, q))
-    check_positive_(phi)
-    if (length(phi) == 1) phi <- rep(phi, q)
+      check_structure_(phi, "vector", "double", c(1, q))
+      check_positive_(phi)
+      if (length(phi) == 1) phi <- rep(phi, q)
 
-    check_structure_(xi, "vector", "double", c(1, q))
-    check_positive_(xi)
-    if (length(xi) == 1) xi <- rep(xi, q)
+      check_structure_(xi, "vector", "double", c(1, q))
+      check_positive_(xi)
+      if (length(xi) == 1) xi <- rep(xi, q)
+
+    } else {
+
+      check_structure_(phi, "matrix", "double", c(q, d))
+      check_positive_(phi)
+
+      check_structure_(xi, "matrix", "double", c(q, d))
+      check_positive_(xi)
+
+    }
+
 
   } else if (!is.null(phi) | !is.null(xi)) {
     stop("Provided q = NULL, not consitent with phi or xi being non-null.")
@@ -201,11 +253,22 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
   check_positive_(b)
 
   if (!is.null(q)) {
-    phi <- rep(1, q)
-    xi <- rep(1, q)
+
+    if (family == "gaussian") {
+
+      phi <- xi <- rep(1, q)
+
+    } else {
+
+      phi <- xi <- matrix(1, nrow = q, ncol = d)
+
+    }
+
   } else {
+
     phi <- NULL
     xi <- NULL
+
   }
 
   d_hyper <- d
@@ -270,26 +333,69 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 #'
 #' @examples
 #' user_seed <- 123; set.seed(user_seed)
-#' n <- 200; p <- 400; p0 <- 100; d <- 25; d0 <- 20
+#' n <- 200; p <- 250; p0 <- 70; d <- 25; d0 <- 20
 #' list_X <- generate_snps(n = n, p = p)
-#' list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
+#' list_Y <- generate_phenos(n = n, d = d, var_err = 1)
 #'
-#' dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+#' # Gaussian outcomes
+#' dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 #'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                            vec_prob_sh = 0.1, max_tot_pve = 0.9)
+#'                            vec_prob_sh = 0.1, family = "gaussian",
+#'                            max_tot_pve = 0.9)
 #'
 #' # gam_vb chosen so that each candidate predictor has a prior probability to
 #' # be included in the model of 1/4.
 #' gam_vb <- matrix(rbeta(p * d, shape1 = 1, shape2 = 4*d-1), nrow = p)
 #' mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
-#' tau_vb <- 1 / apply(dat$phenos, 2, var)
-#' sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
+#' tau_vb <- 1 / apply(dat_g$phenos, 2, var)
+#' sig2_beta_vb_g <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
 #'
-#' list_init <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+#' list_init_g <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_g, tau_vb,
 #'                       family = "gaussian")
 #'
-#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0,  family = "gaussian",
-#'             list_init = list_init)
+#' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  family = "gaussian",
+#'             list_init = list_init_g)
+#'
+#' # Gaussian outcomes with covariates
+#' q <- 4
+#' Z <- matrix(rnorm(n * q), nrow = n)
+#'
+#' mu_alpha_vb <- matrix(rnorm(q * d), nrow = q)
+#' sig2_alpha_vb <- 1 / matrix(rgamma(q * d, shape = 2, rate = 1), nrow = q)
+#'
+#' list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_g, tau_vb,
+#'                           family = "gaussian", q = q, mu_alpha_vb = mu_alpha_vb,
+#'                           sig2_alpha_vb = sig2_alpha_vb)
+#'
+#' vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
+#'                 family = "gaussian", list_init = list_init_g_z)
+#'
+#' # Binary outcomes
+#' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+#'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+#'                            vec_prob_sh = 0.1, family = "binomial",
+#'                            max_tot_pve = 0.9)
+#'
+#' # gam_vb chosen so that each candidate predictor has a prior probability to
+#' # be included in the model of 1/4.
+#'
+#' sig2_beta_vb_b <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
+#'
+#' list_init_b <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_b, tau_vb = NULL,
+#'                       family = "binomial", n = n)
+#'
+#' vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial",
+#'             list_init = list_init_b)
+#'
+#' # Binary outcomes with covariates
+#' list_init_b_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_b,
+#'                           tau_vb = NULL, family = "binomial", n = n, q = q,
+#'                           mu_alpha_vb = mu_alpha_vb,
+#'                           sig2_alpha_vb = sig2_alpha_vb)
+#'
+#' vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
+#'                 family = "binomial", list_init = list_init_b_z)
+#'
 #'
 #' @seealso  \code{\link{set_hyper}}, \code{\link{locus}}
 #'
@@ -343,17 +449,16 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
   if (!is.null(q)) {
 
-    if (family == "binomial")
-      stop("Logistic regression with covariates Z not implemented yet.")
-
     check_structure_(mu_alpha_vb, "matrix", "double", c(q, d))
 
     check_structure_(sig2_alpha_vb, "matrix", "double", c(q, d))
     check_positive_(sig2_alpha_vb)
 
   } else if (!is.null(mu_alpha_vb) | !is.null(sig2_alpha_vb)) {
+
     stop(paste("Provided q = NULL, not consistent with mu_alpha_vb or ",
                "sig2_alpha_vb being non-null.", sep = ""))
+
   }
 
   d_init <- d
@@ -420,16 +525,32 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family) {
 
 
   if (!is.null(q)) {
+
     mu_alpha_vb <- matrix(rnorm(q * d), nrow = q)
-    zeta2_inv_vb <- rgamma(q, shape = 1, rate = 1)
-    sig2_alpha_vb <- 1 / sapply(tau_vb,
-                                function(tau_vb_t) {
-                                  rgamma(q, shape = 2,
-                                         rate = 1 / (zeta2_inv_vb * tau_vb_t))
-                                } )
+
+    if (family == "gaussian") {
+
+      zeta2_inv_vb <- rgamma(q, shape = 1, rate = 1)
+
+      sig2_alpha_vb <- 1 / sapply(tau_vb,
+                                  function(tau_vb_t) {
+                                    rgamma(q, shape = 2,
+                                           rate = 1 / (zeta2_inv_vb * tau_vb_t))
+                                  } )
+
+    } else{
+
+      zeta2_inv_vb <- matrix(rgamma(q * d, shape = 1, rate = 1), nrow = q)
+      sig2_alpha_vb <- 1 / apply(zeta2_inv_vb, 2, function(zeta2_inv_vb_t) rgamma(q, shape = 2, rate = 1 / zeta2_inv_vb_t))
+
+    }
+
+
   } else {
+
     mu_alpha_vb <- NULL
     sig2_alpha_vb <- NULL
+
   }
 
 

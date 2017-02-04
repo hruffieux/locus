@@ -54,17 +54,19 @@ regression or "\code{binomial}" for logistic regression.}
 \item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
 
-\item{phi}{Vector of length 1 or q providing the values of hyperparameter
-\eqn{\phi} for the prior distributions for the sizes of the nonzero
-covariate effects, \eqn{\zeta} (vector of size q). If of length 1, the
-provided value is repeated q times. Default is \code{NULL}, for \code{Z}
-\code{NULL}.}
+\item{phi}{For \code{family = "gaussian"}, vector of length 1 or q providing
+the values of hyperparameter \eqn{\phi} for the prior distributions for the
+sizes of the nonzero covariate effects, \eqn{\zeta}. If of length 1, the
+provided value is repeated q times. For \code{family = "binomial"}, matrix
+of dimension q x d as the values are also specific to the responses.
+Default is \code{NULL}, for \code{Z} \code{NULL}.}
 
-\item{xi}{Vector of length 1 or q providing the values of hyperparameter
-\eqn{\xi} for the prior distributions for the sizes of the nonzero
-covariate effects, \eqn{\zeta} (vector of size q). If of length 1, the
-provided value is repeated q times. Default is \code{NULL}, for \code{Z}
-\code{NULL}.}
+\item{xi}{For \code{family = "gaussian"}, vector of length 1 or q providing
+the values of hyperparameter \eqn{\xi} for the prior distributions for the
+sizes of the nonzero covariate effects, \eqn{\zeta}. If of length 1, the
+provided value is repeated q times. For \code{family = "binomial"}, matrix
+of dimension q x d as the values are also specific to the responses.
+Default is \code{NULL}, for \code{Z} \code{NULL}.}
 }
 \value{
 An object of class "\code{hyper}" preparing user hyperparameter in a
@@ -81,22 +83,62 @@ setting its argument \code{list_hyper} to \code{NULL}.
 }
 \examples{
 user_seed <- 123
-n <- 200; p <- 400; p0 <- 100; d <- 25; d0 <- 20
+n <- 200; p <- 250; p0 <- 70; d <- 25; d0 <- 20
 list_X <- generate_snps(n = n, p = p, user_seed = user_seed)
-list_Y <- generate_phenos(n = n, d = d, var_err = 0.25, user_seed = user_seed)
+list_Y <- generate_phenos(n = n, d = d, var_err = 1, user_seed = user_seed)
 
-dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-                           ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-                           vec_prob_sh = 0.1, max_tot_pve = 0.9,
-                           user_seed = user_seed)
+# Gaussian outcomes
+dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+                            vec_prob_sh = 0.1, family = "gaussian",
+                            max_tot_pve = 0.9, user_seed = user_seed)
 
 # a and b chosen so that each candidate predictor has a prior probability to
 # be included in the model of 1/4.
-list_hyper <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1, eta = 1,
-                       kappa = apply(dat$phenos, 2, var), family = "gaussian")
+list_hyper_g <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1, eta = 1,
+                       kappa = apply(dat_g$phenos, 2, var), family = "gaussian")
 
-vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, family = "gaussian",
-            list_hyper = list_hyper, user_seed = user_seed)
+vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, family = "gaussian",
+            list_hyper = list_hyper_g, user_seed = user_seed)
+
+# Gaussian outcomes with covariates
+q <- 4
+Z <- matrix(rnorm(n * q), nrow = n)
+
+phi <- xi <- rep(1, q)
+
+list_hyper_g_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1, eta = 1,
+                       kappa = apply(dat_g$phenos, 2, var), family = "gaussian",
+                       q = q, phi = phi, xi = xi)
+
+vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
+                family = "gaussian", list_hyper = list_hyper_g_z,
+                user_seed = user_seed)
+
+# Binary outcomes
+dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+                             ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+                             vec_prob_sh = 0.1, family = "binomial",
+                             max_tot_pve = 0.9, user_seed = user_seed)
+
+# a and b chosen so that each candidate predictor has a prior probability to
+# be included in the model of 1/4.
+list_hyper_b <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
+                          eta = NULL, kappa = NULL, family = "binomial")
+
+vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial",
+              list_hyper = list_hyper_b, user_seed = user_seed)
+
+# Binary outcomes with covariates
+phi <- xi <- matrix(1, nrow = q, ncol = d)
+
+list_hyper_b_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
+                          eta = NULL, kappa = NULL, family = "binomial",
+                          q = q, phi = phi, xi = xi)
+
+vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
+                family = "binomial", list_hyper = list_hyper_b_z,
+                user_seed = user_seed)
 
 }
 \seealso{

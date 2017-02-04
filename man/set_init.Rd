@@ -66,26 +66,69 @@ its argument \code{list_init} to \code{NULL}.
 }
 \examples{
 user_seed <- 123; set.seed(user_seed)
-n <- 200; p <- 400; p0 <- 100; d <- 25; d0 <- 20
+n <- 200; p <- 250; p0 <- 70; d <- 25; d0 <- 20
 list_X <- generate_snps(n = n, p = p)
-list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
+list_Y <- generate_phenos(n = n, d = d, var_err = 1)
 
-dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+# Gaussian outcomes
+dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-                           vec_prob_sh = 0.1, max_tot_pve = 0.9)
+                           vec_prob_sh = 0.1, family = "gaussian",
+                           max_tot_pve = 0.9)
 
 # gam_vb chosen so that each candidate predictor has a prior probability to
 # be included in the model of 1/4.
 gam_vb <- matrix(rbeta(p * d, shape1 = 1, shape2 = 4*d-1), nrow = p)
 mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
-tau_vb <- 1 / apply(dat$phenos, 2, var)
-sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
+tau_vb <- 1 / apply(dat_g$phenos, 2, var)
+sig2_beta_vb_g <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
 
-list_init <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+list_init_g <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_g, tau_vb,
                       family = "gaussian")
 
-vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0,  family = "gaussian",
-            list_init = list_init)
+vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  family = "gaussian",
+            list_init = list_init_g)
+
+# Gaussian outcomes with covariates
+q <- 4
+Z <- matrix(rnorm(n * q), nrow = n)
+
+mu_alpha_vb <- matrix(rnorm(q * d), nrow = q)
+sig2_alpha_vb <- 1 / matrix(rgamma(q * d, shape = 2, rate = 1), nrow = q)
+
+list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_g, tau_vb,
+                          family = "gaussian", q = q, mu_alpha_vb = mu_alpha_vb,
+                          sig2_alpha_vb = sig2_alpha_vb)
+
+vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
+                family = "gaussian", list_init = list_init_g_z)
+
+# Binary outcomes
+dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
+                           ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
+                           vec_prob_sh = 0.1, family = "binomial",
+                           max_tot_pve = 0.9)
+
+# gam_vb chosen so that each candidate predictor has a prior probability to
+# be included in the model of 1/4.
+
+sig2_beta_vb_b <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
+
+list_init_b <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_b, tau_vb = NULL,
+                      family = "binomial", n = n)
+
+vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial",
+            list_init = list_init_b)
+
+# Binary outcomes with covariates
+list_init_b_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_b,
+                          tau_vb = NULL, family = "binomial", n = n, q = q,
+                          mu_alpha_vb = mu_alpha_vb,
+                          sig2_alpha_vb = sig2_alpha_vb)
+
+vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
+                family = "binomial", list_init = list_init_b_z)
+
 
 }
 \seealso{

@@ -60,7 +60,8 @@
 #'                association between predictor s and response t.}
 #'  \item{mu_alpha_vb}{Matrix of dimension q x d whose entries are the posterior
 #'                     mean regression coefficients for the covariates provided
-#'                     in \code{Z}. \code{NULL} if \code{Z} is \code{NULL}.}
+#'                     in \code{Z} (if \code{family = "binomial"}, also for the
+#'                     intercept). \code{NULL} if \code{Z} is \code{NULL}.}
 #'  \item{om_vb}{Vector of size p containing the posterior mean of omega. Entry
 #'              s controls the proportion of responses associated with predictor
 #'              s.}
@@ -96,6 +97,12 @@
 #' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, family = "gaussian",
 #'             user_seed = user_seed)
 #'
+#' # Gaussian outcomes with covariates
+#' q <- 4
+#' Z <- matrix(rnorm(n * q), nrow = n)
+#' vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  Z = Z,
+#'                 family = "gaussian", user_seed = user_seed)
+#'
 #' # Binary outcomes
 #' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 #'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
@@ -104,6 +111,10 @@
 #'
 #' vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial",
 #'             user_seed = user_seed)
+#'
+#' # Binary outcomes with covariates
+#' vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
+#'                 family = "binomial", user_seed = user_seed)
 #'
 #' @seealso \code{\link{set_hyper}}, \code{\link{set_init}},
 #'   \code{\link{set_cv}}, \code{\link{set_blocks}}
@@ -200,12 +211,41 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
 
   if (verbose) cat("... done. == \n\n")
 
+
+  if (family == "binomial") { # adds an intercept for logistic regression
+
+    if (is.null(q)) {
+
+      Z <- matrix(1, nrow = n, ncol = 1)
+
+      # uninformative prior
+      list_hyper$phi <- list_hyper$xi <- matrix(1e-3, nrow = 1, ncol = d)
+
+      list_init$mu_alpha_vb <- matrix(0, nrow = 1, ncol = d)
+      list_init$sig2_alpha_vb <- matrix(1, nrow = 1, ncol = d)
+
+    } else{
+
+      Z <- cbind(rep(1, n), Z)
+
+      # uninformative prior
+      list_hyper$phi <- rbind(rep(1e-3, d), list_hyper$phi)
+      list_hyper$xi <- rbind(rep(1e-3, d), list_hyper$xi)
+
+      list_init$mu_alpha_vb <- rbind(rep(0, d), list_init$mu_alpha_vb)
+      list_init$sig2_alpha_vb <- rbind(rep(1, d), list_init$sig2_alpha_vb)
+
+    }
+    colnames(Z)[1] <- "Intercept"
+  }
+
   if (verbose){
     cat(paste("============================================================== \n",
               "== Variational inference for sparse multivariate regression == \n",
               "============================================================== \n\n",
               sep = ""))
   }
+
 
   if (is.null(list_blocks)) {
 
@@ -222,8 +262,9 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
                             list_init$tau_vb, tol, maxit, batch, verbose)
     } else {
 
-      vb <- locus_bin_core_(Y, X, list_hyper, list_init$chi_vb, list_init$gam_vb,
-                            list_init$mu_beta_vb, list_init$sig2_beta_vb, tol,
+      vb <- locus_bin_core_(Y, X, Z, list_hyper, list_init$chi_vb, list_init$gam_vb,
+                            list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                            list_init$sig2_alpha_vb, list_init$sig2_beta_vb, tol,
                             maxit, batch, verbose)
     }
 
@@ -269,9 +310,10 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
                                  list_init_bl$tau_vb, tol, maxit, batch, verbose)
       } else {
 
-        vb <- locus_bin_core_(Y, X_bl, list_hyper_bl,
+        vb_bl <- locus_bin_core_(Y, X_bl, Z, list_hyper_bl,
                               list_init_bl$chi_vb, list_init_bl$gam_vb,
-                              list_init_bl$mu_beta_vb, list_init_bl$sig2_beta_vb,
+                              list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
+                              list_init_bl$sig2_alpha_vb, list_init_bl$sig2_beta_vb,
                               tol, maxit, batch, verbose)
 
       }

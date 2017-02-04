@@ -81,7 +81,8 @@ An object of class "\code{vb}" containing the following variational
                association between predictor s and response t.}
  \item{mu_alpha_vb}{Matrix of dimension q x d whose entries are the posterior
                     mean regression coefficients for the covariates provided
-                    in \code{Z}. \code{NULL} if \code{Z} is \code{NULL}.}
+                    in \code{Z} (if \code{family = "binomial"}, also for the
+                    intercept). \code{NULL} if \code{Z} is \code{NULL}.}
  \item{om_vb}{Vector of size p containing the posterior mean of omega. Entry
              s controls the proportion of responses associated with predictor
              s.}
@@ -124,6 +125,12 @@ dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, family = "gaussian",
             user_seed = user_seed)
 
+# Gaussian outcomes with covariates
+q <- 4
+Z <- matrix(rnorm(n * q), nrow = n)
+vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  Z = Z,
+                family = "gaussian", user_seed = user_seed)
+
 # Binary outcomes
 dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
@@ -132,6 +139,10 @@ dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 
 vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial",
             user_seed = user_seed)
+
+# Binary outcomes with covariates
+vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
+                family = "binomial", user_seed = user_seed)
 
 }
 \seealso{

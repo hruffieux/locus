@@ -38,9 +38,6 @@ prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose
 
   if (!is.null(Z)) {
 
-    if (family == "binomial")
-      stop("Logistic regression with covariates Z not implemented yet.")
-
     if (verbose) cat(paste("Each factor variables must be provided by adding ",
                            "to Z (nb levels - 1) variables representing their ",
                            "levels.", sep=""))
@@ -61,7 +58,6 @@ prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose
 
     list_Z_cst <- rm_constant_(Z, verbose)
     Z <- list_Z_cst$mat
-    q <- ncol(Z)
     bool_cst_z <- list_Z_cst$bool_cst
     rmvd_cst_z <- list_Z_cst$rmvd_cst
 
@@ -86,7 +82,6 @@ prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose
 
   list_X_cst <- rm_constant_(X, verbose)
   X <- list_X_cst$mat
-  p <- ncol(X)
   bool_cst_x <- list_X_cst$bool_cst
   rmvd_cst_x <- list_X_cst$rmvd_cst
 
@@ -240,8 +235,13 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family,
         q_hyper_match <- length(bool_rmvd_z)
         # remove the entries corresponding to the removed constant predictors in X
         # (if any)
-        list_hyper$phi <- list_hyper$phi[!bool_rmvd_z]
-        list_hyper$xi <- list_hyper$xi[!bool_rmvd_z]
+        if (family == "gaussian") {
+          list_hyper$phi <- list_hyper$phi[!bool_rmvd_z]
+          list_hyper$xi <- list_hyper$xi[!bool_rmvd_z]
+        } else {
+          list_hyper$phi <- list_hyper$phi[!bool_rmvd_z,, drop = FALSE]
+          list_hyper$xi <- list_hyper$xi[!bool_rmvd_z,, drop = FALSE]
+        }
       } else {
         q_hyper_match <- q
       }
@@ -366,9 +366,8 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, family, list_hyper,
                "cross-validation step. ***",
                sep=""))
 
-  if (family == "binomial") {
+  if (family == "binomial")
     stop("Cross-validation not implemented for logistic regression. Please, set list_cv to NULL.")
-  }
 
   if (!is.null(p0_av) | !is.null(list_hyper) | !is.null(list_init))
     stop(paste("p0_av, list_hyper and list_init must all be NULL if non NULL ",
