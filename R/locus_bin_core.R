@@ -146,17 +146,13 @@ locus_bin_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
         mat_z_mu <- Z %*% mu_alpha_vb
       }
 
-      chi_vb <- sqrt(apply(m2_beta, 2,
-                           function(m2_beta_k) rowSums(sweep(X, 2, sqrt(m2_beta_k), `*`)^2) ) +
-                       mat_x_m1 ^ 2 -
-                       apply(m1_beta^2, 2,
-                             function(m1_beta_sq_k) rowSums(sweep(X, 2, sqrt(m1_beta_sq_k), `*`)^2) ) +
-                       apply(sig2_alpha_vb, 2,
-                             function(s_alpha_k) rowSums(sweep(Z, 2, sqrt(s_alpha_k), `*`)^2) ) +
-                       mat_z_mu ^ 2 +
+      chi_vb <- sqrt(X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 +
+                       Z^2 %*% sig2_alpha_vb + mat_z_mu^2 +
                        2 * mat_x_m1 * mat_z_mu)
 
       psi_vb <- update_psi_bin_vb_(chi_vb)
+
+
       # % #
 
       lb_new <- lower_bound_bin_(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
@@ -174,8 +170,6 @@ locus_bin_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
       lb_old <- lb_new
       it <- it + 1
     }
-
-
 
     if (verbose) {
       if (converged) {
