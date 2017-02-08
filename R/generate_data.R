@@ -877,16 +877,18 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
     check_structure_(ind_p0, "vector", "numeric")
 
     ind_d0 <- sort(unique(ind_d0))
-    if(!all(ind_d0 %in% 1:d))
+    if (!all(ind_d0 %in% 1:d))
       stop("All indices provided in ind_d0 must be integers between 1 and d.")
 
     ind_p0 <- sort(unique(ind_p0))
-    if(!all(ind_p0 %in% 1:p))
+    if (!all(ind_p0 %in% 1:p))
       stop("All indices provided in ind_p0 must be integers between 1 and p.")
 
+    if (n != nrow(phenos))
+      stop("The numbers of observations used for list_snps and for list_phenos do not match.")
 
-    if(n != nrow(phenos))
-      stop("The number of observations used for list_snps and for list_phenos does not match.")
+    if (n == 1)
+      stop("The number of observations must be greater than 1 in order to generate associations.")
 
     phenos_act <- phenos[, ind_d0, drop = FALSE]
     snps_act <- snps[, ind_p0, drop = FALSE]
