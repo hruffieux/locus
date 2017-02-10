@@ -189,13 +189,6 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
     lb_opt <- lb_new
 
-    x_prpnst <- rowSums(gam_vb)
-    names(x_prpnst) <- colnames(X)
-
-    y_prpnst <- colSums(gam_vb)
-    names(y_prpnst) <- colnames(Y)
-
-
     if (full_output) { # for internal use only
       create_named_list_(mu_alpha_vb, sig2_alpha_vb, zeta2_inv_vb, sig2_beta_vb,
                          sig2_inv_vb, tau_vb, gam_vb, eta, kappa, lambda, nu,
@@ -211,10 +204,8 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
       names(om_vb) <- names_x
       rownames(mu_alpha_vb) <- names_z
       colnames(mu_alpha_vb) <- names_y
-      names(x_prpnst) <- names_x
-      names(y_prpnst) <- names_y
 
-      create_named_list_(lb_opt, gam_vb, om_vb, mu_alpha_vb, x_prpnst, y_prpnst)
+      create_named_list_(lb_opt, gam_vb, om_vb, mu_alpha_vb)
     }
   })
 }

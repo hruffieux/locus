@@ -65,12 +65,6 @@
 #'  \item{om_vb}{Vector of size p containing the posterior mean of omega. Entry
 #'              s controls the proportion of responses associated with predictor
 #'              s.}
-#'  \item{x_prpnst}{Vector of size p containing the sums over the colums of
-#'                  \code{gam_vb}, used to evaluate the propensity for the
-#'                  candidate predictors to be involved in associations.}
-#'  \item{y_prpnst}{Vector of size d containing the sums over the rows of
-#'                  \code{gam_vb}, used to evaluate the propensity for the
-#'                  responses to be involved in associations.}
 #'  \item{rmvd_cst_x, rmvd_cst_z}{Vectors containing the indices of constant
 #'                                variables in X (resp. Z) removed prior to the
 #'                                analysis.}
@@ -323,14 +317,13 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
 
     list_vb <- parallel::mclapply(1:n_bl, function(k) locus_bl_(k), mc.cores = n_cpus)
 
-    names_vec <- c("lb_opt", "om_vb", "x_prpnst", "p_star")
-    names_mat <- c("gam_vb", "y_prpnst")
+    names_vec <- c("lb_opt", "om_vb", "p_star")
+    names_mat <- "gam_vb"
 
     vb <- c(lapply(names_vec, function(key) do.call(c, lapply(list_vb, `[[`, key))),
             lapply(names_mat, function(key) do.call(rbind, lapply(list_vb, `[[`, key))))
 
     names(vb) <- c(names_vec, names_mat)
-    vb$y_prpnst <- colSums(vb$y_prpnst)
 
   }
 

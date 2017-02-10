@@ -183,9 +183,6 @@ locus_bin_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
     }
 
     lb_opt <- lb_new
-    x_prpnst <- rowSums(gam_vb)
-    y_prpnst <- colSums(gam_vb)
-
 
     if (full_output) { # for internal use only
       create_named_list_(a, a_vb, b, b_vb, chi_vb, gam_vb, lambda, nu, phi,
@@ -203,10 +200,8 @@ locus_bin_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
       names(om_vb) <- names_x
       rownames(mu_alpha_vb) <- names_z
       colnames(mu_alpha_vb) <- names_y
-      names(x_prpnst) <- names_x
-      names(y_prpnst) <- names_y
 
-      create_named_list_(lb_opt, gam_vb, om_vb, mu_alpha_vb, x_prpnst, y_prpnst)
+      create_named_list_(lb_opt, gam_vb, om_vb, mu_alpha_vb)
     }
   })
 

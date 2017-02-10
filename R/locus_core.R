@@ -148,9 +148,6 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
     }
 
     lb_opt <- lb_new
-    x_prpnst <- rowSums(gam_vb)
-    y_prpnst <- colSums(gam_vb)
-
 
     if (full_output) { # for internal use only
       create_named_list_(sig2_beta_vb, sig2_inv_vb, tau_vb, gam_vb,
@@ -163,10 +160,8 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
       rownames(gam_vb) <- names_x
       colnames(gam_vb) <- names_y
       names(om_vb) <- names_x
-      names(x_prpnst) <- names_x
-      names(y_prpnst) <- names_y
 
-      create_named_list_(lb_opt, gam_vb, om_vb, x_prpnst, y_prpnst)
+      create_named_list_(lb_opt, gam_vb, om_vb)
     }
   })
 

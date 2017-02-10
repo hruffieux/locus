@@ -86,12 +86,6 @@ An object of class "\code{vb}" containing the following variational
  \item{om_vb}{Vector of size p containing the posterior mean of omega. Entry
              s controls the proportion of responses associated with predictor
              s.}
- \item{x_prpnst}{Vector of size p containing the sums over the colums of
-                 \code{gam_vb}, used to evaluate the propensity for the
-                 candidate predictors to be involved in associations.}
- \item{y_prpnst}{Vector of size d containing the sums over the rows of
-                 \code{gam_vb}, used to evaluate the propensity for the
-                 responses to be involved in associations.}
  \item{rmvd_cst_x, rmvd_cst_z}{Vectors containing the indices of constant
                                variables in X (resp. Z) removed prior to the
                                analysis.}
