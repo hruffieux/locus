@@ -60,7 +60,7 @@ check_structure_ <- function(x, struct, type, size = NULL,
 
   bool_null <- is.null(x)
 
-  if (type != "string") {
+  if (!is.list(x) & type != "string") {
     na_mess <- ""
     if (!na_ok) {
       if (!bool_null) correct_obj <- correct_obj & !any(is.na(x))
