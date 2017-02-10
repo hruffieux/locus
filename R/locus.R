@@ -297,19 +297,20 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
           vb_bl <- locus_core_(Y, X_bl, list_hyper_bl,
                                list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
                                list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                               tol, maxit, batch, verbose)
+                               tol, maxit, batch, verbose = FALSE)
         else
           vb_bl <- locus_z_core_(Y, X_bl, Z, list_hyper_bl, list_init_bl$gam_vb,
                                  list_init_bl$mu_alpha_vb,list_init_bl$mu_beta_vb,
-                                 list_init_bl$sig2_alpha_vb, list_init_bl$sig2_beta_vb,
-                                 list_init_bl$tau_vb, tol, maxit, batch, verbose)
+                                 list_init_bl$sig2_alpha_vb,
+                                 list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
+                                 tol, maxit, batch, verbose = FALSE)
       } else {
 
         vb_bl <- locus_bin_core_(Y, X_bl, Z, list_hyper_bl,
                               list_init_bl$chi_vb, list_init_bl$gam_vb,
                               list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
                               list_init_bl$sig2_alpha_vb, list_init_bl$sig2_beta_vb,
-                              tol, maxit, batch, verbose)
+                              tol, maxit, batch, verbose = FALSE)
 
       }
       vb_bl
