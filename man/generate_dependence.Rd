@@ -103,12 +103,12 @@ list_phenos <- generate_phenos(n, d, var_err = 1, cor_type = cor_type,
                                vec_rho = vec_rho, n_cpus = 2)
 
 # Gaussian phenotypes
-dat <- generate_dependence(list_snps, list_phenos, ind_d0 = sample(1:d, d0),
+dat_g <- generate_dependence(list_snps, list_phenos, ind_d0 = sample(1:d, d0),
                            ind_p0 = sample(1:p, p0), vec_prob_sh = 0.05,
                            family = "gaussian", max_tot_pve = 0.5)
 
 # Binary phenotypes
-dat <- generate_dependence(list_snps, list_phenos, ind_d0 = sample(1:d, d0),
+dat_b <- generate_dependence(list_snps, list_phenos, ind_d0 = sample(1:d, d0),
                            ind_p0 = sample(1:p, p0), vec_prob_sh = 0.05,
                            family = "binomial", max_tot_pve = 0.5)
 
