@@ -1,6 +1,6 @@
 prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose) {
 
-  stopifnot(family %in% c("gaussian", "binomial"))
+  stopifnot(family %in% c("gaussian", "binomial-logit"))
 
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
 
@@ -310,7 +310,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family,
       stop(paste("The dimensions (p) of the provided initial parameters ",
                  "(list_init) are not consistent with that of X.\n", sep=""))
 
-    if (family == "binomial" && list_init$n_init != n)
+    if (family == "binomial-logit" && list_init$n_init != n)
       stop(paste("The number of observations provided when setting the initial ",
                  "parameters (list_init) is not consistent with that of X.\n", sep=""))
 
@@ -324,7 +324,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family,
       list_init$gam_vb <- list_init$gam_vb[!bool_rmvd_x,, drop = FALSE]
       list_init$mu_beta_vb <- list_init$mu_beta_vb[!bool_rmvd_x,, drop = FALSE]
 
-      if (family == "binomial")
+      if (family == "binomial-logit")
         list_init$sig2_beta_vb <- list_init$sig2_beta_vb[!bool_rmvd_x,, drop = FALSE]
 
     }
@@ -364,7 +364,7 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, family, list_hyper,
                "cross-validation step. ***",
                sep=""))
 
-  if (family == "binomial")
+  if (family == "binomial-logit")
     stop("Cross-validation not implemented for logistic regression. Please, set list_cv to NULL.")
 
   if (!is.null(p0_av) | !is.null(list_hyper) | !is.null(list_init))

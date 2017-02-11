@@ -49,4 +49,3 @@ vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0,
 \seealso{
 \code{\link{locus}}
 }
-

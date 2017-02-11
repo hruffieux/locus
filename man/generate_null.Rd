@@ -35,7 +35,7 @@ covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 after transformation to dummy coding. No intercept must be supplied.}
 
 \item{family}{Response type. Must be either "\code{gaussian}" for linear
-regression or "\code{binomial}" for logistic regression.}
+regression or "\code{binomial-logit}" for logistic regression.}
 
 \item{list_hyper}{An object of class "\code{hyper}" containing the model
 hyperparameters. Must be filled using the \code{\link{set_hyper}}
@@ -108,4 +108,3 @@ list_perm <- generate_null(n_perm = 10, dat$phenos, dat$snps, p0_av = p0,
 \seealso{
 \code{\link{locus}}
 }
-

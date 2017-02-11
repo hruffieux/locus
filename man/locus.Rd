@@ -28,7 +28,7 @@ covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 after transformation to dummy coding. No intercept must be supplied.}
 
 \item{family}{Response type. Must be either "\code{gaussian}" for linear
-regression or "\code{binomial}" for logistic regression.}
+regression or "\code{binomial-logit}" for logistic regression.}
 
 \item{list_hyper}{An object of class "\code{hyper}" containing the model
 hyperparameters. Must be filled using the \code{\link{set_hyper}}
@@ -81,7 +81,7 @@ An object of class "\code{vb}" containing the following variational
                association between predictor s and response t.}
  \item{mu_alpha_vb}{Matrix of dimension q x d whose entries are the posterior
                     mean regression coefficients for the covariates provided
-                    in \code{Z} (if \code{family = "binomial"}, also for the
+                    in \code{Z} (if \code{family = "binomial-logit"}, also for the
                     intercept). \code{NULL} if \code{Z} is \code{NULL}.}
  \item{om_vb}{Vector of size p containing the posterior mean of omega. Entry
              s controls the proportion of responses associated with predictor
@@ -131,19 +131,18 @@ vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  Z = Z,
 # Binary outcomes
 dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-                           vec_prob_sh = 0.1, family = "binomial",
+                           vec_prob_sh = 0.1, family = "binomial-logit",
                            max_tot_pve = 0.9)
 
-vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial",
+vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial-logit",
             user_seed = user_seed)
 
 # Binary outcomes with covariates
 vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
-                family = "binomial", user_seed = user_seed)
+                family = "binomial-logit", user_seed = user_seed)
 
 }
 \seealso{
 \code{\link{set_hyper}}, \code{\link{set_init}},
   \code{\link{set_cv}}, \code{\link{set_blocks}}
 }
-

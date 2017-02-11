@@ -63,4 +63,3 @@ list_phenos <- generate_phenos(n, d, var_err, cor_type = cor_type,
 \code{\link{generate_snps}}, \code{\link{replicate_real_snps}},
   \code{\link{replicate_real_phenos}}, \code{\link{generate_dependence}}
 }
-

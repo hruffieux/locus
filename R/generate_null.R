@@ -24,7 +24,7 @@
 #'   covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 #'   after transformation to dummy coding. No intercept must be supplied.
 #' @param family Response type. Must be either "\code{gaussian}" for linear
-#'   regression or "\code{binomial}" for logistic regression.
+#'   regression or "\code{binomial-logit}" for logistic regression.
 #' @param list_hyper An object of class "\code{hyper}" containing the model
 #'   hyperparameters. Must be filled using the \code{\link{set_hyper}}
 #'   function or must be \code{NULL} for default hyperparameters.

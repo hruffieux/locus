@@ -55,8 +55,8 @@ vb <- locus(Y = Y, X = X, p0_av = p0_av, family = "gaussian")
 vb_z <- locus(Y = Y, X = X, p0_av = p0_av, Z = Z, family = "gaussian")
 
 # Binomial outcomes, no covariates
-vb_bin <- locus(Y = Y_bin, X = X, p0_av = p0_av, family = "binomial")
+vb_logit <- locus(Y = Y_bin, X = X, p0_av = p0_av, family = "binomial-logit")
 
 # Binomial outcomes, with covariates
-vb_bin_z <- locus(Y = Y_bin, X = X, p0_av = p0_av, Z = Z, family = "binomial")
+vb_logit_z <- locus(Y = Y_bin, X = X, p0_av = p0_av, Z = Z, family = "binomial-logit")
 

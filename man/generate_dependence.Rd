@@ -32,7 +32,7 @@ active SNP is associated with an additional active phenotype in a given
 phenotypic block. See Details section.}
 
 \item{family}{Distribution used to generate the phenotypes. Must be either
-"\code{gaussian}" or "\code{binomial}" for binary phenotypes.}
+"\code{gaussian}" or "\code{binomial-logit}" for binary phenotypes.}
 
 \item{pve_per_snp}{Average proportion of phenotypic variance explained by
 each active SNP (for an active phenotype). Must be \code{NULL} if
@@ -110,11 +110,10 @@ dat_g <- generate_dependence(list_snps, list_phenos, ind_d0 = sample(1:d, d0),
 # Binary phenotypes
 dat_b <- generate_dependence(list_snps, list_phenos, ind_d0 = sample(1:d, d0),
                            ind_p0 = sample(1:p, p0), vec_prob_sh = 0.05,
-                           family = "binomial", max_tot_pve = 0.5)
+                           family = "binomial-logit", max_tot_pve = 0.5)
 
 }
 \seealso{
 \code{\link{generate_snps}}, \code{\link{replicate_real_snps}},
   \code{\link{generate_phenos}}, \code{\link{replicate_real_phenos}}
 }
-

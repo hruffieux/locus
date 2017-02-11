@@ -20,7 +20,7 @@ parameter yielding regression coefficient estimates for predictor-response
 pairs included in the model.}
 
 \item{sig2_beta_vb}{Vector of size d, for \code{family = "gaussian"}, or
-matrix of size p x d, for \code{family = "binomial"}, with initial values
+matrix of size p x d, for \code{family = "binomial-logit"}, with initial values
 forthe variational parameter yielding estimates of effect variances for
 predictor-response pairs included in the model. For
 \code{family = "gaussian"}, these values are the same for all predictors
@@ -30,12 +30,12 @@ variational algorithm).}
 \item{tau_vb}{Vector of size d with initial values, for
 \code{family = "gaussian"}, for the variational parameter yielding
 estimates for the response residual precisions. Must be \code{NULL} for
-\code{family = "binomial"}.}
+\code{family = "binomial-logit"}.}
 
 \item{family}{Response type. Must be either "\code{gaussian}" for linear
-regression or "\code{binomial}" for logistic regression.}
+regression or "\code{binomial-logit}" for logistic regression.}
 
-\item{n}{Number of observations. Used only when \code{family = "binomial"}.}
+\item{n}{Number of observations. Used only when \code{family = "binomial-logit"}.}
 
 \item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
@@ -106,7 +106,7 @@ vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
 # Binary outcomes
 dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-                           vec_prob_sh = 0.1, family = "binomial",
+                           vec_prob_sh = 0.1, family = "binomial-logit",
                            max_tot_pve = 0.9)
 
 # gam_vb chosen so that each candidate predictor has a prior probability to
@@ -115,23 +115,22 @@ dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 sig2_beta_vb_b <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
 
 list_init_b <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_b, tau_vb = NULL,
-                      family = "binomial", n = n)
+                      family = "binomial-logit", n = n)
 
-vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial",
+vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial-logit",
             list_init = list_init_b)
 
 # Binary outcomes with covariates
 list_init_b_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_b,
-                          tau_vb = NULL, family = "binomial", n = n, q = q,
+                          tau_vb = NULL, family = "binomial-logit", n = n, q = q,
                           mu_alpha_vb = mu_alpha_vb,
                           sig2_alpha_vb = sig2_alpha_vb)
 
 vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
-                family = "binomial", list_init = list_init_b_z)
+                family = "binomial-logit", list_init = list_init_b_z)
 
 
 }
 \seealso{
 \code{\link{set_hyper}}, \code{\link{locus}}
 }
-

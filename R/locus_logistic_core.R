@@ -1,4 +1,4 @@
-locus_bin_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
+locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
                             mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, tol, maxit,
                             batch, verbose, full_output = FALSE) {
 
@@ -16,7 +16,7 @@ locus_bin_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
     m1_beta <- mu_beta_vb * gam_vb
     m2_beta <- (sig2_beta_vb + mu_beta_vb ^ 2) * gam_vb
 
-    psi_vb <- update_psi_bin_vb_(chi_vb)
+    psi_vb <- update_psi_logit_vb_(chi_vb)
 
     rowsums_gam <- rowSums(gam_vb)
 
@@ -26,7 +26,7 @@ locus_bin_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
     lb_old <- -Inf
     it <- 1
 
-    phi_vb <- update_phi_bin_vb_(phi)
+    phi_vb <- update_phi_logit_vb_(phi)
 
     while ((!converged) & (it <= maxit)) {
 
@@ -34,14 +34,14 @@ locus_bin_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
         cat(paste("Iteration ", format(it), "... \n", sep = ""))
 
       # % #
-      xi_vb <- update_xi_bin_vb_(xi, m2_alpha)
+      xi_vb <- update_xi_logit_vb_(xi, m2_alpha)
 
       zeta2_inv_vb <- phi_vb / xi_vb
       # % #
 
       # % #
-      lambda_vb <- update_lambda_bin_vb_(lambda, gam_vb)
-      nu_vb <- update_nu_bin_vb_(nu, m2_beta)
+      lambda_vb <- update_lambda_logit_vb_(lambda, gam_vb)
+      nu_vb <- update_nu_logit_vb_(nu, m2_beta)
 
       sig2_inv_vb <- lambda_vb / nu_vb
       # % #
@@ -150,12 +150,12 @@ locus_bin_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
                        Z^2 %*% sig2_alpha_vb + mat_z_mu^2 +
                        2 * mat_x_m1 * mat_z_mu)
 
-      psi_vb <- update_psi_bin_vb_(chi_vb)
+      psi_vb <- update_psi_logit_vb_(chi_vb)
 
 
       # % #
 
-      lb_new <- lower_bound_bin_(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
+      lb_new <- lower_bound_logit_(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
                                  lambda, nu, phi, phi_vb, psi_vb, sig2_alpha_vb,
                                  sig2_beta_vb, sig2_inv_vb, xi, zeta2_inv_vb,
                                  mu_alpha_vb, m1_beta, m2_alpha, m2_beta, mat_x_m1,
@@ -208,19 +208,19 @@ locus_bin_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 }
 
 
-update_phi_bin_vb_ <- function(phi) {
+update_phi_logit_vb_ <- function(phi) {
 
   phi + 1 / 2
 
 }
 
-update_xi_bin_vb_ <- function(xi, m2_alpha) {
+update_xi_logit_vb_ <- function(xi, m2_alpha) {
 
   xi + m2_alpha / 2
 
 }
 
-update_psi_bin_vb_ <- function(chi_vb) {
+update_psi_logit_vb_ <- function(chi_vb) {
 
   sig <- function(chi) {
     1 / (1 + exp(-chi))
@@ -230,28 +230,28 @@ update_psi_bin_vb_ <- function(chi_vb) {
 
 }
 
-update_lambda_bin_vb_ <- function(lambda, gam_vb) {
+update_lambda_logit_vb_ <- function(lambda, gam_vb) {
 
   lambda + colSums(gam_vb) / 2
 
 }
 
-update_nu_bin_vb_ <- function(nu, m2_beta) {
+update_nu_logit_vb_ <- function(nu, m2_beta) {
 
   nu + colSums(m2_beta) / 2
 
 }
 
-lower_bound_bin_ <- function(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
+lower_bound_logit_ <- function(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
                              lambda, nu, phi, phi_vb, psi_vb, sig2_alpha_vb,
                              sig2_beta_vb, sig2_inv_vb, xi, zeta2_inv_vb,
                              mu_alpha_vb, m1_beta, m2_alpha, m2_beta, mat_x_m1,
                              mat_z_mu) {
 
-  lambda_vb <- update_lambda_bin_vb_(lambda, gam_vb)
-  nu_vb <- update_nu_bin_vb_(nu, m2_beta)
+  lambda_vb <- update_lambda_logit_vb_(lambda, gam_vb)
+  nu_vb <- update_nu_logit_vb_(nu, m2_beta)
 
-  xi_vb <- update_xi_bin_vb_(xi, m2_alpha)
+  xi_vb <- update_xi_logit_vb_(xi, m2_alpha)
 
   log_sig2_inv_vb <- digamma(lambda_vb) - log(nu_vb)
   log_zeta2_inv_vb <- digamma(phi_vb) - log(xi_vb)

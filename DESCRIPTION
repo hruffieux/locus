@@ -23,5 +23,5 @@ LazyData: TRUE
 Imports:
     Matrix (>= 1.2-2),
     parallel
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
 Suggests: testthat

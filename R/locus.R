@@ -19,7 +19,7 @@
 #'   covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 #'   after transformation to dummy coding. No intercept must be supplied.
 #' @param family Response type. Must be either "\code{gaussian}" for linear
-#'   regression or "\code{binomial}" for logistic regression.
+#'   regression or "\code{binomial-logit}" for logistic regression.
 #' @param list_hyper An object of class "\code{hyper}" containing the model
 #'   hyperparameters. Must be filled using the \code{\link{set_hyper}}
 #'   function or must be \code{NULL} for default hyperparameters.
@@ -60,7 +60,7 @@
 #'                association between predictor s and response t.}
 #'  \item{mu_alpha_vb}{Matrix of dimension q x d whose entries are the posterior
 #'                     mean regression coefficients for the covariates provided
-#'                     in \code{Z} (if \code{family = "binomial"}, also for the
+#'                     in \code{Z} (if \code{family = "binomial-logit"}, also for the
 #'                     intercept). \code{NULL} if \code{Z} is \code{NULL}.}
 #'  \item{om_vb}{Vector of size p containing the posterior mean of omega. Entry
 #'              s controls the proportion of responses associated with predictor
@@ -103,15 +103,15 @@
 #' # Binary outcomes
 #' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 #'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                            vec_prob_sh = 0.1, family = "binomial",
+#'                            vec_prob_sh = 0.1, family = "binomial-logit",
 #'                            max_tot_pve = 0.9)
 #'
-#' vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial",
+#' vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial-logit",
 #'             user_seed = user_seed)
 #'
 #' # Binary outcomes with covariates
 #' vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
-#'                 family = "binomial", user_seed = user_seed)
+#'                 family = "binomial-logit", user_seed = user_seed)
 #'
 #' @seealso \code{\link{set_hyper}}, \code{\link{set_init}},
 #'   \code{\link{set_cv}}, \code{\link{set_blocks}}
@@ -207,7 +207,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
   if (verbose) cat("... done. == \n\n")
 
 
-  if (family == "binomial") { # adds an intercept for logistic regression
+  if (family == "binomial-logit") { # adds an intercept for logistic regression
 
     if (is.null(q)) {
 
@@ -257,7 +257,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
                             list_init$tau_vb, tol, maxit, batch, verbose)
     } else {
 
-      vb <- locus_bin_core_(Y, X, Z, list_hyper, list_init$chi_vb, list_init$gam_vb,
+      vb <- locus_logit_core_(Y, X, Z, list_hyper, list_init$chi_vb, list_init$gam_vb,
                             list_init$mu_alpha_vb, list_init$mu_beta_vb,
                             list_init$sig2_alpha_vb, list_init$sig2_beta_vb, tol,
                             maxit, batch, verbose)
@@ -279,7 +279,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
       list_init$p_init <- length(pos_bl)
       list_init$gam_vb <- list_init$gam_vb[pos_bl,, drop = FALSE]
       list_init$mu_beta_vb <- list_init$mu_beta_vb[pos_bl,, drop = FALSE]
-      if (family == "binomial")
+      if (family == "binomial-logit")
         list_init$sig2_beta_vb <- list_init$sig2_beta_vb[pos_bl,, drop = FALSE]
 
       list_init
@@ -306,7 +306,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
                                  tol, maxit, batch, verbose = FALSE)
       } else {
 
-        vb_bl <- locus_bin_core_(Y, X_bl, Z, list_hyper_bl,
+        vb_bl <- locus_logit_core_(Y, X_bl, Z, list_hyper_bl,
                               list_init_bl$chi_vb, list_init_bl$gam_vb,
                               list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
                               list_init_bl$sig2_alpha_vb, list_init_bl$sig2_beta_vb,
