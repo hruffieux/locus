@@ -129,6 +129,27 @@ log_sum_exp_mat_ <- function(list_vec) { # avoid numerical underflow or overflow
 
 }
 
+inv_mills_ratio_ <- function(Y, U) {
+
+  m <- matrix(NA, nrow = nrow(U), ncol = ncol(U))
+
+  U_1 <- U[Y==1]
+  m_1 <- exp(dnorm(U_1, log = TRUE) - pnorm(U_1, log.p = TRUE))
+  m_1[m_1 < -U_1] <- -U_1
+
+  m[Y==1] <- m_1
+
+
+  U_0 <- U[Y==0]
+  m_0 <- - exp(dnorm(U[Y==0], log = TRUE) - pnorm(U[Y==0], lower.tail = FALSE, log.p = TRUE))
+  m_0[m_0 > -U_0] <- -U_0
+
+  m[Y==0] <- m_0
+
+  m
+
+}
+
 rm_constant_ <- function(mat, verbose) {
 
   bool_cst <- is.nan(colSums(mat))

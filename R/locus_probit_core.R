@@ -48,9 +48,8 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
       sig2_inv_vb <- lambda_vb / nu_vb
       # % #
 
-      #sig2_alpha_vb <- 1 / (n - 1 + zeta2_inv_vb)
       sig2_alpha_vb <- n - 1 + zeta2_inv_vb
-      sig2_alpha_vb[1, ] <- sig2_alpha_vb[1, ] + 1 # the first column of Z was not scaled, it is the intercept!
+      sig2_alpha_vb[1, ] <- sig2_alpha_vb[1, ] + 1 # the first column of Z was not scaled, it is the intercept.
       sig2_alpha_vb <- 1 / sig2_alpha_vb
       sig2_beta_vb <- 1 / (n - 1 + sig2_inv_vb)
 
@@ -160,10 +159,8 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
                                     sig2_inv_vb, xi, zeta2_inv_vb, mu_alpha_vb,
                                     m1_beta, m2_alpha, m2_beta, mat_x_m1, mat_z_mu)
 
-      #if (verbose & (it == 1 | it %% 5 == 0))
-      #  cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
-      cat(paste("Lower bound = ", lb_new, "\n\n", sep = ""))
-
+      if (verbose & (it == 1 | it %% 5 == 0))
+        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
 
       converged <- (abs(lb_new - lb_old) < tol)
 
@@ -210,16 +207,8 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
 
 update_W_probit_vb_ <- function(Y, mat_z_mu, mat_x_m1) {
 
-  eps <- .Machine$double.eps # to control the denominator when R rounds
-                             # pnorm(mat_z_mu + mat_x_m1) to 0 or one
-  mat_z_mu + mat_x_m1 + (-1)^(1-Y) *
-    dnorm(mat_z_mu + mat_x_m1) / ((pnorm(mat_z_mu + mat_x_m1) + eps)^Y * (1 - pnorm(mat_z_mu + mat_x_m1) + eps)^(1-Y))
+  mat_z_mu + mat_x_m1 + inv_mills_ratio_(Y, mat_z_mu + mat_x_m1)
 
-  # effectively deal with the precision of pnorm # not ok take e.g. u <- -50 y <- 1
-  # mat_z_mu + mat_x_m1 + (-1)^(1-Y) *
-  #   exp(dnorm(mat_z_mu + mat_x_m1, log = TRUE) -
-  #         Y * pnorm(mat_z_mu + mat_x_m1, log.p = TRUE) -
-  #         (1-Y) * pnorm(mat_z_mu + mat_x_m1, lower.tail = TRUE, log.p = TRUE))
 }
 
 
@@ -243,18 +232,9 @@ lower_bound_probit_ <- function(Y, W, X, Z, a, a_vb, b, b_vb, gam_vb, lambda, nu
 
   U <- mat_x_m1 + mat_z_mu
   W_2 <- 1 + U * W
-  #W_2 <- 1 + U^2 + (-1)^Y * U * dnorm(U) / ((pnorm(U) + eps)^Y * (1 - pnorm(U) + eps)^(1 - Y)) +
-  #  2 * (-1)^(1-Y) * U * dnorm(U) / ((pnorm(U) + eps)^Y * (1 - pnorm(U) + eps)^(1 - Y))
-
-
-  #H <- log((2 * pi * exp(1))^(1/2) * (-1)^(1-Y) * dnorm(U) / (W - U + eps)) - U * (W - U) / 2 # negative log argument
-  #H <- log((2 * pi * exp(1))^(1/2) * exp(dnorm(U, log = TRUE) - log((-1)^(1-Y) * (W - U) + eps))) - U * (W - U) / 2
-
-  #H <- log((2 * pi * exp(1))^(1/2) * (pnorm(U) + eps)^Y * (1 - pnorm(U) + eps)^(1 - Y)) +
-   # (-1)^Y  * U * dnorm(U) / ((pnorm(U) + eps)^Y * (1 - pnorm(U) + eps)^(1 - Y))/2
-
-  H <- log((2 * pi * exp(1))^(1/2) * (pnorm(U) + eps)^Y * (1 - pnorm(U) + eps)^(1 - Y)) - U * (W - U) / 2 ###
-
+  H <- log((2 * pi * exp(1))^(1/2) *
+             exp(Y * pnorm(U, log.p = TRUE) + (1-Y) * pnorm(U, lower.tail = FALSE, log.p = TRUE))) -
+    U * inv_mills_ratio_(Y, U) / 2
 
   A <- sum(- log(2*pi) / 2 - W_2 / 2 +
              W * (mat_x_m1 + mat_z_mu)  -
@@ -262,8 +242,8 @@ lower_bound_probit_ <- function(Y, W, X, Z, a, a_vb, b, b_vb, gam_vb, lambda, nu
                 Z^2 %*% m2_alpha + mat_z_mu^2 - Z^2 %*% mu_alpha_vb^2 +
                 2 * mat_x_m1 * mat_z_mu) / 2 + H)
 
-
-  #A <- sum(Y * log(pnorm(U) + eps) + (1 - Y) * log(1 - pnorm(U) + eps))
+  #A <- sum(Y * log(pnorm(U) + eps) + (1 - Y) * log(1 - pnorm(U) + eps)) # if one wants a bound for p(Y)
+                                                                         # rather than for p(W) (W Gaussian latent variable)
 
   B <- sum(sweep(gam_vb, 2, log_sig2_inv_vb, `*`) / 2 -
               sweep(m2_beta, 2, sig2_inv_vb, `*`) / 2 +
