@@ -442,7 +442,7 @@ generate_phenos <- function(n, d, var_err, cor_type = NULL, vec_rho = NULL,
 #'   phenotypic variables), without missing values.
 #' @param input_family Phenotype distribution assumption for the phenotypes
 #'   provided in real_phenos. Must be either "\code{gaussian}" or
-#'   "\code{binomial-logit}" for binary phenotypes.
+#'   "\code{binomial}" for binary phenotypes.
 #' @param bl_lgth Number of variables per block for reproducing the dependence
 #'   structure of real phenotypes. Must be between 2 and d. Must be small enough
 #'   (e.g. 1000) for tractability reasons. Default is \code{NULL} for a single
@@ -490,15 +490,15 @@ replicate_real_phenos <- function(n, real_phenos, input_family = "gaussian",
     set.seed(user_seed)
   }
 
-  stopifnot(input_family %in% c("gaussian", "binomial-logit"))
+  stopifnot(input_family %in% c("gaussian", "binomial"))
 
   check_structure_(real_phenos, "matrix", "numeric")
 
   var_err <- apply(real_phenos, 2, var)
 
-  if (input_family == "binomial-logit") {
+  if (input_family == "binomial") {
     if(!identical(as.vector(real_phenos), as.numeric(as.logical(real_phenos))))
-      stop("real_phenos must be a binary matrix when family is set to binomial-logit.")
+      stop("real_phenos must be a binary matrix when family is set to binomial.")
   }
 
   check_structure_(n_cpus, "vector", "numeric", 1)
@@ -778,7 +778,7 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 #'   active SNP is associated with an additional active phenotype in a given
 #'   phenotypic block. See Details section.
 #' @param family Distribution used to generate the phenotypes. Must be either
-#' "\code{gaussian}" or "\code{binomial-logit}" for binary phenotypes.
+#' "\code{gaussian}" or "\code{binomial}" for binary phenotypes.
 #' @param pve_per_snp Average proportion of phenotypic variance explained by
 #'   each active SNP (for an active phenotype). Must be \code{NULL} if
 #'   \code{max_tot_pve} is provided. See Details section.
@@ -822,7 +822,7 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 #' # Binary phenotypes
 #' dat_b <- generate_dependence(list_snps, list_phenos, ind_d0 = sample(1:d, d0),
 #'                            ind_p0 = sample(1:p, p0), vec_prob_sh = 0.05,
-#'                            family = "binomial-logit", max_tot_pve = 0.5)
+#'                            family = "binomial", max_tot_pve = 0.5)
 #'
 #' @export
 #'
@@ -837,7 +837,7 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
     set.seed(user_seed)
   }
 
-  stopifnot(family %in% c("gaussian", "binomial-logit"))
+  stopifnot(family %in% c("gaussian", "binomial"))
 
   if (!is.null(pve_per_snp) & !is.null(max_tot_pve))
     stop("Either pve_per_snp or max_tot_pve must be NULL.")
@@ -898,7 +898,7 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
     with(list_eff, {
       phenos <- phenos + snps %*% beta
 
-      if (family == "binomial-logit")
+      if (family == "binomial")
         phenos <- ifelse(phenos > 0, 1, 0)
 
       list_data <- create_named_list_(phenos, snps, beta, pat, pve_per_snp)

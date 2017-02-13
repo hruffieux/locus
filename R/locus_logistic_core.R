@@ -26,7 +26,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
     lb_old <- -Inf
     it <- 1
 
-    phi_vb <- update_phi_logit_vb_(phi)
+    phi_vb <- update_phi_bin_vb_(phi)
 
     while ((!converged) & (it <= maxit)) {
 
@@ -34,14 +34,14 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
         cat(paste("Iteration ", format(it), "... \n", sep = ""))
 
       # % #
-      xi_vb <- update_xi_logit_vb_(xi, m2_alpha)
+      xi_vb <- update_xi_bin_vb_(xi, m2_alpha)
 
       zeta2_inv_vb <- phi_vb / xi_vb
       # % #
 
       # % #
-      lambda_vb <- update_lambda_logit_vb_(lambda, gam_vb)
-      nu_vb <- update_nu_logit_vb_(nu, m2_beta)
+      lambda_vb <- update_lambda_bin_vb_(lambda, gam_vb)
+      nu_vb <- update_nu_bin_vb_(nu, m2_beta)
 
       sig2_inv_vb <- lambda_vb / nu_vb
       # % #
@@ -208,13 +208,13 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 }
 
 
-update_phi_logit_vb_ <- function(phi) {
+update_phi_bin_vb_ <- function(phi) {
 
   phi + 1 / 2
 
 }
 
-update_xi_logit_vb_ <- function(xi, m2_alpha) {
+update_xi_bin_vb_ <- function(xi, m2_alpha) {
 
   xi + m2_alpha / 2
 
@@ -230,13 +230,13 @@ update_psi_logit_vb_ <- function(chi_vb) {
 
 }
 
-update_lambda_logit_vb_ <- function(lambda, gam_vb) {
+update_lambda_bin_vb_ <- function(lambda, gam_vb) {
 
   lambda + colSums(gam_vb) / 2
 
 }
 
-update_nu_logit_vb_ <- function(nu, m2_beta) {
+update_nu_bin_vb_ <- function(nu, m2_beta) {
 
   nu + colSums(m2_beta) / 2
 
@@ -248,10 +248,10 @@ lower_bound_logit_ <- function(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
                              mu_alpha_vb, m1_beta, m2_alpha, m2_beta, mat_x_m1,
                              mat_z_mu) {
 
-  lambda_vb <- update_lambda_logit_vb_(lambda, gam_vb)
-  nu_vb <- update_nu_logit_vb_(nu, m2_beta)
+  lambda_vb <- update_lambda_bin_vb_(lambda, gam_vb)
+  nu_vb <- update_nu_bin_vb_(nu, m2_beta)
 
-  xi_vb <- update_xi_logit_vb_(xi, m2_alpha)
+  xi_vb <- update_xi_bin_vb_(xi, m2_alpha)
 
   log_sig2_inv_vb <- digamma(lambda_vb) - log(nu_vb)
   log_zeta2_inv_vb <- digamma(phi_vb) - log(xi_vb)

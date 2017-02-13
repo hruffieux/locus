@@ -213,52 +213,35 @@ cross_validate_ <- function(Y, X, Z, list_cv, user_seed, verbose) {
         list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, family = "gaussian")
         list_init_pg <- auto_set_init_(Y_tr, p, pg, q, user_seed, family = "gaussian")
 
-        #if (family == "gaussian") {
-          if (is.null(q)) {
-            vb_tr <- locus_core_(Y_tr, X_tr, list_hyper_pg,
-                                 list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
+        if (is.null(q)) {
+          vb_tr <- locus_core_(Y_tr, X_tr, list_hyper_pg,
+                               list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
+                               list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
+                               tol_cv, maxit_cv, batch_cv, verbose = FALSE,
+                               full_output = TRUE)
+
+          lb_vec[ind_pg] <- with(vb_tr, {
+            lower_bound_(Y_test, X_test, a, a_vb, b, b_vb, eta, gam_vb, kappa,
+                         lambda, nu, sig2_beta_vb, sig2_inv_vb, tau_vb,
+                         m1_beta, m2_beta, sum_gam)
+
+          })
+        } else {
+          vb_tr <- locus_z_core_(Y_tr, X_tr, Z_tr, list_hyper_pg,
+                                 list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
+                                 list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
                                  list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
                                  tol_cv, maxit_cv, batch_cv, verbose = FALSE,
                                  full_output = TRUE)
 
-            lb_vec[ind_pg] <- with(vb_tr, {
-              lower_bound_(Y_test, X_test, a, a_vb, b, b_vb, eta, gam_vb, kappa,
-                           lambda, nu, sig2_beta_vb, sig2_inv_vb, tau_vb,
-                           m1_beta, m2_beta, sum_gam)
+          lb_vec[ind_pg] <- with(vb_tr, {
+            lower_bound_z_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, eta,
+                           gam_vb, kappa, lambda, mu_alpha_vb, nu, phi, phi_vb,
+                           sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
+                           xi, zeta2_inv_vb, m2_alpha, m1_beta, m2_beta, sum_gam)
+          })
+        }
 
-            })
-          } else {
-            vb_tr <- locus_z_core_(Y_tr, X_tr, Z_tr, list_hyper_pg,
-                                   list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
-                                   list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
-                                   list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
-                                   tol_cv, maxit_cv, batch_cv, verbose = FALSE,
-                                   full_output = TRUE)
-
-            lb_vec[ind_pg] <- with(vb_tr, {
-              lower_bound_z_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, eta,
-                             gam_vb, kappa, lambda, mu_alpha_vb, nu, phi, phi_vb,
-                             sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
-                             xi, zeta2_inv_vb, m2_alpha, m1_beta, m2_beta, sum_gam)
-            })
-          }
-        # } else { # issue: chi_vb would need to be restriced to the test set.
-        #
-        #   vb_tr <- locus_logit_core_(Y_tr, X_tr, list_hyper_pg,
-        #                            list_init_pg$chi_vb, list_init_pg$gam_vb,
-        #                            list_init_pg$mu_beta_vb,
-        #                            list_init_pg$sig2_beta_vb, tol_cv, maxit_cv,
-        #                            batch_cv, verbose, full_output = TRUE)
-        #
-        #
-        #   lb_vec[ind_pg] <- with(vb_tr, {
-        #     lower_bound_logit_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, chi_vb,
-        #                      gam_vb, lambda, nu, phi, phi_vb, psi_vb,
-        #                      sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, xi,
-        #                      zeta2_inv_vb, mu_alpha, m1_beta, m2_alpha,
-        #                      m2_beta, mat_x_m1, mat_z_mu)
-        #   })
-        # }
 
         if (verbose) { cat(paste("Lower bound on test set, fold ", k, ", p0_av ",
                                  pg, ": ", lb_vec[ind_pg], ". \n", sep = ""))

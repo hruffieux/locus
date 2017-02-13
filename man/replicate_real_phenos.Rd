@@ -15,7 +15,7 @@ phenotypic variables), without missing values.}
 
 \item{input_family}{Phenotype distribution assumption for the phenotypes
 provided in real_phenos. Must be either "\code{gaussian}" or
-"\code{binomial-logit}" for binary phenotypes.}
+"\code{binomial}" for binary phenotypes.}
 
 \item{bl_lgth}{Number of variables per block for reproducing the dependence
 structure of real phenotypes. Must be between 2 and d. Must be small enough

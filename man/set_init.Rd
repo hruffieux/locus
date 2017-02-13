@@ -106,7 +106,7 @@ vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
 # Binary outcomes
 dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-                           vec_prob_sh = 0.1, family = "binomial-logit",
+                           vec_prob_sh = 0.1, family = "binomial",
                            max_tot_pve = 0.9)
 
 # gam_vb chosen so that each candidate predictor has a prior probability to

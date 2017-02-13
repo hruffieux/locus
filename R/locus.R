@@ -103,7 +103,7 @@
 #' # Binary outcomes
 #' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 #'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                            vec_prob_sh = 0.1, family = "binomial-logit",
+#'                            vec_prob_sh = 0.1, family = "binomial",
 #'                            max_tot_pve = 0.9)
 #'
 #' vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial-logit",
@@ -207,7 +207,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
   if (verbose) cat("... done. == \n\n")
 
 
-  if (family == "binomial-logit") { # adds an intercept for logistic regression
+  if (family %in% c("binomial-logit", "binomial-probit")) { # adds an intercept for logistic regression
 
     if (is.null(q)) {
 
@@ -255,12 +255,21 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
                             list_init$mu_alpha_vb, list_init$mu_beta_vb,
                             list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                             list_init$tau_vb, tol, maxit, batch, verbose)
+
+    } else if (family == "binomial-logit"){
+
+      vb <- locus_logit_core_(Y, X, Z, list_hyper, list_init$chi_vb,
+                              list_init$gam_vb, list_init$mu_alpha_vb,
+                              list_init$mu_beta_vb, list_init$sig2_alpha_vb,
+                              list_init$sig2_beta_vb, tol, maxit, batch, verbose)
+
     } else {
 
-      vb <- locus_logit_core_(Y, X, Z, list_hyper, list_init$chi_vb, list_init$gam_vb,
-                            list_init$mu_alpha_vb, list_init$mu_beta_vb,
-                            list_init$sig2_alpha_vb, list_init$sig2_beta_vb, tol,
-                            maxit, batch, verbose)
+      vb <- locus_probit_core_(Y, X, Z, list_hyper, list_init$gam_vb,
+                               list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                               list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
+                               tol, maxit, batch, verbose)
+
     }
 
   } else {
@@ -304,16 +313,29 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
                                  list_init_bl$sig2_alpha_vb,
                                  list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
                                  tol, maxit, batch, verbose = FALSE)
-      } else {
+
+      } else if (family == "binomial-logit") {
 
         vb_bl <- locus_logit_core_(Y, X_bl, Z, list_hyper_bl,
-                              list_init_bl$chi_vb, list_init_bl$gam_vb,
-                              list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
-                              list_init_bl$sig2_alpha_vb, list_init_bl$sig2_beta_vb,
-                              tol, maxit, batch, verbose = FALSE)
+                                   list_init_bl$chi_vb, list_init_bl$gam_vb,
+                                   list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
+                                   list_init_bl$sig2_alpha_vb,
+                                   list_init_bl$sig2_beta_vb, tol, maxit, batch,
+                                   verbose = FALSE)
+
+      } else {
+
+        vb_bl <- locus_probit_core_(Y, X_bl, Z, list_hyper_bl,
+                                    list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                    list_init_bl$mu_beta_vb,
+                                    list_init_bl$sig2_alpha_vb,
+                                    list_init_bl$sig2_beta_vb, tol, maxit, batch,
+                                    verbose = FALSE)
 
       }
+
       vb_bl
+
     }
 
     list_vb <- parallel::mclapply(1:n_bl, function(k) locus_bl_(k), mc.cores = n_cpus)

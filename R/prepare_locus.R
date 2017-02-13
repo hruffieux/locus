@@ -1,6 +1,6 @@
 prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose) {
 
-  stopifnot(family %in% c("gaussian", "binomial-logit"))
+  stopifnot(family %in% c("gaussian", "binomial-logit", "binomial-probit"))
 
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
 
@@ -18,7 +18,7 @@ prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose
   if (family == "gaussian") check_structure_(Y, "matrix", "double")
   else { check_structure_(Y, "matrix", "numeric")
     if(!identical(as.vector(Y), as.numeric(as.logical(Y))))
-      stop("Y must be a binary matrix for logistic regression.")
+      stop("Y must be a binary matrix for logistic/probit regression.")
   }
   n <- nrow(X)
   p <- ncol(X)
@@ -95,7 +95,7 @@ prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose
   bool_rmvd_x[!bool_cst_x] <- bool_coll_x
 
   if (family == "gaussian") Y <- scale(Y, center = TRUE, scale = FALSE)
-  else Y <- Y - 1 / 2
+  else if (family == "binomial-logit") Y <- Y - 1 / 2
 
   if (p < 1) stop(paste("There must be at least 1 non-constant candidate predictor ",
                         " stored in X.", sep=""))
@@ -364,8 +364,8 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, family, list_hyper,
                "cross-validation step. ***",
                sep=""))
 
-  if (family == "binomial-logit")
-    stop("Cross-validation not implemented for logistic regression. Please, set list_cv to NULL.")
+  if (family %in% c("binomial-logit", "binomial-probit"))
+    stop("Cross-validation not implemented for logisitic/probit regression. Please, set list_cv to NULL.")
 
   if (!is.null(p0_av) | !is.null(list_hyper) | !is.null(list_init))
     stop(paste("p0_av, list_hyper and list_init must all be NULL if non NULL ",

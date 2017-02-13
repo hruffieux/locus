@@ -96,7 +96,7 @@
 #' # Binary outcomes
 #' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 #'                              ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                              vec_prob_sh = 0.1, family = "binomial-logit",
+#'                              vec_prob_sh = 0.1, family = "binomial",
 #'                              max_tot_pve = 0.9, user_seed = user_seed)
 #'
 #' # a and b chosen so that each candidate predictor has a prior probability to
@@ -134,7 +134,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
   check_structure_(q, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(q)) check_natural_(q)
 
-  stopifnot(family %in% c("gaussian", "binomial-logit"))
+  stopifnot(family %in% c("gaussian", "binomial-logit", "binomial-probit"))
 
   check_structure_(a, "vector", "double", c(1, p))
   check_positive_(a)
@@ -373,7 +373,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 #' # Binary outcomes
 #' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 #'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                            vec_prob_sh = 0.1, family = "binomial-logit",
+#'                            vec_prob_sh = 0.1, family = "binomial",
 #'                            max_tot_pve = 0.9)
 #'
 #' # gam_vb chosen so that each candidate predictor has a prior probability to
@@ -417,12 +417,13 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   check_structure_(q, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(q)) check_natural_(q)
 
-  stopifnot(family %in% c("gaussian", "binomial-logit"))
+  stopifnot(family %in% c("gaussian", "binomial-logit", "binomial-probit"))
 
   check_structure_(gam_vb, "matrix", "double", c(p, d))
   check_zero_one_(gam_vb)
 
   check_structure_(mu_beta_vb, "matrix", "double", c(p, d))
+
 
   if (family == "gaussian") {
 
@@ -433,7 +434,7 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
     chi_vb <- NULL
 
-  } else {
+  } else if (family == "binomial-logit"){
 
     check_structure_(sig2_beta_vb, "matrix", "double", c(p, d))
 
@@ -444,7 +445,17 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
       stop("The number of observations, n, must be provided for logistic regression.")
     chi_vb <- matrix(1 / 2, nrow = n, ncol = d)
 
+  } else {
+
+    check_structure_(sig2_beta_vb, "vector", "double", d)
+
+    if (!is.null(tau_vb))
+      stop("tau_vb must be NULL for logistic regression.")
+
+    chi_vb <- NULL
+
   }
+
   check_positive_(sig2_beta_vb)
 
   if (!is.null(q)) {
@@ -504,21 +515,27 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family) {
 
   if (family == "gaussian") {
 
-   tau_vb <- 1 / median(apply(Y, 2, var))
-   if (!is.finite(tau_vb)) tau_vb <- 1e3
-   tau_vb <- rep(tau_vb, d)
+    tau_vb <- 1 / median(apply(Y, 2, var))
+    if (!is.finite(tau_vb)) tau_vb <- 1e3
+    tau_vb <- rep(tau_vb, d)
 
-   sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / (sig2_inv_vb * tau_vb))
+    sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / (sig2_inv_vb * tau_vb))
 
-   chi_vb <- NULL
+    chi_vb <- NULL
+
+  } else if (family == "binomial-logit") {
+
+    sig2_beta_vb <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1 / sig2_inv_vb)))
+
+    chi_vb <- matrix(1 / 2, nrow = n, ncol = d)
+
+    tau_vb <- NULL
 
   } else {
 
-   tau_vb <- NULL
+    sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / sig2_inv_vb)
 
-   sig2_beta_vb <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1 / sig2_inv_vb)))
-
-   chi_vb <- matrix(1 / 2, nrow = n, ncol = d)
+    tau_vb <- chi_vb <- NULL
 
   }
 
