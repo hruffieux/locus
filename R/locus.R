@@ -18,8 +18,9 @@
 #' @param Z Covariate matrix of dimension n x q, where q is the number of
 #'   covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 #'   after transformation to dummy coding. No intercept must be supplied.
-#' @param family Response type. Must be either "\code{gaussian}" for linear
-#'   regression or "\code{binomial-logit}" for logistic regression.
+#' @param family Response type. Must be "\code{gaussian}" for linear
+#'   regression or "\code{binomial-logit}" for logistic regression or
+#'   "\code{binomial-probit}" for probit regression.
 #' @param list_hyper An object of class "\code{hyper}" containing the model
 #'   hyperparameters. Must be filled using the \code{\link{set_hyper}}
 #'   function or must be \code{NULL} for default hyperparameters.
@@ -60,7 +61,8 @@
 #'                association between predictor s and response t.}
 #'  \item{mu_alpha_vb}{Matrix of dimension q x d whose entries are the posterior
 #'                     mean regression coefficients for the covariates provided
-#'                     in \code{Z} (if \code{family = "binomial-logit"}, also for the
+#'                     in \code{Z} (if \code{family = "binomial-logit"} or
+#'                     \code{family = "binomial-logit"}, also for the
 #'                     intercept). \code{NULL} if \code{Z} is \code{NULL}.}
 #'  \item{om_vb}{Vector of size p containing the posterior mean of omega. Entry
 #'              s controls the proportion of responses associated with predictor
@@ -87,12 +89,13 @@
 #'
 #' # Gaussian outcomes
 #' dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-#'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                            vec_prob_sh = 0.1, family = "gaussian",
-#'                            max_tot_pve = 0.9)
+#'                              ind_d0 = sample(1:d, d0),
+#'                              ind_p0 = sample(1:p, p0),
+#'                              vec_prob_sh = 0.1, family = "gaussian",
+#'                              max_tot_pve = 0.9)
 #'
-#' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, family = "gaussian",
-#'             user_seed = user_seed)
+#' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
+#'               family = "gaussian", user_seed = user_seed)
 #'
 #' # Gaussian outcomes with covariates
 #' q <- 4
@@ -102,16 +105,26 @@
 #'
 #' # Binary outcomes
 #' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-#'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                            vec_prob_sh = 0.1, family = "binomial",
-#'                            max_tot_pve = 0.9)
+#'                              ind_d0 = sample(1:d, d0),
+#'                              ind_p0 = sample(1:p, p0),
+#'                              vec_prob_sh = 0.1, family = "binomial",
+#'                              max_tot_pve = 0.9)
 #'
-#' vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial-logit",
-#'             user_seed = user_seed)
+#' p0_av <- floor(4*p/5) # overestimating the prior number of active covariates
+#'                       # often leads to better inference
+#'
+#' vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+#'                   family = "binomial-logit", user_seed = user_seed)
+#'
+#' vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+#'                    family = "binomial-probit", user_seed = user_seed)
 #'
 #' # Binary outcomes with covariates
-#' vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
-#'                 family = "binomial-logit", user_seed = user_seed)
+#' vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,  Z = Z,
+#'                     family = "binomial-logit", user_seed = user_seed)
+#'
+#' vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,  Z = Z,
+#'                      family = "binomial-probit", user_seed = user_seed)
 #'
 #' @seealso \code{\link{set_hyper}}, \code{\link{set_init}},
 #'   \code{\link{set_cv}}, \code{\link{set_blocks}}

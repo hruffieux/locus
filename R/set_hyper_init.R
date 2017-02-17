@@ -10,17 +10,19 @@
 #' @param d Number of responses.
 #' @param p Number of candidate predictors.
 #' @param lambda Vector of length 1 for \code{family = "gaussian"} and of length
-#'   1 or d for \code{family = "binomial-logit"} providing the values of
-#'   hyperparameter \eqn{\lambda} for the prior distribution of
-#'   \eqn{\sigma^{-2}}. If of length 1 for \code{family = "binomial-logit"}, the
-#'   provided value is repeated p times.\eqn{\sigma^2} represents the typical
-#'   size of nonzero effects.
+#'   1 or d for \code{family = "binomial-logit"} and
+#'   \code{family = "binomial-probit"} providing the values of hyperparameter
+#'   \eqn{\lambda} for the prior distribution of \eqn{\sigma^{-2}}. If of length
+#'   1 for \code{family = "binomial-logit"} or \code{family = "binomial-probit"},
+#'   the provided value is repeated p times. \eqn{\sigma^2} represents the
+#'   typical size of nonzero effects.
 #' @param nu Vector of length 1 for \code{family = "gaussian"} and of length
-#'   1 or d for \code{family = "binomial-logit"} providing the values of
-#'   hyperparameter \eqn{\nu} for the prior distribution of
-#'   \eqn{\sigma^{-2}}. If of length 1 for \code{family = "binomial-logit"}, the
-#'   provided value is repeated p times.\eqn{\sigma^2} represents the typical
-#'   size of nonzero effects.
+#'   1 or d for \code{family = "binomial-logit"} and
+#'   \code{family = "binomial-probit"} providing the values of hyperparameter
+#'   \eqn{\nu} for the prior distribution of \eqn{\sigma^{-2}}. If of length 1
+#'   for \code{family = "binomial-logit"} or \code{family = "binomial-probit"},
+#'   the provided value is repeated p times. \eqn{\sigma^2} represents the
+#'   typical size of nonzero effects.
 #' @param a Vector of length 1 or p providing the values of hyperparameter
 #'   \eqn{a} for the prior distributions for the proportion of responses
 #'   associated with each candidate predictor, \eqn{\omega} (vector of size p).
@@ -33,51 +35,59 @@
 #'   providing the values of hyperparameter \eqn{\eta} for the prior
 #'   distributions of the response residual precisions, \eqn{\tau}
 #'   (vector of size d). If of length 1, the provided value is repeated d times.
-#'   Must be \code{NULL} for \code{family = "binomial-logit"}.
+#'   Must be \code{NULL} for \code{family = "binomial-logit"} and
+#'   \code{family = "binomial-probit"}.
 #' @param kappa Vector of length 1 or d for \code{family = "gaussian"},
 #'   providing the values of hyperparameter \eqn{\kappa} for the prior
 #'   distributions of the response residual precisions, \eqn{\tau}
 #'   (vector of size d). If of length 1, the provided value is repeated d times.
-#'   Must be \code{NULL} for \code{family = "binomial-logit"}.
+#'   Must be \code{NULL} for \code{family = "binomial-logit"} and
+#'   \code{family = "binomial-probit"}.
 #' @param family Response type. Must be either "\code{gaussian}" for linear
-#'   regression or "\code{binomial-logit}" for logistic regression.
+#'   regression, "\code{binomial-logit}" for logistic regression or
+#'   "\code{binomial-probit}" for probit regression.
 #' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
 #'   \code{NULL}.
 #' @param phi For \code{family = "gaussian"}, vector of length 1 or q providing
 #'   the values of hyperparameter \eqn{\phi} for the prior distributions for the
 #'   sizes of the nonzero covariate effects, \eqn{\zeta}. If of length 1, the
-#'   provided value is repeated q times. For \code{family = "binomial-logit"}, matrix
-#'   of dimension q x d as the values are also specific to the responses.
-#'   Default is \code{NULL}, for \code{Z} \code{NULL}.
+#'   provided value is repeated q times. For \code{family = "binomial-logit"} or
+#'   \code{family = "binomial-probit"}, matrix of dimension q x d as the values
+#'   are also specific to the responses. Default is \code{NULL}, for \code{Z}
+#'   \code{NULL}.
 #' @param xi For \code{family = "gaussian"}, vector of length 1 or q providing
 #'   the values of hyperparameter \eqn{\xi} for the prior distributions for the
 #'   sizes of the nonzero covariate effects, \eqn{\zeta}. If of length 1, the
-#'   provided value is repeated q times. For \code{family = "binomial-logit"}, matrix
-#'   of dimension q x d as the values are also specific to the responses.
-#'   Default is \code{NULL}, for \code{Z} \code{NULL}.
+#'   provided value is repeated q times. For \code{family = "binomial-logit"} or
+#'   \code{family = "binomial-probit"}, matrix of dimension q x d as the values
+#'   are also specific to the responses. Default is \code{NULL}, for \code{Z}
+#'   \code{NULL}.
 #'
 #' @return An object of class "\code{hyper}" preparing user hyperparameter in a
 #'   form that can be passed to the \code{\link{locus}} function.
 #'
 #' @examples
 #' user_seed <- 123
-#' n <- 200; p <- 200; p0 <- 50; d <- 25; d0 <- 20
+#' n <- 200; p <- 250; p0 <- 50; d <- 25; d0 <- 15
 #' list_X <- generate_snps(n = n, p = p, user_seed = user_seed)
 #' list_Y <- generate_phenos(n = n, d = d, var_err = 1, user_seed = user_seed)
 #'
 #' # Gaussian outcomes
 #' dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-#'                             ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                             vec_prob_sh = 0.1, family = "gaussian",
-#'                             max_tot_pve = 0.9, user_seed = user_seed)
+#'                              ind_d0 = sample(1:d, d0),
+#'                              ind_p0 = sample(1:p, p0), vec_prob_sh = 0.1,
+#'                              family = "gaussian", max_tot_pve = 0.9,
+#'                              user_seed = user_seed)
 #'
 #' # a and b chosen so that each candidate predictor has a prior probability to
 #' # be included in the model of 1/4.
-#' list_hyper_g <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1, eta = 1,
-#'                        kappa = apply(dat_g$phenos, 2, var), family = "gaussian")
+#' list_hyper_g <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
+#'                           eta = 1, kappa = apply(dat_g$phenos, 2, var),
+#'                           family = "gaussian")
 #'
-#' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, family = "gaussian",
-#'             list_hyper = list_hyper_g, user_seed = user_seed)
+#' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
+#'               family = "gaussian", list_hyper = list_hyper_g,
+#'               user_seed = user_seed)
 #'
 #' # Gaussian outcomes with covariates
 #' q <- 4
@@ -85,9 +95,9 @@
 #'
 #' phi <- xi <- rep(1, q)
 #'
-#' list_hyper_g_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1, eta = 1,
-#'                        kappa = apply(dat_g$phenos, 2, var), family = "gaussian",
-#'                        q = q, phi = phi, xi = xi)
+#' list_hyper_g_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
+#'                             eta = 1, kappa = apply(dat_g$phenos, 2, var),
+#'                             family = "gaussian", q = q, phi = phi, xi = xi)
 #'
 #' vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
 #'                 family = "gaussian", list_hyper = list_hyper_g_z,
@@ -95,28 +105,52 @@
 #'
 #' # Binary outcomes
 #' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-#'                              ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                              vec_prob_sh = 0.1, family = "binomial",
-#'                              max_tot_pve = 0.9, user_seed = user_seed)
+#'                              ind_d0 = sample(1:d, d0),
+#'                              ind_p0 = sample(1:p, p0), vec_prob_sh = 0.1,
+#'                              family = "binomial", max_tot_pve = 0.9,
+#'                              user_seed = user_seed)
 #'
 #' # a and b chosen so that each candidate predictor has a prior probability to
 #' # be included in the model of 1/4.
-#' list_hyper_b <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
-#'                           eta = NULL, kappa = NULL, family = "binomial-logit")
+#' list_hyper_logit <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
+#'                               eta = NULL, kappa = NULL,
+#'                               family = "binomial-logit")
 #'
-#' vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial-logit",
-#'               list_hyper = list_hyper_b, user_seed = user_seed)
+#' p0_av <- floor(4*p/5) # overestimating the prior number of active covariates
+#'                       # often leads to better inference
+#'
+#' vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+#'                   family = "binomial-logit", list_hyper = list_hyper_logit,
+#'                   user_seed = user_seed)
+#'
+#' list_hyper_probit <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
+#'                                eta = NULL, kappa = NULL,
+#'                                family = "binomial-probit")
+#'
+#' vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+#'                   family = "binomial-probit", list_hyper = list_hyper_probit,
+#'                   user_seed = user_seed)
 #'
 #' # Binary outcomes with covariates
 #' phi <- xi <- matrix(1, nrow = q, ncol = d)
 #'
-#' list_hyper_b_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
-#'                           eta = NULL, kappa = NULL, family = "binomial-logit",
-#'                           q = q, phi = phi, xi = xi)
+#' list_hyper_logit_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
+#'                                 eta = NULL, kappa = NULL,
+#'                                 family = "binomial-logit", q = q, phi = phi,
+#'                                 xi = xi)
 #'
-#' vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
-#'                 family = "binomial-logit", list_hyper = list_hyper_b_z,
-#'                 user_seed = user_seed)
+#' vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
+#'                     family = "binomial-logit",
+#'                     list_hyper = list_hyper_logit_z, user_seed = user_seed)
+#'
+#' list_hyper_probit_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
+#'                                  eta = NULL, kappa = NULL,
+#'                                  family = "binomial-probit", q = q, phi = phi,
+#'                                  xi = xi)
+#'
+#' vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
+#'                      family = "binomial-probit",
+#'                      list_hyper = list_hyper_probit_z, user_seed = user_seed)
 #'
 #' @seealso  \code{\link{set_init}}, \code{\link{locus}}
 #'
@@ -299,23 +333,26 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 #' @param p Number of candidate predictors.
 #' @param gam_vb Matrix of size p x d with initial values for the variational
 #'   parameter yielding posterior probabilities of inclusion.
-#' @param mu_beta_vb Matrix of size p x d with initial values for the variational
-#'   parameter yielding regression coefficient estimates for predictor-response
-#'   pairs included in the model.
-#' @param sig2_beta_vb Vector of size d, for \code{family = "gaussian"}, or
-#'   matrix of size p x d, for \code{family = "binomial-logit"}, with initial values
-#'   forthe variational parameter yielding estimates of effect variances for
-#'   predictor-response pairs included in the model. For
-#'   \code{family = "gaussian"}, these values are the same for all predictors
-#'   (as a result of the predictor variables being standardized before the
-#'   variational algorithm).
+#' @param mu_beta_vb Matrix of size p x d with initial values for the
+#'   variationa parameter yielding regression coefficient estimates for
+#'   predictor-response pairs included in the model.
+#' @param sig2_beta_vb Vector of size d, for \code{family = "gaussian"} and
+#'   \code{family = "binomial-probit"}, or matrix of size p x d, for
+#'   \code{family = "binomial-logit"}, with initial values for the variational
+#'   parameter yielding estimates of effect variances for predictor-response
+#'   pairs included in the model. For \code{family = "gaussian"} and
+#'   \code{family = "binomial-probit"}, these values are the same for all
+#'   predictors (as a result of the predictor variables being standardized
+#'   before the variational algorithm).
 #' @param tau_vb  Vector of size d with initial values, for
 #'   \code{family = "gaussian"}, for the variational parameter yielding
 #'   estimates for the response residual precisions. Must be \code{NULL} for
-#'   \code{family = "binomial-logit"}.
+#'   \code{family = "binomial-logit"} and \code{family = "binomial-probit"}.
 #' @param family Response type. Must be either "\code{gaussian}" for linear
-#'   regression or "\code{binomial-logit}" for logistic regression.
-#' @param n Number of observations. Used only when \code{family = "binomial-logit"}.
+#'   regression, "\code{binomial-logit}" for logistic regression or
+#'   \code{family = "binomial-probit"} for probit regression.
+#' @param n Number of observations. Used only when
+#'   \code{family = "binomial-logit"}.
 #' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
 #'   \code{NULL}.
 #' @param mu_alpha_vb Matrix of size p x q with initial values for the
@@ -333,28 +370,29 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 #'
 #' @examples
 #' user_seed <- 123; set.seed(user_seed)
-#' n <- 200; p <- 200; p0 <- 50; d <- 25; d0 <- 20
+#' n <- 200; p <- 250; p0 <- 50; d <- 25; d0 <- 15
 #' list_X <- generate_snps(n = n, p = p)
 #' list_Y <- generate_phenos(n = n, d = d, var_err = 1)
 #'
 #' # Gaussian outcomes
 #' dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-#'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                            vec_prob_sh = 0.1, family = "gaussian",
-#'                            max_tot_pve = 0.9)
+#'                              ind_d0 = sample(1:d, d0),
+#'                              ind_p0 = sample(1:p, p0),
+#'                              vec_prob_sh = 0.1, family = "gaussian",
+#'                              max_tot_pve = 0.9)
 #'
 #' # gam_vb chosen so that each candidate predictor has a prior probability to
 #' # be included in the model of 1/4.
 #' gam_vb <- matrix(rbeta(p * d, shape1 = 1, shape2 = 4*d-1), nrow = p)
 #' mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
 #' tau_vb <- 1 / apply(dat_g$phenos, 2, var)
-#' sig2_beta_vb_g <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
+#' sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
 #'
-#' list_init_g <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_g, tau_vb,
-#'                       family = "gaussian")
+#' list_init_g <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+#'                         family = "gaussian")
 #'
-#' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  family = "gaussian",
-#'             list_init = list_init_g)
+#' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
+#'               family = "gaussian", list_init = list_init_g)
 #'
 #' # Gaussian outcomes with covariates
 #' q <- 4
@@ -363,8 +401,9 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 #' mu_alpha_vb <- matrix(rnorm(q * d), nrow = q)
 #' sig2_alpha_vb <- 1 / matrix(rgamma(q * d, shape = 2, rate = 1), nrow = q)
 #'
-#' list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_g, tau_vb,
-#'                           family = "gaussian", q = q, mu_alpha_vb = mu_alpha_vb,
+#' list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+#'                           family = "gaussian", q = q,
+#'                           mu_alpha_vb = mu_alpha_vb,
 #'                           sig2_alpha_vb = sig2_alpha_vb)
 #'
 #' vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
@@ -372,30 +411,49 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 #'
 #' # Binary outcomes
 #' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-#'                            ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-#'                            vec_prob_sh = 0.1, family = "binomial",
-#'                            max_tot_pve = 0.9)
+#'                              ind_d0 = sample(1:d, d0),
+#'                              ind_p0 = sample(1:p, p0),
+#'                              vec_prob_sh = 0.1, family = "binomial",
+#'                              max_tot_pve = 0.9)
+#'
+#' p0_av <- floor(4*p/5) # overestimating the prior number of active covariates
+#'                       # often leads to better inference
 #'
 #' # gam_vb chosen so that each candidate predictor has a prior probability to
 #' # be included in the model of 1/4.
 #'
-#' sig2_beta_vb_b <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
+#' sig2_beta_vb_logit <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
 #'
-#' list_init_b <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_b, tau_vb = NULL,
-#'                       family = "binomial-logit", n = n)
+#' list_init_logit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
+#'                             tau_vb = NULL, family = "binomial-logit", n = n)
 #'
-#' vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial-logit",
-#'             list_init = list_init_b)
+#' vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+#'                   family = "binomial-logit", list_init = list_init_logit)
+#'
+#'
+#' list_init_probit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
+#'                              tau_vb = NULL, family = "binomial-probit")
+#'
+#' vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+#'                    family = "binomial-probit", list_init = list_init_probit)
 #'
 #' # Binary outcomes with covariates
-#' list_init_b_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_b,
-#'                           tau_vb = NULL, family = "binomial-logit", n = n, q = q,
-#'                           mu_alpha_vb = mu_alpha_vb,
-#'                           sig2_alpha_vb = sig2_alpha_vb)
+#' list_init_logit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
+#'                               tau_vb = NULL, family = "binomial-logit",
+#'                               n = n, q = q, mu_alpha_vb = mu_alpha_vb,
+#'                               sig2_alpha_vb = sig2_alpha_vb)
 #'
-#' vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
-#'                 family = "binomial-logit", list_init = list_init_b_z)
+#' vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
+#'                 family = "binomial-logit", list_init = list_init_logit_z)
 #'
+#'
+#' list_init_probit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
+#'                                tau_vb = NULL, family = "binomial-probit",
+#'                                q = q, mu_alpha_vb = mu_alpha_vb,
+#'                                sig2_alpha_vb = sig2_alpha_vb)
+#'
+#' vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
+#'                 family = "binomial-probit", list_init = list_init_probit_z)
 #'
 #' @seealso  \code{\link{set_hyper}}, \code{\link{locus}}
 #'

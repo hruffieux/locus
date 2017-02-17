@@ -45,7 +45,7 @@ user_seed <- 123; set.seed(user_seed)
 n <- 500; p <- 7500
 cor_type <- "autocorrelated"; vec_rho <- runif(100, min = 0.25, max = 0.95)
 list_fake_real_snps <- generate_snps(n, p, cor_type, vec_rho, n_cpus = 2,
-                           user_seed = user_seed)
+                                     user_seed = user_seed)
 list_snps <- replicate_real_snps(n, list_fake_real_snps$snps, bl_lgth = 100,
                                  n_cpus = 2, user_seed = user_seed)
 

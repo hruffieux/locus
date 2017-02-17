@@ -54,8 +54,9 @@ list_X <- generate_snps(n = n, p = p)
 list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
 
 dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-                           ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-                           vec_prob_sh = 0.1, max_tot_pve = 0.9)
+                           ind_d0 = sample(1:d, d0),
+                           ind_p0 = sample(1:p, p0), vec_prob_sh = 0.1,
+                           max_tot_pve = 0.9)
 
 list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 2)
 

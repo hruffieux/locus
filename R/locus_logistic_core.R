@@ -1,6 +1,6 @@
 locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
-                            mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, tol, maxit,
-                            batch, verbose, full_output = FALSE) {
+                              mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, tol,
+                              maxit, batch, verbose, full_output = FALSE) {
 
   d <- ncol(Y)
   n <- nrow(Y)

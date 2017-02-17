@@ -15,27 +15,30 @@ set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, family = "gaussian",
 \item{gam_vb}{Matrix of size p x d with initial values for the variational
 parameter yielding posterior probabilities of inclusion.}
 
-\item{mu_beta_vb}{Matrix of size p x d with initial values for the variational
-parameter yielding regression coefficient estimates for predictor-response
-pairs included in the model.}
+\item{mu_beta_vb}{Matrix of size p x d with initial values for the
+variationa parameter yielding regression coefficient estimates for
+predictor-response pairs included in the model.}
 
-\item{sig2_beta_vb}{Vector of size d, for \code{family = "gaussian"}, or
-matrix of size p x d, for \code{family = "binomial-logit"}, with initial values
-forthe variational parameter yielding estimates of effect variances for
-predictor-response pairs included in the model. For
-\code{family = "gaussian"}, these values are the same for all predictors
-(as a result of the predictor variables being standardized before the
-variational algorithm).}
+\item{sig2_beta_vb}{Vector of size d, for \code{family = "gaussian"} and
+\code{family = "binomial-probit"}, or matrix of size p x d, for
+\code{family = "binomial-logit"}, with initial values for the variational
+parameter yielding estimates of effect variances for predictor-response
+pairs included in the model. For \code{family = "gaussian"} and
+\code{family = "binomial-probit"}, these values are the same for all
+predictors (as a result of the predictor variables being standardized
+before the variational algorithm).}
 
 \item{tau_vb}{Vector of size d with initial values, for
 \code{family = "gaussian"}, for the variational parameter yielding
 estimates for the response residual precisions. Must be \code{NULL} for
-\code{family = "binomial-logit"}.}
+\code{family = "binomial-logit"} and \code{family = "binomial-probit"}.}
 
 \item{family}{Response type. Must be either "\code{gaussian}" for linear
-regression or "\code{binomial-logit}" for logistic regression.}
+regression, "\code{binomial-logit}" for logistic regression or
+\code{family = "binomial-probit"} for probit regression.}
 
-\item{n}{Number of observations. Used only when \code{family = "binomial-logit"}.}
+\item{n}{Number of observations. Used only when
+\code{family = "binomial-logit"}.}
 
 \item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
@@ -66,28 +69,29 @@ its argument \code{list_init} to \code{NULL}.
 }
 \examples{
 user_seed <- 123; set.seed(user_seed)
-n <- 200; p <- 200; p0 <- 50; d <- 25; d0 <- 20
+n <- 200; p <- 250; p0 <- 50; d <- 25; d0 <- 15
 list_X <- generate_snps(n = n, p = p)
 list_Y <- generate_phenos(n = n, d = d, var_err = 1)
 
 # Gaussian outcomes
 dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-                           ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-                           vec_prob_sh = 0.1, family = "gaussian",
-                           max_tot_pve = 0.9)
+                             ind_d0 = sample(1:d, d0),
+                             ind_p0 = sample(1:p, p0),
+                             vec_prob_sh = 0.1, family = "gaussian",
+                             max_tot_pve = 0.9)
 
 # gam_vb chosen so that each candidate predictor has a prior probability to
 # be included in the model of 1/4.
 gam_vb <- matrix(rbeta(p * d, shape1 = 1, shape2 = 4*d-1), nrow = p)
 mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
 tau_vb <- 1 / apply(dat_g$phenos, 2, var)
-sig2_beta_vb_g <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
+sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
 
-list_init_g <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_g, tau_vb,
-                      family = "gaussian")
+list_init_g <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+                        family = "gaussian")
 
-vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  family = "gaussian",
-            list_init = list_init_g)
+vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
+              family = "gaussian", list_init = list_init_g)
 
 # Gaussian outcomes with covariates
 q <- 4
@@ -96,8 +100,9 @@ Z <- matrix(rnorm(n * q), nrow = n)
 mu_alpha_vb <- matrix(rnorm(q * d), nrow = q)
 sig2_alpha_vb <- 1 / matrix(rgamma(q * d, shape = 2, rate = 1), nrow = q)
 
-list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_g, tau_vb,
-                          family = "gaussian", q = q, mu_alpha_vb = mu_alpha_vb,
+list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+                          family = "gaussian", q = q,
+                          mu_alpha_vb = mu_alpha_vb,
                           sig2_alpha_vb = sig2_alpha_vb)
 
 vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
@@ -105,30 +110,49 @@ vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
 
 # Binary outcomes
 dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-                           ind_d0 = sample(1:d, d0), ind_p0 = sample(1:p, p0),
-                           vec_prob_sh = 0.1, family = "binomial",
-                           max_tot_pve = 0.9)
+                             ind_d0 = sample(1:d, d0),
+                             ind_p0 = sample(1:p, p0),
+                             vec_prob_sh = 0.1, family = "binomial",
+                             max_tot_pve = 0.9)
+
+p0_av <- floor(4*p/5) # overestimating the prior number of active covariates
+                      # often leads to better inference
 
 # gam_vb chosen so that each candidate predictor has a prior probability to
 # be included in the model of 1/4.
 
-sig2_beta_vb_b <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
+sig2_beta_vb_logit <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
 
-list_init_b <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_b, tau_vb = NULL,
-                      family = "binomial-logit", n = n)
+list_init_logit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
+                            tau_vb = NULL, family = "binomial-logit", n = n)
 
-vb_b <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, family = "binomial-logit",
-            list_init = list_init_b)
+vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+                  family = "binomial-logit", list_init = list_init_logit)
+
+
+list_init_probit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
+                             tau_vb = NULL, family = "binomial-probit")
+
+vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+                   family = "binomial-probit", list_init = list_init_probit)
 
 # Binary outcomes with covariates
-list_init_b_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_b,
-                          tau_vb = NULL, family = "binomial-logit", n = n, q = q,
-                          mu_alpha_vb = mu_alpha_vb,
-                          sig2_alpha_vb = sig2_alpha_vb)
+list_init_logit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
+                              tau_vb = NULL, family = "binomial-logit",
+                              n = n, q = q, mu_alpha_vb = mu_alpha_vb,
+                              sig2_alpha_vb = sig2_alpha_vb)
 
-vb_b_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
-                family = "binomial-logit", list_init = list_init_b_z)
+vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
+                family = "binomial-logit", list_init = list_init_logit_z)
 
+
+list_init_probit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
+                               tau_vb = NULL, family = "binomial-probit",
+                               q = q, mu_alpha_vb = mu_alpha_vb,
+                               sig2_alpha_vb = sig2_alpha_vb)
+
+vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
+                family = "binomial-probit", list_init = list_init_probit_z)
 
 }
 \seealso{
