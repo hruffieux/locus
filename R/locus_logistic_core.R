@@ -165,10 +165,8 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
                                    m2_beta, mat_x_m1, mat_z_mu, sum_gam)
 
 
-      #if (verbose & (it == 1 | it %% 5 == 0))
-      #  cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
-
-      cat(paste("Lower bound = ", lb_new, "\n\n", sep = ""))
+      if (verbose & (it == 1 | it %% 5 == 0))
+       cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
 
       converged <- (abs(lb_new - lb_old) < tol)
 

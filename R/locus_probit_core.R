@@ -162,11 +162,8 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
                                     m1_beta, m2_alpha, m2_beta, mat_x_m1,
                                     mat_z_mu, sum_gam)
 
-      # if (verbose & (it == 1 | it %% 5 == 0))
-      #   cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
-
-
-      cat(paste("Lower bound = ", lb_new, "\n\n", sep = ""))
+      if (verbose & (it == 1 | it %% 5 == 0))
+        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
 
       converged <- (abs(lb_new - lb_old) < tol)
 
@@ -249,7 +246,7 @@ lower_bound_probit_ <- function(Y, W, X, Z, a, a_vb, b, b_vb, gam_vb, lambda, nu
                 2 * mat_x_m1 * mat_z_mu) / 2 + H)
 
   #A <- sum(Y * log(pnorm(U) + eps) + (1 - Y) * log(1 - pnorm(U) + eps)) # if one wants a bound for p(Y)
-                                                                         # rather than for p(W) (W Gaussian latent variable)
+                                                                         # rather than for p(W) (W = Gaussian latent variable)
 
   B <- sum(gam_vb * log_sig2_inv_vb / 2 - m2_beta * sig2_inv_vb / 2 +
              sweep(gam_vb, 1, log_om_vb, `*`) +

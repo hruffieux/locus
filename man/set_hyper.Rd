@@ -94,6 +94,9 @@ list_hyper_g <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
                           eta = 1, kappa = apply(dat_g$phenos, 2, var),
                           family = "gaussian")
 
+# we take p0_av = p0 (known here); this choice may result in variable
+# selections that are (too) conservative in some cases. In practice, often
+# p0_av as a slightly overestimated guess of p0.
 vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
               family = "gaussian", list_hyper = list_hyper_g,
               user_seed = user_seed)
@@ -123,10 +126,7 @@ list_hyper_logit <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
                               eta = NULL, kappa = NULL,
                               family = "binomial-logit")
 
-p0_av <- floor(4*p/5) # overestimating the prior number of active covariates
-                      # often leads to better inference
-
-vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
                   family = "binomial-logit", list_hyper = list_hyper_logit,
                   user_seed = user_seed)
 
@@ -134,7 +134,7 @@ list_hyper_probit <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
                                eta = NULL, kappa = NULL,
                                family = "binomial-probit")
 
-vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
                   family = "binomial-probit", list_hyper = list_hyper_probit,
                   user_seed = user_seed)
 
@@ -145,7 +145,7 @@ list_hyper_logit_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
                                 family = "binomial-logit", q = q, phi = 1,
                                 xi = 1)
 
-vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
+vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
                     family = "binomial-logit",
                     list_hyper = list_hyper_logit_z, user_seed = user_seed)
 
@@ -154,7 +154,7 @@ list_hyper_probit_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
                                  family = "binomial-probit", q = q, phi = 1,
                                  xi = 1)
 
-vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
+vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
                      family = "binomial-probit",
                      list_hyper = list_hyper_probit_z, user_seed = user_seed)
 

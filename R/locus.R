@@ -94,6 +94,9 @@
 #'                              vec_prob_sh = 0.1, family = "gaussian",
 #'                              max_tot_pve = 0.9)
 #'
+#' # we take p0_av = p0 (known here); this choice may result in variable
+#' # selections that are (too) conservative in some cases. In practice, often
+#' # p0_av as a slightly overestimated guess of p0.
 #' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
 #'               family = "gaussian", user_seed = user_seed)
 #'
@@ -110,20 +113,17 @@
 #'                              vec_prob_sh = 0.1, family = "binomial",
 #'                              max_tot_pve = 0.9)
 #'
-#' p0_av <- floor(4*p/5) # overestimating the prior number of active covariates
-#'                       # often leads to better inference
-#'
-#' vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+#' vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
 #'                   family = "binomial-logit", user_seed = user_seed)
 #'
-#' vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+#' vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
 #'                    family = "binomial-probit", user_seed = user_seed)
 #'
 #' # Binary outcomes with covariates
-#' vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,  Z = Z,
+#' vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
 #'                     family = "binomial-logit", user_seed = user_seed)
 #'
-#' vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,  Z = Z,
+#' vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
 #'                      family = "binomial-probit", user_seed = user_seed)
 #'
 #' @seealso \code{\link{set_hyper}}, \code{\link{set_init}},

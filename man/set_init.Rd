@@ -108,6 +108,9 @@ list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
                           mu_alpha_vb = mu_alpha_vb,
                           sig2_alpha_vb = sig2_alpha_vb)
 
+# we take p0_av = p0 (known here); this choice may result in variable
+# selections that are (too) conservative in some cases. In practice, often
+# p0_av as a slightly overestimated guess of p0.
 vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
                 family = "gaussian", list_init = list_init_g_z)
 
@@ -118,9 +121,6 @@ dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
                              vec_prob_sh = 0.1, family = "binomial",
                              max_tot_pve = 0.9)
 
-p0_av <- floor(4*p/5) # overestimating the prior number of active covariates
-                      # often leads to better inference
-
 # gam_vb chosen so that each candidate predictor has a prior probability to
 # be included in the model of 1/4.
 
@@ -129,7 +129,7 @@ sig2_beta_vb_logit <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
 list_init_logit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
                             tau_vb = NULL, family = "binomial-logit", n = n)
 
-vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
                   family = "binomial-logit", list_init = list_init_logit)
 
 
@@ -137,7 +137,7 @@ sig2_beta_vb_probit <- sig2_beta_vb[1]
 list_init_probit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_probit,
                              tau_vb = NULL, family = "binomial-probit")
 
-vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
+vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
                    family = "binomial-probit", list_init = list_init_probit)
 
 # Binary outcomes with covariates
@@ -146,16 +146,16 @@ list_init_logit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
                               n = n, q = q, mu_alpha_vb = mu_alpha_vb,
                               sig2_alpha_vb = sig2_alpha_vb)
 
-vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
+vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
                 family = "binomial-logit", list_init = list_init_logit_z)
 
-sig2_alpha_vb_probit <- sig2_alpha_vb[1,]
+sig2_alpha_vb_probit <- sig2_alpha_vb[, 1]
 list_init_probit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_probit,
                                tau_vb = NULL, family = "binomial-probit",
                                q = q, mu_alpha_vb = mu_alpha_vb,
                                sig2_alpha_vb = sig2_alpha_vb_probit)
 
-vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
+vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
                 family = "binomial-probit", list_init = list_init_probit_z)
 
 }
