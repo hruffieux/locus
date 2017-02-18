@@ -12,21 +12,13 @@ set_hyper(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian", q = NULL,
 
 \item{p}{Number of candidate predictors.}
 
-\item{lambda}{Vector of length 1 for \code{family = "gaussian"} and of length
-1 or d for \code{family = "binomial-logit"} and
-\code{family = "binomial-probit"} providing the values of hyperparameter
-\eqn{\lambda} for the prior distribution of \eqn{\sigma^{-2}}. If of length
-1 for \code{family = "binomial-logit"} or \code{family = "binomial-probit"},
-the provided value is repeated p times. \eqn{\sigma^2} represents the
-typical size of nonzero effects.}
+\item{lambda}{Vector of length 1 providing the values of hyperparameter
+\eqn{\lambda} for the prior distribution of \eqn{\sigma^{-2}}.
+\eqn{\sigma^2} represents the typical size of nonzero effects.}
 
-\item{nu}{Vector of length 1 for \code{family = "gaussian"} and of length
-1 or d for \code{family = "binomial-logit"} and
-\code{family = "binomial-probit"} providing the values of hyperparameter
-\eqn{\nu} for the prior distribution of \eqn{\sigma^{-2}}. If of length 1
-for \code{family = "binomial-logit"} or \code{family = "binomial-probit"},
-the provided value is repeated p times. \eqn{\sigma^2} represents the
-typical size of nonzero effects.}
+\item{nu}{Vector of length 1 providing the values of hyperparameter \eqn{\nu}
+for the prior distribution of \eqn{\sigma^{-2}}. \eqn{\sigma^2} represents
+the typical size of nonzero effects.}
 
 \item{a}{Vector of length 1 or p providing the values of hyperparameter
 \eqn{a} for the prior distributions for the proportion of responses
@@ -59,20 +51,15 @@ regression, "\code{binomial-logit}" for logistic regression or
 \item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
 
-\item{phi}{For \code{family = "gaussian"}, vector of length 1 or q providing
-the values of hyperparameter \eqn{\phi} for the prior distributions for the
-sizes of the nonzero covariate effects, \eqn{\zeta}. If of length 1, the
-provided value is repeated q times. For \code{family = "binomial-logit"} or
-\code{family = "binomial-probit"}, matrix of dimension q x d as the values
-are also specific to the responses. Default is \code{NULL}, for \code{Z}
-\code{NULL}.}
+\item{phi}{Vector of length 1 or q providing the values of hyperparameter
+\eqn{\phi} for the prior distributions for the sizes of the nonzero
+covariate effects, \eqn{\zeta}. If of length 1, the provided value is
+repeated q times. Default is \code{NULL}, for \code{Z} \code{NULL}.}
 
-\item{xi}{For \code{family = "gaussian"}, vector of length 1 or q providing
+\item{xi}{Vector of length 1 or q providing
 the values of hyperparameter \eqn{\xi} for the prior distributions for the
 sizes of the nonzero covariate effects, \eqn{\zeta}. If of length 1, the
-provided value is repeated q times. For \code{family = "binomial-logit"} or
-\code{family = "binomial-probit"}, matrix of dimension q x d as the values
-are also specific to the responses. Default is \code{NULL}, for \code{Z}
+provided value is repeated q times. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
 }
 \value{
@@ -115,11 +102,9 @@ vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
 q <- 4
 Z <- matrix(rnorm(n * q), nrow = n)
 
-phi <- xi <- rep(1, q)
-
 list_hyper_g_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
                             eta = 1, kappa = apply(dat_g$phenos, 2, var),
-                            family = "gaussian", q = q, phi = phi, xi = xi)
+                            family = "gaussian", q = q, phi = 1, xi = 1)
 
 vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
                 family = "gaussian", list_hyper = list_hyper_g_z,
@@ -154,12 +139,11 @@ vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
                   user_seed = user_seed)
 
 # Binary outcomes with covariates
-phi <- xi <- matrix(1, nrow = q, ncol = d)
 
 list_hyper_logit_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
                                 eta = NULL, kappa = NULL,
-                                family = "binomial-logit", q = q, phi = phi,
-                                xi = xi)
+                                family = "binomial-logit", q = q, phi = 1,
+                                xi = 1)
 
 vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
                     family = "binomial-logit",
@@ -167,8 +151,8 @@ vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
 
 list_hyper_probit_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
                                  eta = NULL, kappa = NULL,
-                                 family = "binomial-probit", q = q, phi = phi,
-                                 xi = xi)
+                                 family = "binomial-probit", q = q, phi = 1,
+                                 xi = 1)
 
 vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
                      family = "binomial-probit",

@@ -234,13 +234,9 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family,
         q_hyper_match <- length(bool_rmvd_z)
         # remove the entries corresponding to the removed constant predictors in X
         # (if any)
-        if (family == "gaussian") {
-          list_hyper$phi <- list_hyper$phi[!bool_rmvd_z]
-          list_hyper$xi <- list_hyper$xi[!bool_rmvd_z]
-        } else {
-          list_hyper$phi <- list_hyper$phi[!bool_rmvd_z,, drop = FALSE]
-          list_hyper$xi <- list_hyper$xi[!bool_rmvd_z,, drop = FALSE]
-        }
+        list_hyper$phi <- list_hyper$phi[!bool_rmvd_z]
+        list_hyper$xi <- list_hyper$xi[!bool_rmvd_z]
+
       } else {
         q_hyper_match <- q
       }
@@ -336,7 +332,17 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family,
         # remove the entries corresponding to the removed constant predictors in X
         # (if any)
         list_init$mu_alpha_vb <- list_init$mu_alpha_vb[!bool_rmvd_z,, drop = FALSE]
-        list_init$sig2_alpha_vb <- list_init$sig2_alpha_vb[!bool_rmvd_z,, drop = FALSE]
+
+        if (family == "binomial-probit"){
+
+          list_init$sig2_alpha_vb <- list_init$sig2_alpha_vb[!bool_rmvd_z]
+
+        } else {
+
+          list_init$sig2_alpha_vb <- list_init$sig2_alpha_vb[!bool_rmvd_z,, drop = FALSE]
+
+        }
+
       } else {
         q_init_match <- q
       }

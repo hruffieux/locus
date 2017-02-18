@@ -180,8 +180,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
       if (converged) {
         cat(paste("Convergence obtained after ", format(it),
                   " iterations with variational lower bound = ",
-                  format(lb_new), ". \n\n",
-                  sep = ""))
+                  format(lb_new), ". \n\n", sep = ""))
       } else {
         cat("Maximal number of iterations reached before convergence. Exit.")
       }

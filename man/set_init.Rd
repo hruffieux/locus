@@ -19,14 +19,15 @@ parameter yielding posterior probabilities of inclusion.}
 variationa parameter yielding regression coefficient estimates for
 predictor-response pairs included in the model.}
 
-\item{sig2_beta_vb}{Vector of size d, for \code{family = "gaussian"} and
-\code{family = "binomial-probit"}, or matrix of size p x d, for
-\code{family = "binomial-logit"}, with initial values for the variational
-parameter yielding estimates of effect variances for predictor-response
-pairs included in the model. For \code{family = "gaussian"} and
-\code{family = "binomial-probit"}, these values are the same for all
-predictors (as a result of the predictor variables being standardized
-before the variational algorithm).}
+\item{sig2_beta_vb}{Vector of size d, for \code{family = "gaussian"}, of size
+ 1 for \code{family = "binomial-probit"}, and a matrix of size p x d, for
+ \code{family = "binomial-logit"}, with initial values for the variational
+ parameter yielding estimates of effect variances for predictor-response
+ pairs included in the model. For \code{family = "gaussian"}, these values
+ are the same for all the predictors (as a result of the predictor variables
+ being standardized before the variational algorithm). For
+ \code{family = "binomial-probit"}, the are the same for all the predictors
+and responses.}
 
 \item{tau_vb}{Vector of size d with initial values, for
 \code{family = "gaussian"}, for the variational parameter yielding
@@ -43,14 +44,16 @@ regression, "\code{binomial-logit}" for logistic regression or
 \item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
 
-\item{mu_alpha_vb}{Matrix of size p x q with initial values for the
+\item{mu_alpha_vb}{Matrix of size q x d with initial values for the
 variational parameter yielding regression coefficient estimates for
 covariate-response pairs. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
 
-\item{sig2_alpha_vb}{Matrix of size p x q with initial values for the
+\item{sig2_alpha_vb}{Matrix of size q x d for \code{family = "gaussian"} and
+for \code{family = "binomial-logit"}, with initial values for the
 variational parameter yielding estimates of effect variances for
-covariate-response pairs. Default is \code{NULL}, for \code{Z}
+covariate-response pairs. Vector if size q for
+\code{family = "binomial-probit"}, Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
 }
 \value{
@@ -130,7 +133,8 @@ vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
                   family = "binomial-logit", list_init = list_init_logit)
 
 
-list_init_probit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
+sig2_beta_vb_probit <- sig2_beta_vb[1]
+list_init_probit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_probit,
                              tau_vb = NULL, family = "binomial-probit")
 
 vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av,
@@ -145,11 +149,11 @@ list_init_logit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
 vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
                 family = "binomial-logit", list_init = list_init_logit_z)
 
-
-list_init_probit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb,
+sig2_alpha_vb_probit <- sig2_alpha_vb[1,]
+list_init_probit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_probit,
                                tau_vb = NULL, family = "binomial-probit",
                                q = q, mu_alpha_vb = mu_alpha_vb,
-                               sig2_alpha_vb = sig2_alpha_vb)
+                               sig2_alpha_vb = sig2_alpha_vb_probit)
 
 vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0_av, Z = Z,
                 family = "binomial-probit", list_init = list_init_probit_z)

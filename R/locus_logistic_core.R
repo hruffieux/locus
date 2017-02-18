@@ -12,13 +12,14 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects
 
-    m2_alpha <- (sig2_alpha_vb + mu_alpha_vb ^ 2)
+    m2_alpha <- sig2_alpha_vb + mu_alpha_vb ^ 2
     m1_beta <- mu_beta_vb * gam_vb
     m2_beta <- (sig2_beta_vb + mu_beta_vb ^ 2) * gam_vb
 
     psi_vb <- update_psi_logit_vb_(chi_vb)
 
     rowsums_gam <- rowSums(gam_vb)
+    sum_gam <- sum(rowsums_gam)
 
     lambda_vb <- nu_vb <- a_vb <- b_vb <- phi_vb <- xi_vb <- NULL
 
@@ -26,7 +27,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
     lb_old <- -Inf
     it <- 1
 
-    phi_vb <- update_phi_bin_vb_(phi)
+    phi_vb <- update_phi_z_vb_(phi, d)
 
     while ((!converged) & (it <= maxit)) {
 
@@ -40,14 +41,14 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
       # % #
 
       # % #
-      lambda_vb <- update_lambda_bin_vb_(lambda, gam_vb)
+      lambda_vb <- update_lambda_vb_(lambda, sum_gam)
       nu_vb <- update_nu_bin_vb_(nu, m2_beta)
 
       sig2_inv_vb <- lambda_vb / nu_vb
       # % #
 
-      sig2_alpha_vb <- 1 / (2 * crossprod(Z ^ 2, psi_vb) + zeta2_inv_vb)
-      sig2_beta_vb <- 1 / sweep(2 * crossprod(X ^ 2, psi_vb), 2, sig2_inv_vb, `+`)
+      sig2_alpha_vb <- 1 / sweep(2 * crossprod(Z ^ 2, psi_vb), 1, zeta2_inv_vb, `+`)
+      sig2_beta_vb <- 1 / (2 * crossprod(X ^ 2, psi_vb) + sig2_inv_vb)
 
       log_sig2_inv_vb <- digamma(lambda_vb) - log(nu_vb)
 
@@ -77,7 +78,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
           log_part_gam_vb <- log_om_vb[j] + log(sig2_beta_vb[j, ]) / 2 +
             mu_beta_vb[j, ] ^ 2 / (2 * sig2_beta_vb[j, ])
 
-          log_part2_gam_vb <- log_1_min_om_vb[j] - log_sig2_inv_vb / 2
+          log_part2_gam_vb <- log_1_min_om_vb[j] - rep(log_sig2_inv_vb, d) / 2
 
           gam_vb[j, ] <- exp(log_part_gam_vb -
                                log_sum_exp_mat_(list(log_part_gam_vb, log_part2_gam_vb)))
@@ -116,7 +117,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
             log_part_gam_vb <- log_om_vb[j] + log(sig2_beta_vb[j, k]) / 2 +
               mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[j, k])
 
-            log_part2_gam_vb <- log_1_min_om_vb[j] - log_sig2_inv_vb[k] / 2
+            log_part2_gam_vb <- log_1_min_om_vb[j] - log_sig2_inv_vb / 2
 
             gam_vb[j, k] <- exp(log_part_gam_vb -
                                   log_sum_exp_(c(log_part_gam_vb, log_part2_gam_vb)))
@@ -132,6 +133,8 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
         }
 
       }
+
+      sum_gam <- sum(rowsums_gam)
 
       m2_alpha <- (sig2_alpha_vb + mu_alpha_vb ^ 2)
       m2_beta <- (sig2_beta_vb + mu_beta_vb ^ 2) * gam_vb
@@ -156,14 +159,16 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
       # % #
 
       lb_new <- lower_bound_logit_(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
-                                 lambda, nu, phi, phi_vb, psi_vb, sig2_alpha_vb,
-                                 sig2_beta_vb, sig2_inv_vb, xi, zeta2_inv_vb,
-                                 mu_alpha_vb, m1_beta, m2_alpha, m2_beta, mat_x_m1,
-                                 mat_z_mu)
+                                   lambda, nu, phi, phi_vb, psi_vb,
+                                   sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, xi,
+                                   zeta2_inv_vb, mu_alpha_vb, m1_beta, m2_alpha,
+                                   m2_beta, mat_x_m1, mat_z_mu, sum_gam)
 
 
-      if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+      #if (verbose & (it == 1 | it %% 5 == 0))
+      #  cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+
+      cat(paste("Lower bound = ", lb_new, "\n\n", sep = ""))
 
       converged <- (abs(lb_new - lb_old) < tol)
 
@@ -175,8 +180,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
       if (converged) {
         cat(paste("Convergence obtained after ", format(it),
                   " iterations with variational lower bound = ",
-                  format(lb_new), ". \n\n",
-                  sep = ""))
+                  format(lb_new), ". \n\n", sep = ""))
       } else {
         cat("Maximal number of iterations reached before convergence. Exit.")
       }
@@ -188,7 +192,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
       create_named_list_(a, a_vb, b, b_vb, chi_vb, gam_vb, lambda, nu, phi,
                          phi_vb, psi_vb, sig2_alpha_vb, sig2_beta_vb,
                          sig2_inv_vb, xi, zeta2_inv_vb, mu_alpha_vb, m1_beta,
-                         m2_alpha, m2_beta, mat_x_m1, mat_z_mu)
+                         m2_alpha, m2_beta, mat_x_m1, mat_z_mu, sum_gam)
     } else {
 
       names_x <- colnames(X)
@@ -208,15 +212,9 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 }
 
 
-update_phi_bin_vb_ <- function(phi) {
-
-  phi + 1 / 2
-
-}
-
 update_xi_bin_vb_ <- function(xi, m2_alpha) {
 
-  xi + m2_alpha / 2
+  xi + rowSums(m2_alpha) / 2
 
 }
 
@@ -230,15 +228,9 @@ update_psi_logit_vb_ <- function(chi_vb) {
 
 }
 
-update_lambda_bin_vb_ <- function(lambda, gam_vb) {
-
-  lambda + colSums(gam_vb) / 2
-
-}
-
 update_nu_bin_vb_ <- function(nu, m2_beta) {
 
-  nu + colSums(m2_beta) / 2
+  nu + sum(m2_beta) / 2
 
 }
 
@@ -246,9 +238,9 @@ lower_bound_logit_ <- function(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
                              lambda, nu, phi, phi_vb, psi_vb, sig2_alpha_vb,
                              sig2_beta_vb, sig2_inv_vb, xi, zeta2_inv_vb,
                              mu_alpha_vb, m1_beta, m2_alpha, m2_beta, mat_x_m1,
-                             mat_z_mu) {
+                             mat_z_mu, sum_gam) {
 
-  lambda_vb <- update_lambda_bin_vb_(lambda, gam_vb)
+  lambda_vb <- update_lambda_vb_(lambda, sum_gam)
   nu_vb <- update_nu_bin_vb_(nu, m2_beta)
 
   xi_vb <- update_xi_bin_vb_(xi, m2_alpha)
@@ -266,12 +258,11 @@ lower_bound_logit_ <- function(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
                          2 * mat_x_m1 * mat_z_mu - chi_vb^2))
 
   eps <- .Machine$double.eps # to control the argument of the log when gamma is very small
-  B <- sum( sweep(gam_vb, 2, log_sig2_inv_vb, `*`) / 2 -
-             sweep(m2_beta, 2, sig2_inv_vb, `*`) / 2 +
-             sweep(gam_vb, 1, log_om_vb, `*`) +
-             sweep(1 - gam_vb, 1, log_1_min_om_vb, `*`) +
-             gam_vb * (log(sig2_beta_vb) + 1) / 2 -
-             gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
+  B <- sum(gam_vb * log_sig2_inv_vb / 2 - m2_beta * sig2_inv_vb / 2 +
+              sweep(gam_vb, 1, log_om_vb, `*`) +
+              sweep(1 - gam_vb, 1, log_1_min_om_vb, `*`) +
+              gam_vb * (log(sig2_beta_vb) + 1) / 2 -
+              gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
 
   H <- sum((lambda - lambda_vb) * log_sig2_inv_vb - (nu - nu_vb) * sig2_inv_vb +
              lambda * log(nu) - lambda_vb * log(nu_vb) - lgamma(lambda) +
@@ -280,7 +271,8 @@ lower_bound_logit_ <- function(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
   J <- sum((a - a_vb) * log_om_vb + (b - b_vb) * log_1_min_om_vb - lbeta(a, b) +
              lbeta(a_vb, b_vb))
 
-  K <- 1 / 2 * sum(log_zeta2_inv_vb - zeta2_inv_vb * m2_alpha + log(sig2_alpha_vb) + 1)
+  K <- 1 / 2 * sum( sweep(-sweep(m2_alpha, 1, zeta2_inv_vb, `*`), 1,
+                          log_zeta2_inv_vb, `+`) + log(sig2_alpha_vb) + 1)
 
   L <- sum((phi - phi_vb) * log_zeta2_inv_vb - (xi - xi_vb) * zeta2_inv_vb +
              phi * log(xi) - phi_vb * log(xi_vb) - lgamma(phi) +

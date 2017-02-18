@@ -227,21 +227,32 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
       Z <- matrix(1, nrow = n, ncol = 1)
 
       # uninformative prior
-      list_hyper$phi <- list_hyper$xi <- matrix(1e-3, nrow = 1, ncol = d)
+      list_hyper$phi <- list_hyper$xi <- 1e-3
 
       list_init$mu_alpha_vb <- matrix(0, nrow = 1, ncol = d)
-      list_init$sig2_alpha_vb <- matrix(1, nrow = 1, ncol = d)
+
+      if (family == "binomial-logit") {
+       list_init$sig2_alpha_vb <- matrix(1, nrow = 1, ncol = d)
+      } else {
+       list_init$sig2_alpha_vb <- 1
+      }
 
     } else{
 
       Z <- cbind(rep(1, n), Z)
 
       # uninformative prior
-      list_hyper$phi <- rbind(rep(1e-3, d), list_hyper$phi)
-      list_hyper$xi <- rbind(rep(1e-3, d), list_hyper$xi)
+      list_hyper$phi <- c(1e-3, list_hyper$phi)
+      list_hyper$xi <- c(1e-3, list_hyper$xi)
 
       list_init$mu_alpha_vb <- rbind(rep(0, d), list_init$mu_alpha_vb)
-      list_init$sig2_alpha_vb <- rbind(rep(1, d), list_init$sig2_alpha_vb)
+
+      if (family == "binomial-logit") {
+        list_init$sig2_alpha_vb <- rbind(rep(1, d), list_init$sig2_alpha_vb)
+      } else {
+        list_init$sig2_alpha_vb <- c(1, list_init$sig2_alpha_vb)
+      }
+
 
     }
     colnames(Z)[1] <- "Intercept"
