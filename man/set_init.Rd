@@ -5,7 +5,7 @@
 \title{Gather initial variational parameters provided by the user.}
 \usage{
 set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, family = "gaussian",
-  n = NULL, q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL)
+  q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL)
 }
 \arguments{
 \item{d}{Number of responses.}
@@ -37,9 +37,6 @@ estimates for the response residual precisions. Must be \code{NULL} for
 \item{family}{Response type. Must be either "\code{gaussian}" for linear
 regression, "\code{binomial-logit}" for logistic regression or
 \code{family = "binomial-probit"} for probit regression.}
-
-\item{n}{Number of observations. Used only when
-\code{family = "binomial-logit"}.}
 
 \item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
@@ -127,7 +124,7 @@ dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 sig2_beta_vb_logit <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
 
 list_init_logit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
-                            tau_vb = NULL, family = "binomial-logit", n = n)
+                            tau_vb = NULL, family = "binomial-logit")
 
 vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
                   family = "binomial-logit", list_init = list_init_logit)
@@ -143,7 +140,7 @@ vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
 # Binary outcomes with covariates
 list_init_logit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
                               tau_vb = NULL, family = "binomial-logit",
-                              n = n, q = q, mu_alpha_vb = mu_alpha_vb,
+                              q = q, mu_alpha_vb = mu_alpha_vb,
                               sig2_alpha_vb = sig2_alpha_vb)
 
 vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,

@@ -306,10 +306,6 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family,
       stop(paste("The dimensions (p) of the provided initial parameters ",
                  "(list_init) are not consistent with that of X.\n", sep=""))
 
-    if (family == "binomial-logit" && list_init$n_init != n)
-      stop(paste("The number of observations provided when setting the initial ",
-                 "parameters (list_init) is not consistent with that of X.\n", sep=""))
-
     if (list_init$family_init != family)
       stop(paste("The argument family is not consistent with the variable
                  family_init in list_init", sep=""))
@@ -322,7 +318,6 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family,
 
       if (family == "binomial-logit")
         list_init$sig2_beta_vb <- list_init$sig2_beta_vb[!bool_rmvd_x,, drop = FALSE]
-
     }
 
     if (!is.null(q)) {

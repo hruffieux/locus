@@ -310,8 +310,6 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 #' @param family Response type. Must be either "\code{gaussian}" for linear
 #'   regression, "\code{binomial-logit}" for logistic regression or
 #'   \code{family = "binomial-probit"} for probit regression.
-#' @param n Number of observations. Used only when
-#'   \code{family = "binomial-logit"}.
 #' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
 #'   \code{NULL}.
 #' @param mu_alpha_vb Matrix of size q x d with initial values for the
@@ -386,7 +384,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 #' sig2_beta_vb_logit <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
 #'
 #' list_init_logit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
-#'                             tau_vb = NULL, family = "binomial-logit", n = n)
+#'                             tau_vb = NULL, family = "binomial-logit")
 #'
 #' vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
 #'                   family = "binomial-logit", list_init = list_init_logit)
@@ -402,7 +400,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 #' # Binary outcomes with covariates
 #' list_init_logit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
 #'                               tau_vb = NULL, family = "binomial-logit",
-#'                               n = n, q = q, mu_alpha_vb = mu_alpha_vb,
+#'                               q = q, mu_alpha_vb = mu_alpha_vb,
 #'                               sig2_alpha_vb = sig2_alpha_vb)
 #'
 #' vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
@@ -422,17 +420,14 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 #' @export
 #'
 set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-                     family = "gaussian", n = NULL, q = NULL,
-                     mu_alpha_vb = NULL, sig2_alpha_vb = NULL) {
+                     family = "gaussian", q = NULL, mu_alpha_vb = NULL,
+                     sig2_alpha_vb = NULL) {
 
   check_structure_(d, "vector", "numeric", 1)
   check_natural_(d)
 
   check_structure_(p, "vector", "numeric", 1)
   check_natural_(p)
-
-  check_structure_(n, "vector", "numeric", 1, null_ok = TRUE)
-  if (!is.null(n)) check_natural_(n)
 
   check_structure_(q, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(q)) check_natural_(q)
@@ -452,8 +447,6 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
     check_structure_(tau_vb, "vector", "double", d)
     check_positive_(tau_vb)
 
-    chi_vb <- NULL
-
   } else if (family == "binomial-logit"){
 
     check_structure_(sig2_beta_vb, "matrix", "double", c(p, d))
@@ -461,18 +454,12 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
     if (!is.null(tau_vb))
       stop("tau_vb must be NULL for logistic regression.")
 
-    if (is.null(n))
-      stop("The number of observations, n, must be provided for logistic regression.")
-    chi_vb <- matrix(1 / 2, nrow = n, ncol = d)
-
   } else {
 
     check_structure_(sig2_beta_vb, "vector", "double", 1)
 
     if (!is.null(tau_vb))
-      stop("tau_vb must be NULL for logistic regression.")
-
-    chi_vb <- NULL
+      stop("tau_vb must be NULL for probit regression.")
 
   }
 
@@ -504,13 +491,12 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   d_init <- d
   p_init <- p
   q_init <- q
-  n_init <- n
 
   family_init <- family
 
-  list_init <- create_named_list_(d_init, n_init, p_init, q_init, family_init,
-                                  gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-                                  chi_vb, mu_alpha_vb, sig2_alpha_vb)
+  list_init <- create_named_list_(d_init, p_init, q_init, family_init, gam_vb,
+                                  mu_beta_vb, sig2_beta_vb, tau_vb, mu_alpha_vb,
+                                  sig2_alpha_vb)
 
   class(list_init) <- "init"
 
@@ -521,7 +507,6 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 auto_set_init_ <- function(Y, p, p_star, q, user_seed, family) {
 
   d <- ncol(Y)
-  n <- nrow(Y)
 
   if (!is.null(user_seed)) set.seed(user_seed)
 
@@ -550,13 +535,9 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family) {
 
     sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / (sig2_inv_vb * tau_vb))
 
-    chi_vb <- NULL
-
   } else if (family == "binomial-logit") {
 
     sig2_beta_vb <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1 / sig2_inv_vb)))
-
-    chi_vb <- matrix(1 / 2, nrow = n, ncol = d)
 
     tau_vb <- NULL
 
@@ -564,7 +545,7 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family) {
 
     sig2_beta_vb <- 1 / rgamma(1, shape = 2, rate = 1 / sig2_inv_vb)
 
-    tau_vb <- chi_vb <- NULL
+    tau_vb <- NULL
 
   }
 
@@ -608,14 +589,12 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family) {
   d_init <- d
   p_init <- p
   q_init <- q
-  n_init <- n
-
 
   family_init <- family
 
-  list_init <- create_named_list_(d_init, n_init, p_init, q_init, family_init,
-                                  gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-                                  chi_vb, mu_alpha_vb, sig2_alpha_vb)
+  list_init <- create_named_list_(d_init, p_init, q_init, family_init, gam_vb,
+                                  mu_beta_vb, sig2_beta_vb, tau_vb, mu_alpha_vb,
+                                  sig2_alpha_vb)
 
   class(list_init) <- "out_init"
 

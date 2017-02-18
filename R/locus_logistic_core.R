@@ -16,7 +16,9 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
     m1_beta <- mu_beta_vb * gam_vb
     m2_beta <- (sig2_beta_vb + mu_beta_vb ^ 2) * gam_vb
 
-    psi_vb <- update_psi_logit_vb_(chi_vb)
+    mat_z_mu <-  Z %*% mu_alpha_vb
+    mat_x_m1 <-  X %*% m1_beta
+
 
     rowsums_gam <- rowSums(gam_vb)
     sum_gam <- sum(rowsums_gam)
@@ -33,6 +35,14 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("Iteration ", format(it), "... \n", sep = ""))
+
+      # % #
+      chi_vb <- sqrt(X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 +
+                       Z^2 %*% sig2_alpha_vb + mat_z_mu^2 +
+                       2 * mat_x_m1 * mat_z_mu)
+
+      psi_vb <- update_psi_logit_vb_(chi_vb)
+      # % #
 
       # % #
       xi_vb <- update_xi_bin_vb_(xi, m2_alpha)
@@ -58,9 +68,6 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
         log_om_vb <- digamma(a + rowsums_gam) - vec_part_digam
         log_1_min_om_vb <- digamma(b - rowsums_gam + d) - vec_part_digam
-
-        mat_z_mu <-  Z %*% mu_alpha_vb
-        mat_x_m1 <-  X %*% m1_beta
 
         for (i in 1:q) {
           mat_z_mu <- mat_z_mu - tcrossprod(Z[, i], mu_alpha_vb[i, ])
@@ -148,14 +155,6 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
         mat_x_m1 <- X %*% m1_beta
         mat_z_mu <- Z %*% mu_alpha_vb
       }
-
-      chi_vb <- sqrt(X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 +
-                       Z^2 %*% sig2_alpha_vb + mat_z_mu^2 +
-                       2 * mat_x_m1 * mat_z_mu)
-
-      psi_vb <- update_psi_logit_vb_(chi_vb)
-
-
       # % #
 
       lb_new <- lower_bound_logit_(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
@@ -167,6 +166,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
       if (verbose & (it == 1 | it %% 5 == 0))
        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+
 
       converged <- (abs(lb_new - lb_old) < tol)
 
