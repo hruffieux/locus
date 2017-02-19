@@ -4,8 +4,8 @@
 \alias{set_hyper}
 \title{Gather model hyperparameters provided by the user.}
 \usage{
-set_hyper(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian", q = NULL,
-  phi = NULL, xi = NULL)
+set_hyper(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
+  ind_bin = NULL, q = NULL, phi = NULL, xi = NULL)
 }
 \arguments{
 \item{d}{Number of responses.}

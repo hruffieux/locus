@@ -4,10 +4,10 @@
 \alias{locus}
 \title{Fit a sparse multivariate regression model using variational inference.}
 \usage{
-locus(Y, X, p0_av, Z = NULL, family = "gaussian", list_hyper = NULL,
-  list_init = NULL, list_cv = NULL, list_blocks = NULL,
-  user_seed = NULL, tol = 1e-04, maxit = 1000, batch = TRUE,
-  save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
+locus(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
+  list_hyper = NULL, list_init = NULL, list_cv = NULL,
+  list_blocks = NULL, user_seed = NULL, tol = 1e-04, maxit = 1000,
+  batch = TRUE, save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{Y}{Continuous response data matrix of dimension n x d, where n is the

@@ -5,7 +5,7 @@
 \title{Gather initial variational parameters provided by the user.}
 \usage{
 set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, family = "gaussian",
-  q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL)
+  ind_bin = NULL, q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL)
 }
 \arguments{
 \item{d}{Number of responses.}
@@ -29,10 +29,12 @@ predictor-response pairs included in the model.}
  \code{family = "binomial-probit"}, the are the same for all the predictors
 and responses.}
 
-\item{tau_vb}{Vector of size d with initial values, for
-\code{family = "gaussian"}, for the variational parameter yielding
-estimates for the response residual precisions. Must be \code{NULL} for
-\code{family = "binomial-logit"} and \code{family = "binomial-probit"}.}
+\item{tau_vb}{Vector of size d, for \code{family = "gaussian"}, and for size
+d - length(ind_bin) (number of continuous responses), for
+\code{family = "mixed"} with initial values for the variational parameter
+yielding estimates for the continuous response residual precisions. Must be
+\code{NULL} for \code{family = "binomial-logit"} and
+\code{family = "binomial-probit"}.}
 
 \item{family}{Response type. Must be either "\code{gaussian}" for linear
 regression, "\code{binomial-logit}" for logistic regression or

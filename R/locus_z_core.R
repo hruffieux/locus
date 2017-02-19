@@ -8,7 +8,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
   p <- ncol(X)
   q <- ncol(Z)
 
-  # Y must have been centered, and X, standardized.
+  # Y must have been centered, and X and Z, standardized (except the intercept in Z).
 
   with(list_hyper, {  # list_init not used with the with() function to avoid
                       # copy-on-write for large objects

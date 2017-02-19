@@ -141,7 +141,7 @@
 #' @export
 #'
 set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
-                      q = NULL, phi = NULL, xi = NULL) {
+                      ind_bin = NULL, q = NULL, phi = NULL, xi = NULL) {
 
   check_structure_(d, "vector", "numeric", 1)
   check_natural_(d)
@@ -152,7 +152,9 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
   check_structure_(q, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(q)) check_natural_(q)
 
-  stopifnot(family %in% c("gaussian", "binomial-logit", "binomial-probit"))
+  stopifnot(family %in% c("gaussian", "binomial-logit", "binomial-probit", "mixed"))
+
+  ind_bin <- prepare_ind_bin_(d, ind_bin, family)
 
   check_structure_(a, "vector", "double", c(1, p))
   check_positive_(a)
@@ -168,15 +170,17 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
   check_structure_(nu, "vector", "double", 1)
   check_positive_(nu)
 
-  if (family == "gaussian") {
+  if (family %in% c("gaussian", "mixed")) {
 
-    check_structure_(eta, "vector", "double", c(1, d))
+    d_cont <- d - length(ind_bin) # length(NULL) = 0 for family = "gaussian"
+
+    check_structure_(eta, "vector", "double", c(1, d_cont))
     check_positive_(eta)
-    if (length(eta) == 1) eta <- rep(eta, d)
+    if (length(eta) == 1) eta <- rep(eta, d_cont)
 
-    check_structure_(kappa, "vector", "double", c(1, d))
+    check_structure_(kappa, "vector", "double", c(1, d_cont))
     check_positive_(kappa)
-    if (length(kappa) == 1) kappa <- rep(kappa, d)
+    if (length(kappa) == 1) kappa <- rep(kappa, d_cont)
 
   } else {
 
@@ -204,11 +208,13 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
   d_hyper <- d
   p_hyper <- p
   q_hyper <- q
+  ind_bin_hyper <- ind_bin
 
   family_hyper <- family
 
-  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, family_hyper, eta,
-                                   kappa, lambda, nu, a, b, phi, xi)
+  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, family_hyper,
+                                   ind_bin_hyper, eta, kappa, lambda, nu, a, b,
+                                   phi, xi)
 
   class(list_hyper) <- "hyper"
 
@@ -217,20 +223,24 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
 }
 
 
-auto_set_hyper_ <- function(Y, p, p_star, q, family) {
+auto_set_hyper_ <- function(Y, p, p_star, q, family, ind_bin) {
 
   d <- ncol(Y)
 
   lambda <- 1e-2
   nu <- 1
 
-  if (family == "gaussian") {
+  if (family %in% c("gaussian", "mixed")) {
+
+    if (family == "mixed") Y <- Y[, -ind_bin, drop = FALSE]
+
+    d_cont <- d - length(ind_bin) # length(NULL) = 0 for family = "gaussian"
 
     # hyperparameter set using the data Y
     eta <- 1 / median(apply(Y, 2, var)) #median to be consistent when doing permutations
     if (!is.finite(eta)) eta <- 1e3
-    eta <- rep(eta, d)
-    kappa <- rep(1, d)
+    eta <- rep(eta, d_cont)
+    kappa <- rep(1, d_cont)
 
   } else {
 
@@ -266,10 +276,12 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
   d_hyper <- d
   p_hyper <- p
   q_hyper <- q
+  ind_bin_hyper <- ind_bin
 
   family_hyper <- family
 
-  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, family_hyper, eta,
+  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, family_hyper,
+                                   ind_bin_hyper, eta,
                                    kappa, lambda, nu, a, b, phi, xi)
 
   class(list_hyper) <- "out_hyper"
@@ -303,10 +315,12 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 #'   being standardized before the variational algorithm). For
 #'   \code{family = "binomial-probit"}, the are the same for all the predictors
 #'  and responses.
-#' @param tau_vb  Vector of size d with initial values, for
-#'   \code{family = "gaussian"}, for the variational parameter yielding
-#'   estimates for the response residual precisions. Must be \code{NULL} for
-#'   \code{family = "binomial-logit"} and \code{family = "binomial-probit"}.
+#' @param tau_vb  Vector of size d, for \code{family = "gaussian"}, and for size
+#'   d - length(ind_bin) (number of continuous responses), for
+#'   \code{family = "mixed"} with initial values for the variational parameter
+#'   yielding estimates for the continuous response residual precisions. Must be
+#'   \code{NULL} for \code{family = "binomial-logit"} and
+#'   \code{family = "binomial-probit"}.
 #' @param family Response type. Must be either "\code{gaussian}" for linear
 #'   regression, "\code{binomial-logit}" for logistic regression or
 #'   \code{family = "binomial-probit"} for probit regression.
@@ -420,8 +434,8 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family) {
 #' @export
 #'
 set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-                     family = "gaussian", q = NULL, mu_alpha_vb = NULL,
-                     sig2_alpha_vb = NULL) {
+                     family = "gaussian", ind_bin = NULL, q = NULL,
+                     mu_alpha_vb = NULL, sig2_alpha_vb = NULL) {
 
   check_structure_(d, "vector", "numeric", 1)
   check_natural_(d)
@@ -432,7 +446,9 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   check_structure_(q, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(q)) check_natural_(q)
 
-  stopifnot(family %in% c("gaussian", "binomial-logit", "binomial-probit"))
+  stopifnot(family %in% c("gaussian", "binomial-logit", "binomial-probit", "mixed"))
+
+  ind_bin <- prepare_ind_bin_(d, ind_bin, family)
 
   check_structure_(gam_vb, "matrix", "double", c(p, d))
   check_zero_one_(gam_vb)
@@ -440,12 +456,21 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   check_structure_(mu_beta_vb, "matrix", "double", c(p, d))
 
 
-  if (family == "gaussian") {
+  if (family %in% c("gaussian", "mixed")) {
 
     check_structure_(sig2_beta_vb, "vector", "double", d)
 
-    check_structure_(tau_vb, "vector", "double", d)
+    d_cont <- d - length(ind_bin) # length(NULL) = 0 for family = "gaussian"
+
+    check_structure_(tau_vb, "vector", "double", d_cont)
     check_positive_(tau_vb)
+
+    if (family == "mixed") {
+      tmp_tau_vb <- tau_vb
+      tau_vb <- rep(1, d) # tau_vb is set to 1 for binary responses.
+      tau_vb[-ind_bin] <- tmp_tau_vb
+      rm(tmp_tau_vb)
+    }
 
   } else if (family == "binomial-logit"){
 
@@ -491,12 +516,13 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   d_init <- d
   p_init <- p
   q_init <- q
+  ind_bin_init <- ind_bin
 
   family_init <- family
 
-  list_init <- create_named_list_(d_init, p_init, q_init, family_init, gam_vb,
-                                  mu_beta_vb, sig2_beta_vb, tau_vb, mu_alpha_vb,
-                                  sig2_alpha_vb)
+  list_init <- create_named_list_(d_init, p_init, q_init, family_init,
+                                  ind_bin_init, gam_vb, mu_beta_vb, sig2_beta_vb,
+                                  tau_vb, mu_alpha_vb, sig2_alpha_vb)
 
   class(list_init) <- "init"
 
@@ -504,7 +530,7 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 }
 
 
-auto_set_init_ <- function(Y, p, p_star, q, user_seed, family) {
+auto_set_init_ <- function(Y, p, p_star, q, user_seed, family, ind_bin) {
 
   d <- ncol(Y)
 
@@ -527,11 +553,24 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family) {
 
   sig2_inv_vb <- 1e-2
 
-  if (family == "gaussian") {
+  if (family %in% c("gaussian", "mixed")) {
+
+    if (family == "mixed") Y <- Y[, -ind_bin, drop = FALSE]
+
+    d_cont <- d - length(ind_bin) # length(NULL) = 0 for family = "gaussian"
 
     tau_vb <- 1 / median(apply(Y, 2, var))
     if (!is.finite(tau_vb)) tau_vb <- 1e3
-    tau_vb <- rep(tau_vb, d)
+    tau_vb <- rep(tau_vb, d_cont)
+
+    if (family == "mixed") {
+
+      tmp_tau_vb <- tau_vb
+      tau_vb <- rep(1, d) # tau_vb is set to 1 for binary responses.
+      tau_vb[-ind_bin] <- tmp_tau_vb
+      rm(tmp_tau_vb)
+
+    }
 
     sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / (sig2_inv_vb * tau_vb))
 
@@ -555,7 +594,7 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family) {
 
     mu_alpha_vb <- matrix(rnorm(q * d), nrow = q)
 
-    if (family == "gaussian") {
+    if (family %in% c("gaussian", "mixed")) {
 
       zeta2_inv_vb <- rgamma(q, shape = 1, rate = 1)
 
@@ -589,12 +628,13 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family) {
   d_init <- d
   p_init <- p
   q_init <- q
+  ind_bin_init <- ind_bin
 
   family_init <- family
 
-  list_init <- create_named_list_(d_init, p_init, q_init, family_init, gam_vb,
-                                  mu_beta_vb, sig2_beta_vb, tau_vb, mu_alpha_vb,
-                                  sig2_alpha_vb)
+  list_init <- create_named_list_(d_init, p_init, q_init, family_init,
+                                  ind_bin_init, gam_vb, mu_beta_vb, sig2_beta_vb,
+                                  tau_vb, mu_alpha_vb, sig2_alpha_vb)
 
   class(list_init) <- "out_init"
 

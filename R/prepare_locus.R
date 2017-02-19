@@ -1,6 +1,6 @@
-prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose) {
+prepare_data_ <- function(Y, X, Z, family, ind_bin, user_seed, tol, maxit, batch, verbose) {
 
-  stopifnot(family %in% c("gaussian", "binomial-logit", "binomial-probit"))
+  stopifnot(family %in% c("gaussian", "binomial-logit", "binomial-probit", "mixed"))
 
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
 
@@ -13,16 +13,36 @@ prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose
   check_structure_(batch, "vector", "logical", 1)
 
   check_structure_(verbose, "vector", "logical", 1)
-#
+
   check_structure_(X, "matrix", "numeric")
-  if (family == "gaussian") check_structure_(Y, "matrix", "double")
-  else { check_structure_(Y, "matrix", "numeric")
-    if(!identical(as.vector(Y), as.numeric(as.logical(Y))))
-      stop("Y must be a binary matrix for logistic/probit regression.")
-  }
+
   n <- nrow(X)
   p <- ncol(X)
-  d <- ncol(Y)
+
+  if (family == "gaussian") {
+
+    check_structure_(Y, "matrix", "double")
+    d <- ncol(Y)
+
+  } else if (family == "mixed") {
+
+    check_structure_(Y, "matrix", "numeric")
+    d <- ncol(Y)
+
+    if(!identical(as.vector(Y[, ind_bin]), as.numeric(as.logical(Y[, ind_bin]))))
+      stop("The responses in Y correspinding to indices ind_bin must be a binary.")
+
+  } else {
+
+    check_structure_(Y, "matrix", "numeric")
+    d <- ncol(Y)
+    if(!identical(as.vector(Y), as.numeric(as.logical(Y))))
+      stop("Y must be a binary matrix for logistic/probit regression.")
+
+  }
+
+
+  ind_bin <- prepare_ind_bin_(d, ind_bin, family)
 
   if (nrow(Y) != n) stop("X and Y must have the same number of observations.")
 
@@ -94,8 +114,19 @@ prepare_data_ <- function(Y, X, Z, family, user_seed, tol, maxit, batch, verbose
   bool_rmvd_x <- bool_cst_x
   bool_rmvd_x[!bool_cst_x] <- bool_coll_x
 
-  if (family == "gaussian") Y <- scale(Y, center = TRUE, scale = FALSE)
-  else if (family == "binomial-logit") Y <- Y - 1 / 2
+  if (family == "gaussian") {
+
+    Y <- scale(Y, center = TRUE, scale = FALSE)
+
+  } else if (family == "mixed") {
+
+    Y[, -ind_bin] <- scale(Y[, -ind_bin], center = TRUE, scale = FALSE)
+
+  } else if (family == "binomial-logit") {
+
+    Y <- Y - 1 / 2
+
+  }
 
   if (p < 1) stop(paste("There must be at least 1 non-constant candidate predictor ",
                         " stored in X.", sep=""))
@@ -166,7 +197,7 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
 }
 
 
-prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family,
+prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family, ind_bin,
                                 bool_rmvd_x, bool_rmvd_z,
                                 names_x, names_y, names_z, verbose) {
 
@@ -176,7 +207,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family,
 
     if (verbose) cat("list_hyper set automatically. \n")
 
-    list_hyper <- auto_set_hyper_(Y, p, p_star, q, family)
+    list_hyper <- auto_set_hyper_(Y, p, p_star, q, family, ind_bin)
 
   } else {
 
@@ -207,6 +238,10 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family,
       stop(paste("The argument family is not consistent with the variable
                  family_hyper in list_hyper", sep=""))
 
+    if (list_hyper$ind_bin_hyper != ind_bin)
+      stop(paste("The argument ind_bin is not consistent with the variable
+                 ind_bin_hyper in list_hyper", sep=""))
+
     if (inherits(list_hyper, "hyper")) {
       # remove the entries corresponding to the removed constant predictors in X
       # (if any)
@@ -220,12 +255,15 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family,
     if (!is.null(names(list_hyper$b)) && names(list_hyper$b) != names_x)
       stop("Provided names for the entries of b do not match the colnames of X.")
 
-    if (family == "gaussian") {
+    if (family %in% c("gaussian", "mixed")) {
+
+      if (family == "mixed") names_y <- names_y[-ind_bin]
+
       if (!is.null(names(list_hyper$eta)) && names(list_hyper$eta) != names_y)
-        stop("Provided names for the entries of eta do not match the colnames of Y")
+        stop("Provided names for the entries of eta do not match the colnames of the continuous variables in Y")
 
       if (!is.null(names(list_hyper$kappa)) && names(list_hyper$kappa) != names_y)
-        stop("Provided names for the entries of kappa do not match the colnames of Y")
+        stop("Provided names for the entries of kappa do not match the colnames of the continuous variables in Y")
     }
 
     if (!is.null(q)) {
@@ -262,7 +300,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family,
 
 
 
-prepare_list_init_ <- function(list_init, Y, p, p_star, q, family,
+prepare_list_init_ <- function(list_init, Y, p, p_star, q, family, ind_bin,
                                bool_rmvd_x, bool_rmvd_z, user_seed, verbose) {
 
   d <- ncol(Y)
@@ -275,7 +313,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family,
 
     if (verbose) cat(paste("list_init set automatically. \n", sep=""))
 
-    list_init <- auto_set_init_(Y, p, p_star, q, user_seed, family)
+    list_init <- auto_set_init_(Y, p, p_star, q, user_seed, family, ind_bin)
 
   } else {
 
@@ -309,6 +347,10 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family,
     if (list_init$family_init != family)
       stop(paste("The argument family is not consistent with the variable
                  family_init in list_init", sep=""))
+
+    if (list_init$ind_bin_init != ind_bin)
+      stop(paste("The argument ind_bin is not consistent with the variable
+                 ind_bin_init in list_init", sep=""))
 
     if (inherits(list_init, "init")) {
       # remove the entries corresponding to the removed constant predictors in X
@@ -365,8 +407,8 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, family, list_hyper,
                "cross-validation step. ***",
                sep=""))
 
-  if (family %in% c("binomial-logit", "binomial-probit"))
-    stop("Cross-validation not implemented for logisitic/probit regression. Please, set list_cv to NULL.")
+  if (family != "gaussian")
+    stop("Cross-validation implemented only for purely continuous response. Please, set list_cv to NULL.")
 
   if (!is.null(p0_av) | !is.null(list_hyper) | !is.null(list_init))
     stop(paste("p0_av, list_hyper and list_init must all be NULL if non NULL ",
@@ -532,4 +574,29 @@ set_blocks <- function(p, pos_bl, n_cpus, verbose = TRUE) {
   class(list_blocks) <- "blocks"
 
   list_blocks
+}
+
+
+prepare_ind_bin_ <- function(d, ind_bin, family) {
+
+  if (family == "mixed") {
+
+    check_structure_(ind_bin, "vector", "numeric")
+    ind_bin <- sort(unique(ind_bin))
+    if (!all(ind_bin %in% 1:d))
+      stop(paste("All indices provided in ind_bin must be integers between 1 ",
+                 "and the total number of responses, d = ", d, ".", sep = ""))
+
+    if (identical(ind_bin, 1:d))
+      stop(paste("Argument ind_bin indicates that all responses are binary. \n",
+                 "Please set family to logit or probit, or change ind_bin to ",
+                 "the indices of the binary responses only.", sep = ""))
+
+  } else if (!is.null(ind_bin)) {
+
+    stop("Argument ind_bin must be NULL if family is not set to mixed.")
+
+  }
+
+  ind_bin
 }

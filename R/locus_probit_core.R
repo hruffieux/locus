@@ -20,6 +20,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
     mat_x_m1 <-  X %*% m1_beta
 
     W <- update_W_probit_vb_(Y, mat_z_mu, mat_x_m1)
+
     rowsums_gam <- rowSums(gam_vb)
     sum_gam <- sum(rowsums_gam)
 
@@ -240,8 +241,7 @@ lower_bound_probit_ <- function(Y, W, X, Z, a, a_vb, b, b_vb, gam_vb, lambda, nu
     U * inv_mills_ratio_(Y, U) / 2
 
   A <- sum(- log(2*pi) / 2 - W_2 / 2 +
-             W * (mat_x_m1 + mat_z_mu)  -
-             (X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 +
+             W_2 - 1  - (X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 +
                 Z^2 %*% m2_alpha + mat_z_mu^2 - Z^2 %*% mu_alpha_vb^2 +
                 2 * mat_x_m1 * mat_z_mu) / 2 + H)
 

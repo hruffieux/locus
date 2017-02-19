@@ -131,14 +131,15 @@
 #'
 #' @export
 #'
-locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
+locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
                   list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, user_seed = NULL,
                   tol = 1e-4, maxit = 1000, batch = TRUE, save_hyper = FALSE,
                   save_init = FALSE, verbose = TRUE) { ##
 
   if (verbose) cat("== Preparing the data ... \n")
-  dat <- prepare_data_(Y, X, Z, family, user_seed, tol, maxit, batch, verbose)
+  dat <- prepare_data_(Y, X, Z, family, ind_bin, user_seed, tol, maxit, batch,
+                       verbose)
 
   bool_rmvd_x <- dat$bool_rmvd_x
   bool_rmvd_z <- dat$bool_rmvd_z
@@ -209,18 +210,18 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
   }
 
   if (verbose) cat("== Preparing the hyperparameters ... \n\n")
-  list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, family,
+  list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, family, ind_bin,
                                     bool_rmvd_x, bool_rmvd_z, names_x, names_y,
                                     names_z, verbose)
   if (verbose) cat("... done. == \n\n")
 
   if (verbose) cat("== Preparing the parameter initialization ... \n\n")
-  list_init <- prepare_list_init_(list_init, Y, p, p_star, q, family,
+  list_init <- prepare_list_init_(list_init, Y, p, p_star, q, family, ind_bin,
                                   bool_rmvd_x, bool_rmvd_z, user_seed, verbose)
   if (verbose) cat("... done. == \n\n")
 
 
-  if (family %in% c("binomial-logit", "binomial-probit")) { # adds an intercept for logistic regression
+  if (family != "gaussian") { # adds an intercept for logistic/probit regression
 
     if (is.null(q)) {
 
@@ -231,10 +232,14 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
 
       list_init$mu_alpha_vb <- matrix(0, nrow = 1, ncol = d)
 
-      if (family == "binomial-logit") {
-       list_init$sig2_alpha_vb <- matrix(1, nrow = 1, ncol = d)
+      if (family == "binomial-probit") {
+
+        list_init$sig2_alpha_vb <- 1
+
       } else {
-       list_init$sig2_alpha_vb <- 1
+
+        list_init$sig2_alpha_vb <- matrix(1, nrow = 1, ncol = d)
+
       }
 
     } else{
@@ -247,10 +252,14 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
 
       list_init$mu_alpha_vb <- rbind(rep(0, d), list_init$mu_alpha_vb)
 
-      if (family == "binomial-logit") {
-        list_init$sig2_alpha_vb <- rbind(rep(1, d), list_init$sig2_alpha_vb)
-      } else {
+      if (family == "binomial-probit") {
+
         list_init$sig2_alpha_vb <- c(1, list_init$sig2_alpha_vb)
+
+      } else {
+
+        list_init$sig2_alpha_vb <- rbind(rep(1, d), list_init$sig2_alpha_vb)
+
       }
 
 
@@ -287,13 +296,19 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
                               list_init$mu_beta_vb, list_init$sig2_alpha_vb,
                               list_init$sig2_beta_vb, tol, maxit, batch, verbose)
 
-    } else {
+    } else if (family == "binomial-probit"){
 
       vb <- locus_probit_core_(Y, X, Z, list_hyper, list_init$gam_vb,
                                list_init$mu_alpha_vb, list_init$mu_beta_vb,
                                list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                                tol, maxit, batch, verbose)
 
+    } else {
+
+      vb <- locus_mixed_core_(Y, X, Z, ind_bin, list_hyper, list_init$gam_vb,
+                              list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                              list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
+                              list_init$tau_vb, tol, maxit, batch, verbose)
     }
 
   } else {
@@ -347,7 +362,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
                                    list_init_bl$sig2_beta_vb, tol, maxit, batch,
                                    verbose = FALSE)
 
-      } else {
+      } else  if (family == "binomial-probit") {
 
         vb_bl <- locus_probit_core_(Y, X_bl, Z, list_hyper_bl,
                                     list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
@@ -356,6 +371,14 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian",
                                     list_init_bl$sig2_beta_vb, tol, maxit, batch,
                                     verbose = FALSE)
 
+      } else {
+
+        vb_bl <- locus_mixed_core_(Y, X_bl, Z, ind_bin, list_hyper_bl,
+                                   list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                   list_init_bl$mu_beta_vb,
+                                   list_init_bl$sig2_alpha_vb,
+                                   list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
+                                   tol, maxit, batch, verbose = FALSE)
       }
 
       vb_bl
