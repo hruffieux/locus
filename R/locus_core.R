@@ -12,6 +12,8 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
     m1_beta <- mu_beta_vb * gam_vb
     m2_beta <- sweep(mu_beta_vb ^ 2, 2, sig2_beta_vb, `+`) * gam_vb
 
+    mat_x_m1 <-  X %*% m1_beta
+
     rowsums_gam <- rowSums(gam_vb)
     sum_gam <- sum(rowsums_gam)
 
@@ -35,7 +37,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       # % #
       eta_vb <- update_eta_vb_(n, eta, gam_vb)
-      kappa_vb <- update_kappa_vb_(Y, X, kappa, sig2_inv_vb, m1_beta, m2_beta)
+      kappa_vb <- update_kappa_vb_(Y, X, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb)
 
       tau_vb <- eta_vb / kappa_vb
       # % #
@@ -52,13 +54,11 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
         log_om_vb <- digamma(a + rowsums_gam) - vec_part_digam
         log_1_min_om_vb <- digamma(b - rowsums_gam + d) - vec_part_digam
 
-        mat_x_m1_j <-  X %*% m1_beta
-
         for (j in 1:p) {
-          mat_x_m1_j <- mat_x_m1_j - tcrossprod(X[, j], m1_beta[j, ])
+          mat_x_m1 <- mat_x_m1 - tcrossprod(X[, j], m1_beta[j, ])
 
           mu_beta_vb[j, ] <- sig2_beta_vb * (tau_vb *
-                                               crossprod(Y - mat_x_m1_j, X[, j]))
+                                               crossprod(Y - mat_x_m1, X[, j]))
 
           log_part_gam_vb <- log_om_vb[j] + log(sig2_beta_vb) / 2 +
             mu_beta_vb[j, ] ^ 2 / (2 * sig2_beta_vb)
@@ -71,7 +71,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
           m1_beta[j, ] <- mu_beta_vb[j, ] * gam_vb[j, ]
 
-          mat_x_m1_j <- mat_x_m1_j + tcrossprod(X[, j], m1_beta[j, ])
+          mat_x_m1 <- mat_x_m1 + tcrossprod(X[, j], m1_beta[j, ])
         }
 
         rowsums_gam <- rowSums(gam_vb)
@@ -114,6 +114,9 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       m2_beta <- sweep(mu_beta_vb ^ 2, 2, sig2_beta_vb, `+`) * gam_vb
 
+      if (!batch)
+        mat_x_m1 <-  X %*% m1_beta
+
       a_vb <- a + rowsums_gam
       b_vb <- b - rowsums_gam + d
       om_vb <- a_vb / (a_vb + b_vb)
@@ -122,7 +125,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       lb_new <- lower_bound_(Y, X, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
                              nu, sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta,
-                             m2_beta, sum_gam)
+                             m2_beta, mat_x_m1, sum_gam)
 
 
       if (verbose & (it == 1 | it %% 5 == 0))
@@ -149,9 +152,9 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
     lb_opt <- lb_new
 
     if (full_output) { # for internal use only
-      create_named_list_(sig2_beta_vb, sig2_inv_vb, tau_vb, gam_vb,
-                         eta, kappa, lambda, nu, a, b, a_vb, b_vb, m1_beta,
-                         m2_beta, sum_gam)
+      create_named_list_(a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
+                         nu, sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta,
+                         m2_beta, mat_x_m1, sum_gam)
     } else {
       names_x <- colnames(X)
       names_y <- colnames(Y)
@@ -185,52 +188,24 @@ update_eta_vb_ <- function(n, eta, gam_vb) {
 
 }
 
-update_kappa_vb_ <- function(Y_mat, X_mat, kappa, sig2_inv_vb, m1_beta, m2_beta) {
-  # put X_mat and Y_mat instead of X and Y to avoid conflicts with the function sapply,
-  # which has also an "X" argument with different meaning...
+update_kappa_vb_ <- function(Y, X, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb) {
+  n <- nrow(Y)
 
-  d <- ncol(Y_mat)
-  n <- nrow(Y_mat)
-  p <- ncol(X_mat)
-
-  # X must be standardized as we use (X \hadamard X)^T \one_n = (n-1)\one_p
-  kappa_vb <- kappa + colSums(Y_mat ^ 2) / 2 - colSums(Y_mat * (X_mat %*% m1_beta)) +
-    (n - 1 + sig2_inv_vb) * colSums(m2_beta) / 2
-
-  if (p > 1) {
-
-    mat_x_list <- lapply(p:1, function(j) {
-      X_mat[, j, drop = FALSE] %*% m1_beta[j,, drop = FALSE]
-    }
-    )
-
-    cum_mat_x_list <- list(0)
-    for (j in 1:(p-1)) {
-      cum_mat_x_list[[j+1]] <- cum_mat_x_list[[j]] + mat_x_list[[j]]
-    }
-    cum_mat_x_list[[1]] <- NULL
-
-    mix_x_sum <- sapply(p:2, function(j) {
-      colSums(mat_x_list[[j]] * cum_mat_x_list[[j-1]])
-    })
-
-    if(d == 1) mix_x_sum <- t(mix_x_sum)
-
-    kappa_vb <- kappa_vb + rowSums(mix_x_sum)
-  }
-
-  kappa_vb
+  kappa + (colSums(Y^2) - 2 * colSums(Y * mat_x_m1)  +
+             (n - 1 + sig2_inv_vb) * colSums(m2_beta) +
+             colSums(mat_x_m1^2) - (n - 1) * colSums(m1_beta^2))/ 2
 
 }
 
+
 lower_bound_ <- function(Y, X, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, nu,
                          sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta, m2_beta,
-                         sum_gam) {
+                         mat_x_m1, sum_gam) {
 
   n <- nrow(Y)
 
   eta_vb <- update_eta_vb_(n, eta, gam_vb)
-  kappa_vb <- update_kappa_vb_(Y, X, kappa, sig2_inv_vb, m1_beta, m2_beta)
+  kappa_vb <- update_kappa_vb_(Y, X, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb)
 
   lambda_vb <- update_lambda_vb_(lambda, sum_gam)
   nu_vb <- update_nu_vb_(nu, m2_beta, tau_vb)
