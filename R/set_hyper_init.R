@@ -10,8 +10,8 @@
 #' @param d Number of responses.
 #' @param p Number of candidate predictors.
 #' @param lambda Vector of length 1 providing the values of hyperparameter
-#'   \eqn{\lambda} for the prior distribution of \eqn{\sigma^{-2}}.
-#'   \eqn{\sigma} represents the typical size of nonzero effects.
+#'   \eqn{\lambda} for the prior distribution of \eqn{\sigma^{-2}}. \eqn{\sigma}
+#'   represents the typical size of nonzero effects.
 #' @param nu Vector of length 1 providing the values of hyperparameter \eqn{\nu}
 #'   for the prior distribution of \eqn{\sigma^{-2}}. \eqn{\sigma} represents
 #'   the typical size of nonzero effects.
@@ -23,39 +23,38 @@
 #'   \eqn{b} for the prior distributions for the proportion of responses
 #'   associated with each candidate predictor, \eqn{\omega} (vector of length p).
 #'   If of length 1, the provided value is repeated p times.
-#' @param eta Vector of length 1 or d for \code{family = "gaussian"}, and of
+#' @param eta Vector of length 1 or d for \code{link = "identity"}, and of
 #'   length 1 or d_cont = d - length(ind_bin) (the number of continuous response
-#'   variables) for \code{family = "mixed"}. Provides the values of
+#'   variables) for \code{link = "mix"}. Provides the values of
 #'   hyperparameter \eqn{\eta} for the prior distributions of the continuous
 #'   response residual precisions, \eqn{\tau}. If of length 1, the provided
 #'   value is repeated d, resp. d_cont, times. Must be \code{NULL} for
-#'   \code{family = "binomial-logit"} and \code{family = "binomial-probit"}.
-#' @param kappa Vector of length 1 or d for \code{family = "gaussian"}, and of
+#'   \code{link = "logit"} and \code{link = "probit"}.
+#' @param kappa Vector of length 1 or d for \code{link = "identity"}, and of
 #'   length 1 or d_cont = d - length(ind_bin) (the number of continuous response
-#'   variables) for \code{family = "mixed"}. Provides the values of
-#'   hyperparameter \eqn{\kappa} for the prior distributions of the response
-#'   residual precisions, \eqn{\tau}. If of length 1, the provided value is
-#'   repeated d, resp. d_cont, times. Must be \code{NULL} for
-#'   \code{family = "binomial-logit"} and \code{family = "binomial-probit"}.
-#' @param family Response type. Must be "\code{gaussian}" for linear regression,
-#'   "\code{binomial-logit}" for logistic regression, "\code{binomial-probit}"
-#'   for probit regression, or "\code{mixed}" for a mix of linear and probit
+#'   variables) for \code{link = "mix"}. Provides the values of hyperparameter
+#'   \eqn{\kappa} for the prior distributions of the response residual
+#'   precisions, \eqn{\tau}. If of length 1, the provided value is repeated d,
+#'   resp. d_cont, times. Must be \code{NULL} for \code{link = "logit"} and
+#'   \code{link = "probit"}.
+#' @param link Response link. Must be "\code{identity}" for linear regression,
+#'   "\code{logit}" for logistic regression, "\code{probit}"
+#'   for probit regression, or "\code{mix}" for a mix of identity and probit
 #'   link functions (in this case, the indices of the binary responses must be
 #'   gathered in argument \code{ind_bin}, see below).
-#' @param ind_bin If \code{family = "mixed"}, vector of indices corresponding to
+#' @param ind_bin If \code{link = "mix"}, vector of indices corresponding to
 #'   the binary variables in \code{Y}. Must be \code{NULL} if
-#'   \code{family != "mixed"}.
+#'   \code{link != "mix"}.
 #' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
 #'   \code{NULL}.
 #' @param phi Vector of length 1 or q providing the values of hyperparameter
 #'   \eqn{\phi} for the prior distributions for the sizes of the nonzero
 #'   covariate effects, \eqn{\zeta}. If of length 1, the provided value is
 #'   repeated q times. Default is \code{NULL}, for \code{Z} \code{NULL}.
-#' @param xi Vector of length 1 or q providing
-#'   the values of hyperparameter \eqn{\xi} for the prior distributions for the
-#'   sizes of the nonzero covariate effects, \eqn{\zeta}. If of length 1, the
-#'   provided value is repeated q times. Default is \code{NULL}, for \code{Z}
-#'   \code{NULL}.
+#' @param xi Vector of length 1 or q providing the values of hyperparameter
+#'   \eqn{\xi} for the prior distributions for the sizes of the nonzero
+#'   covariate effects, \eqn{\zeta}. If of length 1, the provided value is
+#'   repeated q times. Default is \code{NULL}, for \code{Z} \code{NULL}.
 #'
 #' @return An object of class "\code{hyper}" preparing user hyperparameter in a
 #'   form that can be passed to the \code{\link{locus}} function.
@@ -78,13 +77,13 @@
 #' # each candidate predictor is 1/4.
 #' list_hyper_g <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
 #'                           eta = 1, kappa = apply(dat_g$phenos, 2, var),
-#'                           family = "gaussian")
+#'                           link = "identity")
 #'
 #' # we take p0_av = p0 (known here); this choice may result in variable
 #' # selections that are (too) conservative in some cases. In practice, often
 #' # p0_av as a slightly overestimated guess of p0.
 #' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
-#'               family = "gaussian", list_hyper = list_hyper_g,
+#'               link = "identity", list_hyper = list_hyper_g,
 #'               user_seed = user_seed)
 #'
 #' # Continuous outcomes with covariates
@@ -94,10 +93,10 @@
 #'
 #' list_hyper_g_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
 #'                             eta = 1, kappa = apply(dat_g$phenos, 2, var),
-#'                             family = "gaussian", q = q, phi = 1, xi = 1)
+#'                             link = "identity", q = q, phi = 1, xi = 1)
 #'
 #' vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
-#'                 family = "gaussian", list_hyper = list_hyper_g_z,
+#'                 link = "identity", list_hyper = list_hyper_g_z,
 #'                 user_seed = user_seed)
 #'
 #' # Binary outcomes
@@ -110,38 +109,38 @@
 #'
 #' list_hyper_logit <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
 #'                               eta = NULL, kappa = NULL,
-#'                               family = "binomial-logit")
+#'                               link = "logit")
 #'
 #' vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-#'                   family = "binomial-logit", list_hyper = list_hyper_logit,
+#'                   link = "logit", list_hyper = list_hyper_logit,
 #'                   user_seed = user_seed)
 #'
 #' list_hyper_probit <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
 #'                                eta = NULL, kappa = NULL,
-#'                                family = "binomial-probit")
+#'                                link = "probit")
 #'
 #' vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-#'                   family = "binomial-probit", list_hyper = list_hyper_probit,
-#'                   user_seed = user_seed)
+#'                    link = "probit", list_hyper = list_hyper_probit,
+#'                    user_seed = user_seed)
 #'
 #' # Binary outcomes with covariates
 #' #
 #' list_hyper_logit_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
 #'                                 eta = NULL, kappa = NULL,
-#'                                 family = "binomial-logit", q = q, phi = 1,
+#'                                 link = "logit", q = q, phi = 1,
 #'                                 xi = 1)
 #'
 #' vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
-#'                     family = "binomial-logit",
+#'                     link = "logit",
 #'                     list_hyper = list_hyper_logit_z, user_seed = user_seed)
 #'
 #' list_hyper_probit_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
 #'                                  eta = NULL, kappa = NULL,
-#'                                  family = "binomial-probit", q = q, phi = 1,
+#'                                  link = "probit", q = q, phi = 1,
 #'                                  xi = 1)
 #'
 #' vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
-#'                      family = "binomial-probit",
+#'                      link = "probit",
 #'                      list_hyper = list_hyper_probit_z, user_seed = user_seed)
 #'
 #' # Mix of continuous and binary outcomes
@@ -152,26 +151,26 @@
 #'
 #' list_hyper_mix <- set_hyper(2*d, p, lambda = 1, nu = 1, a = 1, b = 8*d-1,
 #'                             eta = 1, kappa = apply(dat_g$phenos, 2, var),
-#'                             family = "mixed", ind_bin = ind_bin)
+#'                             link = "mix", ind_bin = ind_bin)
 #'
-#' vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, family = "mixed",
+#' vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, link = "mix",
 #'                 ind_bin = ind_bin, list_hyper = list_hyper_mix,
 #'                 user_seed = user_seed)
 #'
 #' list_hyper_mix_z <- set_hyper(2*d, p, lambda = 1, nu = 1, a = 1, b = 8*d-1,
 #'                               eta = 1, kappa = apply(dat_g$phenos, 2, var),
-#'                               family = "mixed", ind_bin = ind_bin, q = q,
+#'                               link = "mix", ind_bin = ind_bin, q = q,
 #'                               phi = 1, xi = 1)
 #'
 #' vb_mix_z <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, Z = Z,
-#'                   family = "mixed", ind_bin = ind_bin,
+#'                   link = "mix", ind_bin = ind_bin,
 #'                   list_hyper = list_hyper_mix_z, user_seed = user_seed)
 #'
 #' @seealso  \code{\link{set_init}}, \code{\link{locus}}
 #'
 #' @export
 #'
-set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
+set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
                       ind_bin = NULL, q = NULL, phi = NULL, xi = NULL) {
 
   check_structure_(d, "vector", "numeric", 1)
@@ -183,9 +182,9 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
   check_structure_(q, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(q)) check_natural_(q)
 
-  stopifnot(family %in% c("gaussian", "binomial-logit", "binomial-probit", "mixed"))
+  stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
-  ind_bin <- prepare_ind_bin_(d, ind_bin, family)
+  ind_bin <- prepare_ind_bin_(d, ind_bin, link)
 
   check_structure_(a, "vector", "double", c(1, p))
   check_positive_(a)
@@ -201,9 +200,9 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
   check_structure_(nu, "vector", "double", 1)
   check_positive_(nu)
 
-  if (family %in% c("gaussian", "mixed")) {
+  if (link %in% c("identity", "mix")) {
 
-    d_cont <- d - length(ind_bin) # length(NULL) = 0 for family = "gaussian"
+    d_cont <- d - length(ind_bin) # length(NULL) = 0 for link = "identity"
 
     check_structure_(eta, "vector", "double", c(1, d_cont))
     check_positive_(eta)
@@ -241,9 +240,9 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
   q_hyper <- q
   ind_bin_hyper <- ind_bin
 
-  family_hyper <- family
+  link_hyper <- link
 
-  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, family_hyper,
+  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, link_hyper,
                                    ind_bin_hyper, eta, kappa, lambda, nu, a, b,
                                    phi, xi)
 
@@ -254,18 +253,18 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, family = "gaussian",
 }
 
 
-auto_set_hyper_ <- function(Y, p, p_star, q, family, ind_bin) {
+auto_set_hyper_ <- function(Y, p, p_star, q, link, ind_bin) {
 
   d <- ncol(Y)
 
   lambda <- 1e-2
   nu <- 1
 
-  if (family %in% c("gaussian", "mixed")) {
+  if (link %in% c("identity", "mix")) {
 
-    if (family == "mixed") Y <- Y[, -ind_bin, drop = FALSE]
+    if (link == "mix") Y <- Y[, -ind_bin, drop = FALSE]
 
-    d_cont <- d - length(ind_bin) # length(NULL) = 0 for family = "gaussian"
+    d_cont <- d - length(ind_bin) # length(NULL) = 0 for link = "identity"
 
     # hyperparameter set using the data Y
     eta <- 1 / median(apply(Y, 2, var)) #median to be consistent when doing permutations
@@ -309,9 +308,9 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family, ind_bin) {
   q_hyper <- q
   ind_bin_hyper <- ind_bin
 
-  family_hyper <- family
+  link_hyper <- link
 
-  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, family_hyper,
+  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, link_hyper,
                                    ind_bin_hyper, eta,
                                    kappa, lambda, nu, a, b, phi, xi)
 
@@ -337,42 +336,37 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family, ind_bin) {
 #' @param mu_beta_vb Matrix of size p x d with initial values for the
 #'   variational parameter yielding regression coefficient estimates for
 #'   predictor-response pairs included in the model.
-#' @param sig2_beta_vb Vector of length d, for \code{family = "gaussian"} and
-#'   for \code{family = "mixed"}, of length 1 for
-#'   \code{family = "binomial-probit"}, and a matrix of size p x d, for
-#'   \code{family = "binomial-logit"}, with initial values for the variational
-#'   parameter yielding estimates of effect variances for predictor-response
-#'   pairs included in the model. For \code{family = "gaussian"} and
-#'   \code{family = "mixed"}, these values are the same for all the predictors
-#'   (as a result of the predictor variables being standardized before the
-#'   variational algorithm). For \code{family = "binomial-probit"}, they are the
-#'   same for all the predictors and responses.
-#' @param tau_vb Vector of length d, for \code{family = "gaussian"}, and of
+#' @param sig2_beta_vb Vector of length d, for \code{link = "identity"} and
+#'   for \code{link = "mix"}, of length 1 for \code{link = "probit"}, and a
+#'   matrix of size p x d, for \code{link = "logit"}, with initial values for
+#'   the variational parameter yielding estimates of effect variances for
+#'   predictor-response pairs included in the model. For
+#'   \code{link = "identity"} and \code{link = "mix"}, these values are the same
+#'   for all the predictors (as a result of the predictor variables being
+#'   standardized before the variational algorithm). For \code{link = "probit"},
+#'   they are the same for all the predictors and responses.
+#' @param tau_vb Vector of length d, for \code{link = "identity"}, and of
 #'   length d_cont = d - length(ind_bin) (number of continuous responses), for
-#'   \code{family = "mixed"}, with initial values for the variational parameter
+#'   \code{link = "mix"}, with initial values for the variational parameter
 #'   yielding estimates for the continuous response residual precisions. Must be
-#'   \code{NULL} for \code{family = "binomial-logit"} and
-#'   \code{family = "binomial-probit"}.
-#' @param family Response type. Must be "\code{gaussian}" for linear
-#'   regression, "\code{binomial-logit}" for logistic regression,
-#'   "\code{binomial-probit}" for probit regression, or "\code{mixed}" for a mix
-#'   of linear and probit link functions (in this case, the indices of the
-#'   binary responses must be gathered in argument \code{ind_bin}, see below).
-#' @param ind_bin If \code{family = "mixed"}, vector of indices corresponding to
-#'   the binary variables in \code{Y}. Must be \code{NULL} if
-#'   \code{family != "mixed"}.
+#'   \code{NULL} for \code{link = "logit"} and \code{link = "probit"}.
+#' @param link Response link. Must be "\code{identity}" for linear regression,
+#'   "\code{logit}" for logistic regression, "\code{probit}" for probit
+#'   regression, or "\code{mix}" for a mix of identity and probit link functions
+#'   (in this case, the indices of the binary responses must be gathered in
+#'   argument \code{ind_bin}, see below).
+#' @param ind_bin If \code{link = "mix"}, vector of indices corresponding to the
+#'   binary variables in \code{Y}. Must be \code{NULL} if \code{link != "mix"}.
 #' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
 #'   \code{NULL}.
 #' @param mu_alpha_vb Matrix of size q x d with initial values for the
 #'   variational parameter yielding regression coefficient estimates for
-#'   covariate-response pairs. Default is \code{NULL}, for \code{Z}
-#'   \code{NULL}.
-#' @param sig2_alpha_vb Matrix of size q x d for \code{family = "gaussian"},
-#'   for \code{family = "binomial-logit"} and for \code{family = "mixed"} with
-#'   initial values for the variational parameter yielding estimates of effect
-#'   variances for covariate-response pairs. Vector if length q for
-#'   \code{family = "binomial-probit"}, Default is \code{NULL}, for \code{Z}
-#'   \code{NULL}.
+#'   covariate-response pairs. Default is \code{NULL}, for \code{Z} \code{NULL}.
+#' @param sig2_alpha_vb Matrix of size q x d for \code{link = "identity"},
+#'   for \code{link = "logit"} and for \code{link = "mix"} with initial values
+#'   for the variational parameter yielding estimates of effect variances for
+#'   covariate-response pairs. Vector of length q for \code{link = "probit"}.
+#'   Default is \code{NULL}, for \code{Z} \code{NULL}.
 #'
 #' @return An object of class "\code{init}" preparing user initial values for
 #'   the variational parameters in a form that can be passed to the
@@ -400,10 +394,10 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family, ind_bin) {
 #' sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
 #'
 #' list_init_g <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-#'                         family = "gaussian")
+#'                         link = "identity")
 #'
 #' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
-#'               family = "gaussian", list_init = list_init_g)
+#'               link = "identity", list_init = list_init_g)
 #'
 #' # Continuous outcomes with covariates
 #' #
@@ -414,7 +408,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family, ind_bin) {
 #' sig2_alpha_vb <- 1 / matrix(rgamma(q * d, shape = 2, rate = 1), nrow = q)
 #'
 #' list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-#'                           family = "gaussian", q = q,
+#'                           link = "identity", q = q,
 #'                           mu_alpha_vb = mu_alpha_vb,
 #'                           sig2_alpha_vb = sig2_alpha_vb)
 #'
@@ -422,7 +416,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family, ind_bin) {
 #' # selections that are (too) conservative in some cases. In practice, often
 #' # p0_av as a slightly overestimated guess of p0.
 #' vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
-#'                 family = "gaussian", list_init = list_init_g_z)
+#'                 link = "identity", list_init = list_init_g_z)
 #'
 #' # Binary outcomes
 #' #
@@ -437,37 +431,37 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family, ind_bin) {
 #' sig2_beta_vb_logit <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
 #'
 #' list_init_logit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
-#'                             tau_vb = NULL, family = "binomial-logit")
+#'                             tau_vb = NULL, link = "logit")
 #'
 #' vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-#'                   family = "binomial-logit", list_init = list_init_logit)
+#'                   link = "logit", list_init = list_init_logit)
 #'
 #'
 #' sig2_beta_vb_probit <- sig2_beta_vb[1]
 #' list_init_probit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_probit,
-#'                              tau_vb = NULL, family = "binomial-probit")
+#'                              tau_vb = NULL, link = "probit")
 #'
 #' vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-#'                    family = "binomial-probit", list_init = list_init_probit)
+#'                    link = "probit", list_init = list_init_probit)
 #'
 #' # Binary outcomes with covariates
 #' #
 #' list_init_logit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
-#'                               tau_vb = NULL, family = "binomial-logit",
+#'                               tau_vb = NULL, link = "logit",
 #'                               q = q, mu_alpha_vb = mu_alpha_vb,
 #'                               sig2_alpha_vb = sig2_alpha_vb)
 #'
 #' vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
-#'                 family = "binomial-logit", list_init = list_init_logit_z)
+#'                    link = "logit", list_init = list_init_logit_z)
 #'
 #' sig2_alpha_vb_probit <- sig2_alpha_vb[, 1]
 #' list_init_probit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_probit,
-#'                                tau_vb = NULL, family = "binomial-probit",
+#'                                tau_vb = NULL, link = "probit",
 #'                                q = q, mu_alpha_vb = mu_alpha_vb,
 #'                                sig2_alpha_vb = sig2_alpha_vb_probit)
 #'
 #' vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
-#'                 family = "binomial-probit", list_init = list_init_probit_z)
+#'                      link = "probit", list_init = list_init_probit_z)
 #'
 #' # Mix of continuous and binary outcomes
 #' #
@@ -485,23 +479,23 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family, ind_bin) {
 #'
 #'
 #' list_init_mix <- set_init(2*d, p, gam_vb_mix, mu_beta_vb_mix,
-#'                           sig2_beta_vb_mix, tau_vb, family = "mixed",
+#'                           sig2_beta_vb_mix, tau_vb, link = "mix",
 #'                           ind_bin = ind_bin)
 #'
-#' vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, family = "mixed",
+#' vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, link = "mix",
 #'                 ind_bin = ind_bin, list_init = list_init_mix)
 #'
 #' mu_alpha_vb_mix <- matrix(rnorm(q * 2*d), nrow = q)
 #' sig2_alpha_vb_mix <- 1 / matrix(rgamma(q * 2*d, shape = 2, rate = 1), nrow = q)
 #'
 #' list_init_mix_z <- set_init(2*d, p, gam_vb_mix, mu_beta_vb_mix,
-#'                             sig2_beta_vb_mix, tau_vb, family = "mixed",
+#'                             sig2_beta_vb_mix, tau_vb, link = "mix",
 #'                             ind_bin = ind_bin, q = q,
 #'                             mu_alpha_vb = mu_alpha_vb_mix,
 #'                             sig2_alpha_vb = sig2_alpha_vb_mix)
 #'
 #' vb_mix_z <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, Z = Z,
-#'                   family = "mixed", ind_bin = ind_bin,
+#'                   link = "mix", ind_bin = ind_bin,
 #'                   list_init = list_init_mix_z)
 #'
 #' @seealso  \code{\link{set_hyper}}, \code{\link{locus}}
@@ -509,7 +503,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, family, ind_bin) {
 #' @export
 #'
 set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-                     family = "gaussian", ind_bin = NULL, q = NULL,
+                     link = "identity", ind_bin = NULL, q = NULL,
                      mu_alpha_vb = NULL, sig2_alpha_vb = NULL) {
 
   check_structure_(d, "vector", "numeric", 1)
@@ -521,9 +515,9 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   check_structure_(q, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(q)) check_natural_(q)
 
-  stopifnot(family %in% c("gaussian", "binomial-logit", "binomial-probit", "mixed"))
+  stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
-  ind_bin <- prepare_ind_bin_(d, ind_bin, family)
+  ind_bin <- prepare_ind_bin_(d, ind_bin, link)
 
   check_structure_(gam_vb, "matrix", "double", c(p, d))
   check_zero_one_(gam_vb)
@@ -531,23 +525,23 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   check_structure_(mu_beta_vb, "matrix", "double", c(p, d))
 
 
-  if (family %in% c("gaussian", "mixed")) {
+  if (link %in% c("identity", "mix")) {
 
     check_structure_(sig2_beta_vb, "vector", "double", d)
 
-    d_cont <- d - length(ind_bin) # length(NULL) = 0 for family = "gaussian"
+    d_cont <- d - length(ind_bin) # length(NULL) = 0 for link = "identity"
 
     check_structure_(tau_vb, "vector", "double", d_cont)
     check_positive_(tau_vb)
 
-    if (family == "mixed") {
+    if (link == "mix") {
       tmp_tau_vb <- tau_vb
       tau_vb <- rep(1, d) # tau_vb is set to 1 for binary responses.
       tau_vb[-ind_bin] <- tmp_tau_vb
       rm(tmp_tau_vb)
     }
 
-  } else if (family == "binomial-logit"){
+  } else if (link == "logit"){
 
     check_structure_(sig2_beta_vb, "matrix", "double", c(p, d))
 
@@ -569,7 +563,7 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
     check_structure_(mu_alpha_vb, "matrix", "double", c(q, d))
 
-    if (family == "binomial-probit") {
+    if (link == "probit") {
 
       check_structure_(sig2_alpha_vb, "vector", "double", q)
 
@@ -593,9 +587,9 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   q_init <- q
   ind_bin_init <- ind_bin
 
-  family_init <- family
+  link_init <- link
 
-  list_init <- create_named_list_(d_init, p_init, q_init, family_init,
+  list_init <- create_named_list_(d_init, p_init, q_init, link_init,
                                   ind_bin_init, gam_vb, mu_beta_vb, sig2_beta_vb,
                                   tau_vb, mu_alpha_vb, sig2_alpha_vb)
 
@@ -605,7 +599,7 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 }
 
 
-auto_set_init_ <- function(Y, p, p_star, q, user_seed, family, ind_bin) {
+auto_set_init_ <- function(Y, p, p_star, q, user_seed, link, ind_bin) {
 
   d <- ncol(Y)
 
@@ -628,17 +622,17 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family, ind_bin) {
 
   sig2_inv_vb <- 1e-2
 
-  if (family %in% c("gaussian", "mixed")) {
+  if (link %in% c("identity", "mix")) {
 
-    if (family == "mixed") Y <- Y[, -ind_bin, drop = FALSE]
+    if (link == "mix") Y <- Y[, -ind_bin, drop = FALSE]
 
-    d_cont <- d - length(ind_bin) # length(NULL) = 0 for family = "gaussian"
+    d_cont <- d - length(ind_bin) # length(NULL) = 0 for link = "identity"
 
     tau_vb <- 1 / median(apply(Y, 2, var))
     if (!is.finite(tau_vb)) tau_vb <- 1e3
     tau_vb <- rep(tau_vb, d_cont)
 
-    if (family == "mixed") {
+    if (link == "mix") {
 
       tmp_tau_vb <- tau_vb
       tau_vb <- rep(1, d) # tau_vb is set to 1 for binary responses.
@@ -649,7 +643,7 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family, ind_bin) {
 
     sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / (sig2_inv_vb * tau_vb))
 
-  } else if (family == "binomial-logit") {
+  } else if (link == "logit") {
 
     sig2_beta_vb <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1 / sig2_inv_vb)))
 
@@ -669,7 +663,7 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family, ind_bin) {
 
     mu_alpha_vb <- matrix(rnorm(q * d), nrow = q)
 
-    if (family %in% c("gaussian", "mixed")) {
+    if (link %in% c("identity", "mix")) {
 
       zeta2_inv_vb <- rgamma(q, shape = 1, rate = 1)
 
@@ -679,7 +673,7 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family, ind_bin) {
                                            rate = 1 / (zeta2_inv_vb * tau_vb_t))
                                   } )
 
-    } else if (family == "binomial-logit"){
+    } else if (link == "logit"){
 
       zeta2_inv_vb <- matrix(rgamma(q * d, shape = 1, rate = 1), nrow = q)
       sig2_alpha_vb <- 1 / apply(zeta2_inv_vb, 2, function(zeta2_inv_vb_t) rgamma(q, shape = 2, rate = 1 / zeta2_inv_vb_t))
@@ -705,9 +699,9 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, family, ind_bin) {
   q_init <- q
   ind_bin_init <- ind_bin
 
-  family_init <- family
+  link_init <- link
 
-  list_init <- create_named_list_(d_init, p_init, q_init, family_init,
+  list_init <- create_named_list_(d_init, p_init, q_init, link_init,
                                   ind_bin_init, gam_vb, mu_beta_vb, sig2_beta_vb,
                                   tau_vb, mu_alpha_vb, sig2_alpha_vb)
 

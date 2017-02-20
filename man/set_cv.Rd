@@ -47,6 +47,10 @@ function and is used to select the prior average number of predictors
 \code{p0_av} expected to be included in the model. \code{p0_av} is used to
 set the model hyperparameters and ensure sparse predictor selections.
 }
+\details{
+This cross-validation procedure is available only for
+\code{link = "identity"}.
+}
 \examples{
 user_seed <- 123; set.seed(user_seed)
 n <- 150; p <- 200; p0 <- 50; d <- 25; d0 <- 20
@@ -60,7 +64,7 @@ dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 
 list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 2)
 
-vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = NULL, family = "gaussian",
+vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = NULL, link = "identity",
             list_cv = list_cv, user_seed = user_seed)
 
 }

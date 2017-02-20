@@ -48,15 +48,17 @@ p0_av <- p0
 ## locus inference ##
 #####################
 
-# Gaussian outcomes, no covariates
-vb <- locus(Y = Y, X = X, p0_av = p0_av, family = "gaussian")
+# Continuous outcomes, no covariates
+#
+vb <- locus(Y = Y, X = X, p0_av = p0_av, link = "identity")
 
-# Gaussian outcomes, with covariates
-vb_z <- locus(Y = Y, X = X, p0_av = p0_av, Z = Z, family = "gaussian")
+# Continuous outcomes, with covariates
+#
+vb_z <- locus(Y = Y, X = X, p0_av = p0_av, Z = Z, link = "identity")
 
-# Binomial outcomes, no covariates
-vb_logit <- locus(Y = Y_bin, X = X, p0_av = p0_av, family = "binomial-logit")
+# Binary outcomes, no covariates
+vb_logit <- locus(Y = Y_bin, X = X, p0_av = p0_av, link = "logit")
 
-# Binomial outcomes, with covariates
-vb_logit_z <- locus(Y = Y_bin, X = X, p0_av = p0_av, Z = Z, family = "binomial-logit")
+# Binary outcomes, with covariates
+vb_logit_z <- locus(Y = Y_bin, X = X, p0_av = p0_av, Z = Z, link = "logit")
 

@@ -5,6 +5,9 @@
 #' \code{p0_av} expected to be included in the model. \code{p0_av} is used to
 #' set the model hyperparameters and ensure sparse predictor selections.
 #'
+#' This cross-validation procedure is available only for
+#' \code{link = "identity"}.
+#'
 #' @param n Number of observations.
 #' @param p Number of candidate predictors.
 #' @param n_folds Number of number of folds. Large folds are not recommended for
@@ -42,7 +45,7 @@
 #'
 #' list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 2)
 #'
-#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = NULL, family = "gaussian",
+#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = NULL, link = "identity",
 #'             list_cv = list_cv, user_seed = user_seed)
 #'
 #' @seealso \code{\link{locus}}
@@ -185,8 +188,6 @@ cross_validate_ <- function(Y, X, Z, list_cv, user_seed, verbose) {
       }
 
       Y_tr <- scale(Y_tr, center = TRUE, scale = FALSE)
-
-      #if (family == "gaussian") Y_test <- scale(Y_test, center = TRUE, scale = FALSE)
       Y_test <- scale(Y_test, center = TRUE, scale = FALSE)
 
       if (!is.null(Z)) {
@@ -211,10 +212,10 @@ cross_validate_ <- function(Y, X, Z, list_cv, user_seed, verbose) {
 
         if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
 
-        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, family = "gaussian",
+        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, link = "identity",
                                          ind_bin = NULL)
         list_init_pg <- auto_set_init_(Y_tr, p, pg, q, user_seed,
-                                       family = "gaussian", ind_bin = NULL)
+                                       link = "identity", ind_bin = NULL)
 
         if (is.null(q)) {
           vb_tr <- locus_core_(Y_tr, X_tr, list_hyper_pg,

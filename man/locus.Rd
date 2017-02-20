@@ -4,7 +4,7 @@
 \alias{locus}
 \title{Fit sparse multivariate regression models using variational inference.}
 \usage{
-locus(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
+locus(Y, X, p0_av, Z = NULL, link = "identity", ind_bin = NULL,
   list_hyper = NULL, list_init = NULL, list_cv = NULL,
   list_blocks = NULL, user_seed = NULL, tol = 1e-04, maxit = 1000,
   batch = TRUE, save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
@@ -27,15 +27,15 @@ covariates. Variables in \code{Z} are not subject to selection. \code{NULL}
 if no covariate. Factor covariates must be supplied after transformation to
 dummy coding. No intercept must be supplied.}
 
-\item{family}{Response type. Must be "\code{gaussian}" for linear
-regression, "\code{binomial-logit}" for logistic regression,
-"\code{binomial-probit}" for probit regression, or "\code{mixed}" for a mix
-of linear and probit link functions (in this case, the indices of the
-binary responses must be gathered in argument \code{ind_bin}, see below).}
+\item{link}{Response link. Must be "\code{identity}" for linear regression,
+"\code{logit}" for logistic regression, "\code{probit}" for probit
+regression, or "\code{mix}" for a mix of identity and probit link functions
+(in this case, the indices of the binary responses must be gathered in
+argument \code{ind_bin}, see below).}
 
-\item{ind_bin}{If \code{family = "mixed"}, vector of indices corresponding to
+\item{ind_bin}{If \code{link = "mix"}, vector of indices corresponding to
 the binary variables in \code{Y}. Must be \code{NULL} if
-\code{family != "mixed"}.}
+\code{link != "mix"}.}
 
 \item{list_hyper}{An object of class "\code{hyper}" containing the model
 hyperparameters. Must be filled using the \code{\link{set_hyper}}
@@ -51,7 +51,7 @@ the model, \code{p0_av}, by cross-validation. Must be filled using the
 \code{\link{set_cv}} function or must be \code{NULL} for no
 cross-validation. If non-\code{NULL}, \code{p0_av}, \code{list_init} and
 \code{list_hyper} must all be \code{NULL}. Cross-validation only available
-for \code{family = "gaussian"}.}
+for \code{link = "identity"}.}
 
 \item{list_blocks}{An object of class "\code{blocks}" containing settings for
 parallel inference on a partitioned predictor space. Must be filled using
@@ -89,9 +89,9 @@ An object of class "\code{vb}" containing the following variational
                association between candidate predictor s and response t.}
  \item{mu_alpha_vb}{Matrix of dimension q x d whose entries are the posterior
                     mean regression coefficients for the covariates provided
-                    in \code{Z} (if \code{family = "binomial-logit"},
-                    \code{family = "binomial-logit"} or
-                    \code{family = "mixed"} also for the intercept).
+                    in \code{Z} (if \code{link = "logit"},
+                    \code{link = "logit"} or
+                    \code{link = "mix"} also for the intercept).
                     \code{NULL} if \code{Z} is \code{NULL}.}
  \item{om_vb}{Vector of length p containing the posterior mean of omega.
               Entry s controls the proportion of responses associated with
@@ -120,12 +120,11 @@ The responses can be purely continuous, purely binary (logit or probit link
 fits), or a mix of continuous and binary variables.
 }
 \details{
-The continuous response variables in \code{Y} (if any) will be centered before
-application of the variational algorithm, and the candidate predictors and
-covariates resp. in \code{X} and \code{Z} will be standardized. An intercept
-will be added if  \code{family} is \code{"binomial-logit"},
-\code{"binomial-probit"} or \code{"mixed"} (do not supply it in \code{X} or
-\code{Z}).
+The continuous response variables in \code{Y} (if any) will be centered
+before application of the variational algorithm, and the candidate predictors
+and covariates resp. in \code{X} and \code{Z} will be standardized. An
+intercept will be added if \code{link} is \code{"logit"}, \code{"probit"} or
+\code{"mix"} (do not supply it in \code{X} or \code{Z}).
 }
 \examples{
 user_seed <- 123; set.seed(user_seed)
@@ -145,14 +144,14 @@ dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 # selections that are (too) conservative in some cases. In practice, often
 # p0_av as a slightly overestimated guess of p0.
 vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
-              family = "gaussian", user_seed = user_seed)
+              link = "identity", user_seed = user_seed)
 
 # Continuous outcomes with covariates
 #
 q <- 4
 Z <- matrix(rnorm(n * q), nrow = n)
 vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  Z = Z,
-                family = "gaussian", user_seed = user_seed)
+                link = "identity", user_seed = user_seed)
 
 # Binary outcomes
 #
@@ -163,18 +162,18 @@ dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
                              max_tot_pve = 0.9)
 
 vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-                  family = "binomial-logit", user_seed = user_seed)
+                  link = "logit", user_seed = user_seed)
 
 vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-                   family = "binomial-probit", user_seed = user_seed)
+                   link = "probit", user_seed = user_seed)
 
 # Binary outcomes with covariates
 #
 vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
-                    family = "binomial-logit", user_seed = user_seed)
+                    link = "logit", user_seed = user_seed)
 
 vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
-                     family = "binomial-probit", user_seed = user_seed)
+                     link = "probit", user_seed = user_seed)
 
 # Mix of continuous and binary outcomes
 #
@@ -182,13 +181,13 @@ Y_mix <- cbind(dat_g$phenos, dat_b$phenos)
 ind_bin <- (d+1):(2*d)
 p0_mix <- sum(rowSums(cbind(dat_g$pat, dat_b$pat)) > 0)
 
-vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0, family = "mixed",
+vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0, link = "mix",
                 ind_bin = ind_bin, user_seed = user_seed)
 
 # Mix of continuous and binary outcomes with covariates
 #
 vb_mix_z <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0,  Z = Z,
-                  family = "mixed", ind_bin = ind_bin, user_seed = user_seed)
+                  link = "mix", ind_bin = ind_bin, user_seed = user_seed)
 
 }
 \seealso{

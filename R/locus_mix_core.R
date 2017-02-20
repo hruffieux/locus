@@ -1,12 +1,13 @@
 ## for continuous and binary responses using a probit link for the latter.
-locus_mixed_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
-                              mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, tau_vb,
-                              tol, maxit, batch, verbose, full_output = FALSE) {
+locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
+                            mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, tau_vb,
+                            tol, maxit, batch, verbose, full_output = FALSE) {
 
   d <- ncol(Y)
   n <- nrow(Y)
   p <- ncol(X)
   q <- ncol(Z)
+
   W <- Y
   Y_bin <- Y[, ind_bin, drop = FALSE]
   rm(Y)
@@ -189,12 +190,12 @@ locus_mixed_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 
       sum_gam <- sum(rowsums_gam)
 
-      lb_new <- lower_bound_mixed_(Y_bin, ind_bin, W, X, Z, a, a_vb, b, b_vb,
-                                   eta, gam_vb, kappa, lambda, mu_alpha_vb, nu,
-                                   phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
-                                   sig2_inv_vb, tau_vb, log_tau_vb, xi,
-                                   zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
-                                   mat_x_m1, mat_z_mu, sum_gam)
+      lb_new <- lower_bound_mix_(Y_bin, ind_bin, W, X, Z, a, a_vb, b, b_vb,
+                                 eta, gam_vb, kappa, lambda, mu_alpha_vb, nu,
+                                 phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
+                                 sig2_inv_vb, tau_vb, log_tau_vb, xi,
+                                 zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
+                                 mat_x_m1, mat_z_mu, sum_gam)
 
 
       if (verbose & (it == 1 | it %% 5 == 0))
@@ -243,11 +244,11 @@ locus_mixed_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 }
 
 
-lower_bound_mixed_ <- function(Y_bin, ind_bin, W, X, Z, a, a_vb, b, b_vb, eta,
-                               gam_vb, kappa, lambda, mu_alpha_vb, nu, phi,
-                               phi_vb, sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb,
-                               tau_vb, log_tau_vb, xi, zeta2_inv_vb, m2_alpha,
-                               m1_beta, m2_beta, mat_x_m1, mat_z_mu, sum_gam) {
+lower_bound_mix_ <- function(Y_bin, ind_bin, W, X, Z, a, a_vb, b, b_vb, eta,
+                             gam_vb, kappa, lambda, mu_alpha_vb, nu, phi,
+                             phi_vb, sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb,
+                             tau_vb, log_tau_vb, xi, zeta2_inv_vb, m2_alpha,
+                             m1_beta, m2_beta, mat_x_m1, mat_z_mu, sum_gam) {
 
   n <- nrow(W)
   q <- ncol(Z)

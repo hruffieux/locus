@@ -42,7 +42,7 @@ n_bl <- 6
 pos_bl <- seq(1, p, by = ceiling(p/n_bl))
 list_blocks <- set_blocks(p, pos_bl, n_cpus = 2)
 
-vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, family = "gaussian",
+vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, link = "identity",
             list_blocks = list_blocks, user_seed = user_seed)
 
 }

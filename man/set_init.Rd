@@ -4,7 +4,7 @@
 \alias{set_init}
 \title{Gather initial variational parameters provided by the user.}
 \usage{
-set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, family = "gaussian",
+set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, link = "identity",
   ind_bin = NULL, q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL)
 }
 \arguments{
@@ -19,48 +19,43 @@ parameter yielding posterior probabilities of inclusion.}
 variational parameter yielding regression coefficient estimates for
 predictor-response pairs included in the model.}
 
-\item{sig2_beta_vb}{Vector of length d, for \code{family = "gaussian"} and
-for \code{family = "mixed"}, of length 1 for
-\code{family = "binomial-probit"}, and a matrix of size p x d, for
-\code{family = "binomial-logit"}, with initial values for the variational
-parameter yielding estimates of effect variances for predictor-response
-pairs included in the model. For \code{family = "gaussian"} and
-\code{family = "mixed"}, these values are the same for all the predictors
-(as a result of the predictor variables being standardized before the
-variational algorithm). For \code{family = "binomial-probit"}, they are the
-same for all the predictors and responses.}
+\item{sig2_beta_vb}{Vector of length d, for \code{link = "identity"} and
+for \code{link = "mix"}, of length 1 for \code{link = "probit"}, and a
+matrix of size p x d, for \code{link = "logit"}, with initial values for
+the variational parameter yielding estimates of effect variances for
+predictor-response pairs included in the model. For
+\code{link = "identity"} and \code{link = "mix"}, these values are the same
+for all the predictors (as a result of the predictor variables being
+standardized before the variational algorithm). For \code{link = "probit"},
+they are the same for all the predictors and responses.}
 
-\item{tau_vb}{Vector of length d, for \code{family = "gaussian"}, and of
+\item{tau_vb}{Vector of length d, for \code{link = "identity"}, and of
 length d_cont = d - length(ind_bin) (number of continuous responses), for
-\code{family = "mixed"}, with initial values for the variational parameter
+\code{link = "mix"}, with initial values for the variational parameter
 yielding estimates for the continuous response residual precisions. Must be
-\code{NULL} for \code{family = "binomial-logit"} and
-\code{family = "binomial-probit"}.}
+\code{NULL} for \code{link = "logit"} and \code{link = "probit"}.}
 
-\item{family}{Response type. Must be "\code{gaussian}" for linear
-regression, "\code{binomial-logit}" for logistic regression,
-"\code{binomial-probit}" for probit regression, or "\code{mixed}" for a mix
-of linear and probit link functions (in this case, the indices of the
-binary responses must be gathered in argument \code{ind_bin}, see below).}
+\item{link}{Response link. Must be "\code{identity}" for linear regression,
+"\code{logit}" for logistic regression, "\code{probit}" for probit
+regression, or "\code{mix}" for a mix of identity and probit link functions
+(in this case, the indices of the binary responses must be gathered in
+argument \code{ind_bin}, see below).}
 
-\item{ind_bin}{If \code{family = "mixed"}, vector of indices corresponding to
-the binary variables in \code{Y}. Must be \code{NULL} if
-\code{family != "mixed"}.}
+\item{ind_bin}{If \code{link = "mix"}, vector of indices corresponding to the
+binary variables in \code{Y}. Must be \code{NULL} if \code{link != "mix"}.}
 
 \item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
 
 \item{mu_alpha_vb}{Matrix of size q x d with initial values for the
 variational parameter yielding regression coefficient estimates for
-covariate-response pairs. Default is \code{NULL}, for \code{Z}
-\code{NULL}.}
+covariate-response pairs. Default is \code{NULL}, for \code{Z} \code{NULL}.}
 
-\item{sig2_alpha_vb}{Matrix of size q x d for \code{family = "gaussian"},
-for \code{family = "binomial-logit"} and for \code{family = "mixed"} with
-initial values for the variational parameter yielding estimates of effect
-variances for covariate-response pairs. Vector if length q for
-\code{family = "binomial-probit"}, Default is \code{NULL}, for \code{Z}
-\code{NULL}.}
+\item{sig2_alpha_vb}{Matrix of size q x d for \code{link = "identity"},
+for \code{link = "logit"} and for \code{link = "mix"} with initial values
+for the variational parameter yielding estimates of effect variances for
+covariate-response pairs. Vector of length q for \code{link = "probit"}.
+Default is \code{NULL}, for \code{Z} \code{NULL}.}
 }
 \value{
 An object of class "\code{init}" preparing user initial values for
@@ -98,10 +93,10 @@ tau_vb <- 1 / apply(dat_g$phenos, 2, var)
 sig2_beta_vb <- 1 / rgamma(d, shape = 2, rate = 1 / tau_vb)
 
 list_init_g <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-                        family = "gaussian")
+                        link = "identity")
 
 vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
-              family = "gaussian", list_init = list_init_g)
+              link = "identity", list_init = list_init_g)
 
 # Continuous outcomes with covariates
 #
@@ -112,7 +107,7 @@ mu_alpha_vb <- matrix(rnorm(q * d), nrow = q)
 sig2_alpha_vb <- 1 / matrix(rgamma(q * d, shape = 2, rate = 1), nrow = q)
 
 list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-                          family = "gaussian", q = q,
+                          link = "identity", q = q,
                           mu_alpha_vb = mu_alpha_vb,
                           sig2_alpha_vb = sig2_alpha_vb)
 
@@ -120,7 +115,7 @@ list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 # selections that are (too) conservative in some cases. In practice, often
 # p0_av as a slightly overestimated guess of p0.
 vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
-                family = "gaussian", list_init = list_init_g_z)
+                link = "identity", list_init = list_init_g_z)
 
 # Binary outcomes
 #
@@ -135,37 +130,37 @@ dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
 sig2_beta_vb_logit <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
 
 list_init_logit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
-                            tau_vb = NULL, family = "binomial-logit")
+                            tau_vb = NULL, link = "logit")
 
 vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-                  family = "binomial-logit", list_init = list_init_logit)
+                  link = "logit", list_init = list_init_logit)
 
 
 sig2_beta_vb_probit <- sig2_beta_vb[1]
 list_init_probit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_probit,
-                             tau_vb = NULL, family = "binomial-probit")
+                             tau_vb = NULL, link = "probit")
 
 vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-                   family = "binomial-probit", list_init = list_init_probit)
+                   link = "probit", list_init = list_init_probit)
 
 # Binary outcomes with covariates
 #
 list_init_logit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
-                              tau_vb = NULL, family = "binomial-logit",
+                              tau_vb = NULL, link = "logit",
                               q = q, mu_alpha_vb = mu_alpha_vb,
                               sig2_alpha_vb = sig2_alpha_vb)
 
 vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
-                family = "binomial-logit", list_init = list_init_logit_z)
+                   link = "logit", list_init = list_init_logit_z)
 
 sig2_alpha_vb_probit <- sig2_alpha_vb[, 1]
 list_init_probit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_probit,
-                               tau_vb = NULL, family = "binomial-probit",
+                               tau_vb = NULL, link = "probit",
                                q = q, mu_alpha_vb = mu_alpha_vb,
                                sig2_alpha_vb = sig2_alpha_vb_probit)
 
 vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
-                family = "binomial-probit", list_init = list_init_probit_z)
+                     link = "probit", list_init = list_init_probit_z)
 
 # Mix of continuous and binary outcomes
 #
@@ -183,23 +178,23 @@ sig2_beta_vb_mix <- 1 / c(rgamma(d, shape = 2, rate = 1 / tau_vb),
 
 
 list_init_mix <- set_init(2*d, p, gam_vb_mix, mu_beta_vb_mix,
-                          sig2_beta_vb_mix, tau_vb, family = "mixed",
+                          sig2_beta_vb_mix, tau_vb, link = "mix",
                           ind_bin = ind_bin)
 
-vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, family = "mixed",
+vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, link = "mix",
                 ind_bin = ind_bin, list_init = list_init_mix)
 
 mu_alpha_vb_mix <- matrix(rnorm(q * 2*d), nrow = q)
 sig2_alpha_vb_mix <- 1 / matrix(rgamma(q * 2*d, shape = 2, rate = 1), nrow = q)
 
 list_init_mix_z <- set_init(2*d, p, gam_vb_mix, mu_beta_vb_mix,
-                            sig2_beta_vb_mix, tau_vb, family = "mixed",
+                            sig2_beta_vb_mix, tau_vb, link = "mix",
                             ind_bin = ind_bin, q = q,
                             mu_alpha_vb = mu_alpha_vb_mix,
                             sig2_alpha_vb = sig2_alpha_vb_mix)
 
 vb_mix_z <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, Z = Z,
-                  family = "mixed", ind_bin = ind_bin,
+                  link = "mix", ind_bin = ind_bin,
                   list_init = list_init_mix_z)
 
 }

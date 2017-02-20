@@ -1,6 +1,7 @@
-prepare_data_ <- function(Y, X, Z, family, ind_bin, user_seed, tol, maxit, batch, verbose) {
+prepare_data_ <- function(Y, X, Z, link, ind_bin, user_seed, tol, maxit, batch,
+                          verbose) {
 
-  stopifnot(family %in% c("gaussian", "binomial-logit", "binomial-probit", "mixed"))
+  stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
 
@@ -19,12 +20,12 @@ prepare_data_ <- function(Y, X, Z, family, ind_bin, user_seed, tol, maxit, batch
   n <- nrow(X)
   p <- ncol(X)
 
-  if (family == "gaussian") {
+  if (link == "identity") {
 
     check_structure_(Y, "matrix", "double")
     d <- ncol(Y)
 
-  } else if (family == "mixed") {
+  } else if (link == "mix") {
 
     check_structure_(Y, "matrix", "numeric")
     d <- ncol(Y)
@@ -42,7 +43,7 @@ prepare_data_ <- function(Y, X, Z, family, ind_bin, user_seed, tol, maxit, batch
   }
 
 
-  ind_bin <- prepare_ind_bin_(d, ind_bin, family)
+  ind_bin <- prepare_ind_bin_(d, ind_bin, link)
 
   if (nrow(Y) != n) stop("X and Y must have the same number of observations.")
 
@@ -114,15 +115,15 @@ prepare_data_ <- function(Y, X, Z, family, ind_bin, user_seed, tol, maxit, batch
   bool_rmvd_x <- bool_cst_x
   bool_rmvd_x[!bool_cst_x] <- bool_coll_x
 
-  if (family == "gaussian") {
+  if (link == "identity") {
 
     Y <- scale(Y, center = TRUE, scale = FALSE)
 
-  } else if (family == "mixed") {
+  } else if (link == "mix") {
 
     Y[, -ind_bin] <- scale(Y[, -ind_bin], center = TRUE, scale = FALSE)
 
-  } else if (family == "binomial-logit") {
+  } else if (link == "logit") {
 
     Y <- Y - 1 / 2
 
@@ -197,7 +198,7 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
 }
 
 
-prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family, ind_bin,
+prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, link, ind_bin,
                                 bool_rmvd_x, bool_rmvd_z,
                                 names_x, names_y, names_z, verbose) {
 
@@ -207,7 +208,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family, ind_bin,
 
     if (verbose) cat("list_hyper set automatically. \n")
 
-    list_hyper <- auto_set_hyper_(Y, p, p_star, q, family, ind_bin)
+    list_hyper <- auto_set_hyper_(Y, p, p_star, q, link, ind_bin)
 
   } else {
 
@@ -234,11 +235,11 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family, ind_bin,
       stop(paste("The dimensions (p) of the provided hyperparameters ",
                  "(list_hyper) are not consistent with that of X.\n", sep=""))
 
-    if (list_hyper$family_hyper != family)
-      stop(paste("The argument family is not consistent with the variable
-                 family_hyper in list_hyper", sep=""))
+    if (list_hyper$link_hyper != link)
+      stop(paste("The argument link is not consistent with the variable
+                 link_hyper in list_hyper", sep=""))
 
-    if(family == "mixed") {
+    if(link == "mix") {
       if (!all(list_hyper$ind_bin_hyper == ind_bin))
         stop(paste("The argument ind_bin is not consistent with the variable
                    ind_bin_hyper in list_hyper", sep=""))
@@ -257,9 +258,9 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family, ind_bin,
     if (!is.null(names(list_hyper$b)) && names(list_hyper$b) != names_x)
       stop("Provided names for the entries of b do not match the colnames of X.")
 
-    if (family %in% c("gaussian", "mixed")) {
+    if (link %in% c("identity", "mix")) {
 
-      if (family == "mixed") names_y <- names_y[-ind_bin]
+      if (link == "mix") names_y <- names_y[-ind_bin]
 
       if (!is.null(names(list_hyper$eta)) && names(list_hyper$eta) != names_y)
         stop("Provided names for the entries of eta do not match the colnames of the continuous variables in Y")
@@ -302,7 +303,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family, ind_bin,
 
 
 
-prepare_list_init_ <- function(list_init, Y, p, p_star, q, family, ind_bin,
+prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
                                bool_rmvd_x, bool_rmvd_z, user_seed, verbose) {
 
   d <- ncol(Y)
@@ -315,7 +316,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family, ind_bin,
 
     if (verbose) cat(paste("list_init set automatically. \n", sep=""))
 
-    list_init <- auto_set_init_(Y, p, p_star, q, user_seed, family, ind_bin)
+    list_init <- auto_set_init_(Y, p, p_star, q, user_seed, link, ind_bin)
 
   } else {
 
@@ -345,11 +346,11 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family, ind_bin,
       stop(paste("The dimensions (p) of the provided initial parameters ",
                  "(list_init) are not consistent with that of X.\n", sep=""))
 
-    if (list_init$family_init != family)
-      stop(paste("The argument family is not consistent with the variable
-                 family_init in list_init", sep=""))
+    if (list_init$link_init != link)
+      stop(paste("The argument link is not consistent with the variable
+                 link_init in list_init", sep=""))
 
-    if(family == "mixed") {
+    if(link == "mix") {
       if (!all(list_init$ind_bin_init == ind_bin))
         stop(paste("The argument ind_bin is not consistent with the variable
                    ind_bin_init in list_init", sep=""))
@@ -361,7 +362,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family, ind_bin,
       list_init$gam_vb <- list_init$gam_vb[!bool_rmvd_x,, drop = FALSE]
       list_init$mu_beta_vb <- list_init$mu_beta_vb[!bool_rmvd_x,, drop = FALSE]
 
-      if (family == "binomial-logit")
+      if (link == "logit")
         list_init$sig2_beta_vb <- list_init$sig2_beta_vb[!bool_rmvd_x,, drop = FALSE]
     }
 
@@ -373,7 +374,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family, ind_bin,
         # (if any)
         list_init$mu_alpha_vb <- list_init$mu_alpha_vb[!bool_rmvd_z,, drop = FALSE]
 
-        if (family == "binomial-probit"){
+        if (link == "probit"){
 
           list_init$sig2_alpha_vb <- list_init$sig2_alpha_vb[!bool_rmvd_z]
 
@@ -400,7 +401,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family, ind_bin,
 }
 
 
-prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, family, list_hyper,
+prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, link, list_hyper,
                         list_init, verbose) {
 
   if (!inherits(list_cv, "cv"))
@@ -410,7 +411,7 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, family, list_hyper,
                "cross-validation step. ***",
                sep=""))
 
-  if (family != "gaussian")
+  if (link != "identity")
     stop("Cross-validation implemented only for purely continuous response. Please, set list_cv to NULL.")
 
   if (!is.null(p0_av) | !is.null(list_hyper) | !is.null(list_init))
@@ -516,7 +517,7 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv) {
 #' pos_bl <- seq(1, p, by = ceiling(p/n_bl))
 #' list_blocks <- set_blocks(p, pos_bl, n_cpus = 2)
 #'
-#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, family = "gaussian",
+#' vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = p0, link = "identity",
 #'             list_blocks = list_blocks, user_seed = user_seed)
 #'
 #' @seealso \code{\link{locus}}
@@ -580,9 +581,9 @@ set_blocks <- function(p, pos_bl, n_cpus, verbose = TRUE) {
 }
 
 
-prepare_ind_bin_ <- function(d, ind_bin, family) {
+prepare_ind_bin_ <- function(d, ind_bin, link) {
 
-  if (family == "mixed") {
+  if (link == "mix") {
 
     check_structure_(ind_bin, "vector", "numeric")
     ind_bin <- sort(unique(ind_bin))
@@ -592,12 +593,12 @@ prepare_ind_bin_ <- function(d, ind_bin, family) {
 
     if (all(ind_bin == 1:d))
       stop(paste("Argument ind_bin indicates that all responses are binary. \n",
-                 "Please set family to logit or probit, or change ind_bin to ",
+                 "Please set link to logit or probit, or change ind_bin to ",
                  "the indices of the binary responses only.", sep = ""))
 
   } else if (!is.null(ind_bin)) {
 
-    stop("Argument ind_bin must be NULL if family is not set to mixed.")
+    stop("Argument ind_bin must be NULL if link is not set to mix.")
 
   }
 

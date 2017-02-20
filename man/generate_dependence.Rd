@@ -87,7 +87,7 @@ for the phenotypes are all below 1. Individual proportions of variance
 explained are drawn from a Beta distribution with shape parameters 2 and 5,
 putting more weights on smaller effects.
 
-If family is "\code{binary}", the phenotypes are generated from a probit
+If family is "\code{binomial}", the phenotypes are generated from a probit
 model, and the phenotypic variance explained by the SNPs is with respect to
 the latent Gaussian variables involved in the probit model.
 }

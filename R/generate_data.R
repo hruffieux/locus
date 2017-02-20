@@ -756,7 +756,7 @@ generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
 #' explained are drawn from a Beta distribution with shape parameters 2 and 5,
 #' putting more weights on smaller effects.
 #'
-#' If family is "\code{binary}", the phenotypes are generated from a probit
+#' If family is "\code{binomial}", the phenotypes are generated from a probit
 #' model, and the phenotypic variance explained by the SNPs is with respect to
 #' the latent Gaussian variables involved in the probit model.
 #'
@@ -852,13 +852,13 @@ generate_dependence <- function(list_snps, list_phenos, ind_d0, ind_p0,
                "*** You must either use the function generate_snps to simulate snps ",
                "under Hardy-Weinberg equilibrium or the function replicate_real_snps ",
                "to simulate SNPs from real SNP data, by replicating their minor ",
-               "allele frequencies and linkage desequilibrium structure. ***",
+               "allele frequencies and linkage disequilibrium structure. ***",
                sep=""))
 
   if (!inherits(list_phenos, "sim_phenos"))
     stop(paste("The provided list_phenos must be an object of class ``sim_phenos''. \n",
                "*** You must either use the function generate_phenos to simulate ",
-               "phenotypes from (possibly correlated) gaussian variables or the ",
+               "phenotypes from (possibly correlated) Gaussian variables or the ",
                "function replicate_real_phenos to simulate phenotypes from real ",
                "phenotypic data, by replicating their correlation structure. ***",
                sep=""))

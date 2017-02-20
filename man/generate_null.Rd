@@ -4,7 +4,7 @@
 \alias{generate_null}
 \title{Generate empirical null distribution using permuted data.}
 \usage{
-generate_null(n_perm, Y, X, p0_av, Z = NULL, family = "gaussian",
+generate_null(n_perm, Y, X, p0_av, Z = NULL, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
   list_blocks = NULL, user_seed = NULL, tol = 0.001, maxit = 1000,
   batch = TRUE, verbose = TRUE, results_dir = NULL, n_cpus = 1)
@@ -32,15 +32,15 @@ candidate predictor s is associated with at least one response.}
 covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 after transformation to dummy coding. No intercept must be supplied.}
 
-\item{family}{Response type. Must be "\code{gaussian}" for linear
-regression, "\code{binomial-logit}" for logistic regression,
-"\code{binomial-probit}" for probit regression, or "\code{mixed}" for a mix
-of linear and probit link functions (in this case, the indices of the
-binary responses must be gathered in argument \code{ind_bin}, see below).}
+\item{link}{Response link. Must be "\code{identity}" for linear regression,
+"\code{logit}" for logistic regression, "\code{probit}" for probit
+regression, or "\code{mix}" for a mix of identity and probit link functions
+(in this case, the indices of the binary responses must be gathered in
+argument \code{ind_bin}, see below).}
 
-\item{ind_bin}{If \code{family = "mixed"}, vector of indices corresponding to
+\item{ind_bin}{If \code{link = "mix"}, vector of indices corresponding to
 the binary variables in \code{Y}. Must be \code{NULL} if
-\code{family != "mixed"}.}
+\code{link != "mix"}.}
 
 \item{list_hyper}{An object of class "\code{hyper}" containing the model
 hyperparameters. Must be filled using the \code{\link{set_hyper}}
@@ -104,7 +104,7 @@ dat <- generate_dependence(list_X, list_Y, ind_d0 = sample(1:d, d0),
                            max_tot_pve = 0.5)
 
 list_perm <- generate_null(n_perm = 10, dat$phenos, dat$snps, p0_av = p0,
-                           family = "gaussian", user_seed = user_seed,
+                           link = "identity", user_seed = user_seed,
                            verbose = FALSE)
 
 }

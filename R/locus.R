@@ -7,12 +7,11 @@
 #' The responses can be purely continuous, purely binary (logit or probit link
 #' fits), or a mix of continuous and binary variables.
 #'
-#' The continuous response variables in \code{Y} (if any) will be centered before
-#' application of the variational algorithm, and the candidate predictors and
-#' covariates resp. in \code{X} and \code{Z} will be standardized. An intercept
-#' will be added if  \code{family} is \code{"binomial-logit"},
-#' \code{"binomial-probit"} or \code{"mixed"} (do not supply it in \code{X} or
-#' \code{Z}).
+#' The continuous response variables in \code{Y} (if any) will be centered
+#' before application of the variational algorithm, and the candidate predictors
+#' and covariates resp. in \code{X} and \code{Z} will be standardized. An
+#' intercept will be added if \code{link} is \code{"logit"}, \code{"probit"} or
+#' \code{"mix"} (do not supply it in \code{X} or \code{Z}).
 #'
 #' @param Y Response data matrix of dimension n x d, where n is the number of
 #'   observations and d is the number of response variables.
@@ -27,14 +26,14 @@
 #'   covariates. Variables in \code{Z} are not subject to selection. \code{NULL}
 #'   if no covariate. Factor covariates must be supplied after transformation to
 #'   dummy coding. No intercept must be supplied.
-#' @param family Response type. Must be "\code{gaussian}" for linear
-#'   regression, "\code{binomial-logit}" for logistic regression,
-#'   "\code{binomial-probit}" for probit regression, or "\code{mixed}" for a mix
-#'   of linear and probit link functions (in this case, the indices of the
-#'   binary responses must be gathered in argument \code{ind_bin}, see below).
-#' @param ind_bin If \code{family = "mixed"}, vector of indices corresponding to
+#' @param link Response link. Must be "\code{identity}" for linear regression,
+#'   "\code{logit}" for logistic regression, "\code{probit}" for probit
+#'   regression, or "\code{mix}" for a mix of identity and probit link functions
+#'   (in this case, the indices of the binary responses must be gathered in
+#'   argument \code{ind_bin}, see below).
+#' @param ind_bin If \code{link = "mix"}, vector of indices corresponding to
 #'   the binary variables in \code{Y}. Must be \code{NULL} if
-#'   \code{family != "mixed"}.
+#'   \code{link != "mix"}.
 #' @param list_hyper An object of class "\code{hyper}" containing the model
 #'   hyperparameters. Must be filled using the \code{\link{set_hyper}}
 #'   function or must be \code{NULL} for default hyperparameters.
@@ -47,7 +46,7 @@
 #'   \code{\link{set_cv}} function or must be \code{NULL} for no
 #'   cross-validation. If non-\code{NULL}, \code{p0_av}, \code{list_init} and
 #'   \code{list_hyper} must all be \code{NULL}. Cross-validation only available
-#'   for \code{family = "gaussian"}.
+#'   for \code{link = "identity"}.
 #' @param list_blocks An object of class "\code{blocks}" containing settings for
 #'   parallel inference on a partitioned predictor space. Must be filled using
 #'   the \code{\link{set_blocks}} function or must be \code{NULL} for no
@@ -76,9 +75,9 @@
 #'                association between candidate predictor s and response t.}
 #'  \item{mu_alpha_vb}{Matrix of dimension q x d whose entries are the posterior
 #'                     mean regression coefficients for the covariates provided
-#'                     in \code{Z} (if \code{family = "binomial-logit"},
-#'                     \code{family = "binomial-logit"} or
-#'                     \code{family = "mixed"} also for the intercept).
+#'                     in \code{Z} (if \code{link = "logit"},
+#'                     \code{link = "logit"} or
+#'                     \code{link = "mix"} also for the intercept).
 #'                     \code{NULL} if \code{Z} is \code{NULL}.}
 #'  \item{om_vb}{Vector of length p containing the posterior mean of omega.
 #'               Entry s controls the proportion of responses associated with
@@ -115,14 +114,14 @@
 #' # selections that are (too) conservative in some cases. In practice, often
 #' # p0_av as a slightly overestimated guess of p0.
 #' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
-#'               family = "gaussian", user_seed = user_seed)
+#'               link = "identity", user_seed = user_seed)
 #'
 #' # Continuous outcomes with covariates
 #' #
 #' q <- 4
 #' Z <- matrix(rnorm(n * q), nrow = n)
 #' vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  Z = Z,
-#'                 family = "gaussian", user_seed = user_seed)
+#'                 link = "identity", user_seed = user_seed)
 #'
 #' # Binary outcomes
 #' #
@@ -133,18 +132,18 @@
 #'                              max_tot_pve = 0.9)
 #'
 #' vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-#'                   family = "binomial-logit", user_seed = user_seed)
+#'                   link = "logit", user_seed = user_seed)
 #'
 #' vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-#'                    family = "binomial-probit", user_seed = user_seed)
+#'                    link = "probit", user_seed = user_seed)
 #'
 #' # Binary outcomes with covariates
 #' #
 #' vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
-#'                     family = "binomial-logit", user_seed = user_seed)
+#'                     link = "logit", user_seed = user_seed)
 #'
 #' vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
-#'                      family = "binomial-probit", user_seed = user_seed)
+#'                      link = "probit", user_seed = user_seed)
 #'
 #' # Mix of continuous and binary outcomes
 #' #
@@ -152,27 +151,27 @@
 #' ind_bin <- (d+1):(2*d)
 #' p0_mix <- sum(rowSums(cbind(dat_g$pat, dat_b$pat)) > 0)
 #'
-#' vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0, family = "mixed",
+#' vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0, link = "mix",
 #'                 ind_bin = ind_bin, user_seed = user_seed)
 #'
 #' # Mix of continuous and binary outcomes with covariates
 #' #
 #' vb_mix_z <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0,  Z = Z,
-#'                   family = "mixed", ind_bin = ind_bin, user_seed = user_seed)
+#'                   link = "mix", ind_bin = ind_bin, user_seed = user_seed)
 #'
 #' @seealso \code{\link{set_hyper}}, \code{\link{set_init}},
 #'   \code{\link{set_cv}}, \code{\link{set_blocks}}
 #'
 #' @export
 #'
-locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
+locus <- function(Y, X, p0_av, Z = NULL, link = "identity", ind_bin = NULL,
                   list_hyper = NULL, list_init = NULL, list_cv = NULL,
                   list_blocks = NULL, user_seed = NULL, tol = 1e-4,
                   maxit = 1000, batch = TRUE, save_hyper = FALSE,
                   save_init = FALSE, verbose = TRUE) { ##
 
   if (verbose) cat("== Preparing the data ... \n")
-  dat <- prepare_data_(Y, X, Z, family, ind_bin, user_seed, tol, maxit, batch,
+  dat <- prepare_data_(Y, X, Z, link, ind_bin, user_seed, tol, maxit, batch,
                        verbose)
 
   bool_rmvd_x <- dat$bool_rmvd_x
@@ -207,7 +206,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
         cat("===== Cross-validation... ===== \n")
         cat("=============================== \n")
       }
-      list_cv <- prepare_cv_(list_cv, n, p, bool_rmvd_x, p0_av, family,
+      list_cv <- prepare_cv_(list_cv, n, p, bool_rmvd_x, p0_av, link,
                              list_hyper, list_init, verbose)
 
       p_star <- cross_validate_(Y, X, Z, list_cv, user_seed, verbose)
@@ -244,18 +243,18 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
   }
 
   if (verbose) cat("== Preparing the hyperparameters ... \n\n")
-  list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, family, ind_bin,
+  list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, link, ind_bin,
                                     bool_rmvd_x, bool_rmvd_z, names_x, names_y,
                                     names_z, verbose)
   if (verbose) cat("... done. == \n\n")
 
   if (verbose) cat("== Preparing the parameter initialization ... \n\n")
-  list_init <- prepare_list_init_(list_init, Y, p, p_star, q, family, ind_bin,
+  list_init <- prepare_list_init_(list_init, Y, p, p_star, q, link, ind_bin,
                                   bool_rmvd_x, bool_rmvd_z, user_seed, verbose)
   if (verbose) cat("... done. == \n\n")
 
 
-  if (family != "gaussian") { # adds an intercept for logistic/probit regression
+  if (link != "identity") { # adds an intercept for logistic/probit regression
 
     if (is.null(q)) {
 
@@ -266,7 +265,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
 
       list_init$mu_alpha_vb <- matrix(0, nrow = 1, ncol = d)
 
-      if (family == "binomial-probit") {
+      if (link == "probit") {
 
         list_init$sig2_alpha_vb <- 1
 
@@ -286,7 +285,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
 
       list_init$mu_alpha_vb <- rbind(rep(0, d), list_init$mu_alpha_vb)
 
-      if (family == "binomial-probit") {
+      if (link == "probit") {
 
         list_init$sig2_alpha_vb <- c(1, list_init$sig2_alpha_vb)
 
@@ -311,7 +310,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
 
   if (is.null(list_blocks)) {
 
-    if (family == "gaussian") {
+    if (link == "identity") {
 
       if (is.null(q))
         vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
@@ -323,14 +322,14 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
                             list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                             list_init$tau_vb, tol, maxit, batch, verbose)
 
-    } else if (family == "binomial-logit"){
+    } else if (link == "logit"){
 
       vb <- locus_logit_core_(Y, X, Z, list_hyper, list_init$chi_vb,
                               list_init$gam_vb, list_init$mu_alpha_vb,
                               list_init$mu_beta_vb, list_init$sig2_alpha_vb,
                               list_init$sig2_beta_vb, tol, maxit, batch, verbose)
 
-    } else if (family == "binomial-probit"){
+    } else if (link == "probit"){
 
       vb <- locus_probit_core_(Y, X, Z, list_hyper, list_init$gam_vb,
                                list_init$mu_alpha_vb, list_init$mu_beta_vb,
@@ -339,10 +338,10 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
 
     } else {
 
-      vb <- locus_mixed_core_(Y, X, Z, ind_bin, list_hyper, list_init$gam_vb,
-                              list_init$mu_alpha_vb, list_init$mu_beta_vb,
-                              list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                              list_init$tau_vb, tol, maxit, batch, verbose)
+      vb <- locus_mix_core_(Y, X, Z, ind_bin, list_hyper, list_init$gam_vb,
+                            list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                            list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
+                            list_init$tau_vb, tol, maxit, batch, verbose)
     }
 
   } else {
@@ -361,7 +360,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
       list_init$p_init <- length(pos_bl)
       list_init$gam_vb <- list_init$gam_vb[pos_bl,, drop = FALSE]
       list_init$mu_beta_vb <- list_init$mu_beta_vb[pos_bl,, drop = FALSE]
-      if (family == "binomial-logit")
+      if (link == "logit")
         list_init$sig2_beta_vb <- list_init$sig2_beta_vb[pos_bl,, drop = FALSE]
 
       list_init
@@ -374,7 +373,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
       list_hyper_bl <- split_bl_hyper[[k]]
       list_init_bl <- split_bl_init[[k]]
 
-      if (family == "gaussian") {
+      if (link == "identity") {
         if (is.null(q))
           vb_bl <- locus_core_(Y, X_bl, list_hyper_bl,
                                list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
@@ -387,7 +386,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
                                  list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
                                  tol, maxit, batch, verbose = FALSE)
 
-      } else if (family == "binomial-logit") {
+      } else if (link == "logit") {
 
         vb_bl <- locus_logit_core_(Y, X_bl, Z, list_hyper_bl,
                                    list_init_bl$chi_vb, list_init_bl$gam_vb,
@@ -396,7 +395,7 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
                                    list_init_bl$sig2_beta_vb, tol, maxit, batch,
                                    verbose = FALSE)
 
-      } else  if (family == "binomial-probit") {
+      } else  if (link == "probit") {
 
         vb_bl <- locus_probit_core_(Y, X_bl, Z, list_hyper_bl,
                                     list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
@@ -407,12 +406,12 @@ locus <- function(Y, X, p0_av, Z = NULL, family = "gaussian", ind_bin = NULL,
 
       } else {
 
-        vb_bl <- locus_mixed_core_(Y, X_bl, Z, ind_bin, list_hyper_bl,
-                                   list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
-                                   list_init_bl$mu_beta_vb,
-                                   list_init_bl$sig2_alpha_vb,
-                                   list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                                   tol, maxit, batch, verbose = FALSE)
+        vb_bl <- locus_mix_core_(Y, X_bl, Z, ind_bin, list_hyper_bl,
+                                 list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                 list_init_bl$mu_beta_vb,
+                                 list_init_bl$sig2_alpha_vb,
+                                 list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
+                                 tol, maxit, batch, verbose = FALSE)
       }
 
       vb_bl
