@@ -5,18 +5,19 @@
 \title{Generate empirical null distribution using permuted data.}
 \usage{
 generate_null(n_perm, Y, X, p0_av, Z = NULL, family = "gaussian",
-  list_hyper = NULL, list_init = NULL, list_blocks = NULL,
-  user_seed = NULL, tol = 0.001, maxit = 1000, batch = TRUE,
-  verbose = TRUE, results_dir = NULL, n_cpus = 1)
+  ind_bin = NULL, list_hyper = NULL, list_init = NULL,
+  list_blocks = NULL, user_seed = NULL, tol = 0.001, maxit = 1000,
+  batch = TRUE, verbose = TRUE, results_dir = NULL, n_cpus = 1)
 }
 \arguments{
-\item{n_perm}{Number of permuted datasets on which \code{\link{locus}} is run.}
+\item{n_perm}{Number of permuted datasets on which \code{\link{locus}} is
+run.}
 
-\item{Y}{Continuous response data matrix (without permuted sample indices)
-of dimension n x d, where n is the number of observations and d is the
-number of response variables.}
+\item{Y}{Response data matrix (without permuted sample indices) of size
+n x d, where n is the number of observations and d is the number of
+response variables.}
 
-\item{X}{Input matrix of dimension n x p, where p is the number of candidate
+\item{X}{Input matrix of size n x p, where p is the number of candidate
 predictors. \code{X} cannot contain NAs. No intercept must be supplied.}
 
 \item{p0_av}{Prior average number of predictors expected to be included in
@@ -25,26 +26,29 @@ predictor blocks). Must be \code{NULL} if \code{list_init} and
 \code{list_hyper} are both non-\code{NULL} or if \code{list_cv} is
 non-\code{NULL}. If \code{list_blocks} is \code{NULL}, can also be a vector
 of length p with entry s corresponding to the prior probability that
-candidate predictor s is associated with at least one response. If
-\code{list_blocks} is non-\code{NULL}, can be a vector of size given by the
-number of blocks, with each entry corresponding to the prior average number
-of predictors from each block expected to be included in the model.}
+candidate predictor s is associated with at least one response.}
 
-\item{Z}{Covariate matrix of dimension n x q, where q is the number of
+\item{Z}{Covariate matrix of size n x q, where q is the number of
 covariates. \code{NULL} if no covariate. Factor covariates must be supplied
 after transformation to dummy coding. No intercept must be supplied.}
 
-\item{family}{Response type. Must be either "\code{gaussian}" for linear
-regression or "\code{binomial-logit}" for logistic regression.}
+\item{family}{Response type. Must be "\code{gaussian}" for linear
+regression, "\code{binomial-logit}" for logistic regression,
+"\code{binomial-probit}" for probit regression, or "\code{mixed}" for a mix
+of linear and probit link functions (in this case, the indices of the
+binary responses must be gathered in argument \code{ind_bin}, see below).}
+
+\item{ind_bin}{If \code{family = "mixed"}, vector of indices corresponding to
+the binary variables in \code{Y}. Must be \code{NULL} if
+\code{family != "mixed"}.}
 
 \item{list_hyper}{An object of class "\code{hyper}" containing the model
 hyperparameters. Must be filled using the \code{\link{set_hyper}}
 function or must be \code{NULL} for default hyperparameters.}
 
 \item{list_init}{An object of class "\code{init}" containing the initial
-variational parameters. Must be filled using the
-\code{\link{set_init}} function or be \code{NULL} for a default
-initialization.}
+variational parameters. Must be filled using the \code{\link{set_init}}
+function or be \code{NULL} for a default initialization.}
 
 \item{list_blocks}{An object of class "\code{blocks}" containing setting for
 parallel inference on a partitioned predictor space. Must be filled using
@@ -53,8 +57,7 @@ partitioning.}
 
 \item{user_seed}{Seed set for reproducible default choices of hyperparameters
 (if \code{list_hyper} is \code{NULL}) and inital variational parameters (if
-\code{list_init} is \code{NULL}). Also used at the cross-validation stage
-(if \code{list_cv} is non-\code{NULL}). Default is \code{NULL}, no seed set.}
+\code{list_init} is \code{NULL}). Default is \code{NULL}, no seed set.}
 
 \item{tol}{Tolerance for the stopping criterion.}
 
@@ -76,14 +79,14 @@ execution.}
 If \code{results_dir} is \code{NULL}, list of length \code{n_perm}
   with each element corresponding to the output of \code{\link{locus}} on one
   permuted dataset. Each contains:
- \item{ind_perm}{Vector of size n containing the permuted response sample
+ \item{ind_perm}{Vector of length n containing the permuted response sample
                  labels.}
- \item{gam_vb}{Posterior inclusion probability matrix of dimension p x d.
+ \item{gam_vb}{Posterior inclusion probability matrix of size p x d.
                Entry (s, t) corresponds to the posterior probability of
                association between predictor s and response t.}
- \item{om_vb}{Vector of size p containing the posterior mean of omega. Entry
-             s controls the proportion of responses associated with predictor
-             s.}
+ \item{om_vb}{Vector of length p containing the posterior mean of omega.
+              Entry s controls the proportion of responses associated with
+              candidate predictor s.}
 }
 \description{
 This function runs \code{\link{locus}} on data with permuted response sample

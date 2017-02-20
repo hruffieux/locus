@@ -44,8 +44,8 @@ An object of class "\code{cv}" preparing the settings for the
 \description{
 The cross-validation procedure uses the variational lower bound as objective
 function and is used to select the prior average number of predictors
-\code{p0_av} expected to be included in the model used to set the model
-hyperparameters and ensure sparse predictor selections.
+\code{p0_av} expected to be included in the model. \code{p0_av} is used to
+set the model hyperparameters and ensure sparse predictor selections.
 }
 \examples{
 user_seed <- 123; set.seed(user_seed)

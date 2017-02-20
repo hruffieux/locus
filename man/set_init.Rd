@@ -16,29 +16,36 @@ set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, family = "gaussian",
 parameter yielding posterior probabilities of inclusion.}
 
 \item{mu_beta_vb}{Matrix of size p x d with initial values for the
-variationa parameter yielding regression coefficient estimates for
+variational parameter yielding regression coefficient estimates for
 predictor-response pairs included in the model.}
 
-\item{sig2_beta_vb}{Vector of size d, for \code{family = "gaussian"}, of size
- 1 for \code{family = "binomial-probit"}, and a matrix of size p x d, for
- \code{family = "binomial-logit"}, with initial values for the variational
- parameter yielding estimates of effect variances for predictor-response
- pairs included in the model. For \code{family = "gaussian"}, these values
- are the same for all the predictors (as a result of the predictor variables
- being standardized before the variational algorithm). For
- \code{family = "binomial-probit"}, the are the same for all the predictors
-and responses.}
+\item{sig2_beta_vb}{Vector of length d, for \code{family = "gaussian"} and
+for \code{family = "mixed"}, of length 1 for
+\code{family = "binomial-probit"}, and a matrix of size p x d, for
+\code{family = "binomial-logit"}, with initial values for the variational
+parameter yielding estimates of effect variances for predictor-response
+pairs included in the model. For \code{family = "gaussian"} and
+\code{family = "mixed"}, these values are the same for all the predictors
+(as a result of the predictor variables being standardized before the
+variational algorithm). For \code{family = "binomial-probit"}, they are the
+same for all the predictors and responses.}
 
-\item{tau_vb}{Vector of size d, for \code{family = "gaussian"}, and for size
-d - length(ind_bin) (number of continuous responses), for
-\code{family = "mixed"} with initial values for the variational parameter
+\item{tau_vb}{Vector of length d, for \code{family = "gaussian"}, and of
+length d_cont = d - length(ind_bin) (number of continuous responses), for
+\code{family = "mixed"}, with initial values for the variational parameter
 yielding estimates for the continuous response residual precisions. Must be
 \code{NULL} for \code{family = "binomial-logit"} and
 \code{family = "binomial-probit"}.}
 
-\item{family}{Response type. Must be either "\code{gaussian}" for linear
-regression, "\code{binomial-logit}" for logistic regression or
-\code{family = "binomial-probit"} for probit regression.}
+\item{family}{Response type. Must be "\code{gaussian}" for linear
+regression, "\code{binomial-logit}" for logistic regression,
+"\code{binomial-probit}" for probit regression, or "\code{mixed}" for a mix
+of linear and probit link functions (in this case, the indices of the
+binary responses must be gathered in argument \code{ind_bin}, see below).}
+
+\item{ind_bin}{If \code{family = "mixed"}, vector of indices corresponding to
+the binary variables in \code{Y}. Must be \code{NULL} if
+\code{family != "mixed"}.}
 
 \item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
@@ -48,10 +55,10 @@ variational parameter yielding regression coefficient estimates for
 covariate-response pairs. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
 
-\item{sig2_alpha_vb}{Matrix of size q x d for \code{family = "gaussian"} and
-for \code{family = "binomial-logit"}, with initial values for the
-variational parameter yielding estimates of effect variances for
-covariate-response pairs. Vector if size q for
+\item{sig2_alpha_vb}{Matrix of size q x d for \code{family = "gaussian"},
+for \code{family = "binomial-logit"} and for \code{family = "mixed"} with
+initial values for the variational parameter yielding estimates of effect
+variances for covariate-response pairs. Vector if length q for
 \code{family = "binomial-probit"}, Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
 }
@@ -75,15 +82,16 @@ n <- 200; p <- 250; p0 <- 50; d <- 25; d0 <- 15
 list_X <- generate_snps(n = n, p = p)
 list_Y <- generate_phenos(n = n, d = d, var_err = 1)
 
-# Gaussian outcomes
+# Continuous outcomes
+#
 dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
                              ind_d0 = sample(1:d, d0),
                              ind_p0 = sample(1:p, p0),
                              vec_prob_sh = 0.1, family = "gaussian",
                              max_tot_pve = 0.9)
 
-# gam_vb chosen so that each candidate predictor has a prior probability to
-# be included in the model of 1/4.
+# gam_vb chosen so that the prior mean number of responses associated with
+# each candidate predictor is 1/4.
 gam_vb <- matrix(rbeta(p * d, shape1 = 1, shape2 = 4*d-1), nrow = p)
 mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
 tau_vb <- 1 / apply(dat_g$phenos, 2, var)
@@ -95,7 +103,8 @@ list_init_g <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
               family = "gaussian", list_init = list_init_g)
 
-# Gaussian outcomes with covariates
+# Continuous outcomes with covariates
+#
 q <- 4
 Z <- matrix(rnorm(n * q), nrow = n)
 
@@ -114,15 +123,15 @@ vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
                 family = "gaussian", list_init = list_init_g_z)
 
 # Binary outcomes
+#
 dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
                              ind_d0 = sample(1:d, d0),
                              ind_p0 = sample(1:p, p0),
                              vec_prob_sh = 0.1, family = "binomial",
                              max_tot_pve = 0.9)
 
-# gam_vb chosen so that each candidate predictor has a prior probability to
-# be included in the model of 1/4.
-
+# gam_vb chosen so that the prior mean number of responses associated with
+# each candidate predictor is 1/4.
 sig2_beta_vb_logit <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
 
 list_init_logit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
@@ -140,6 +149,7 @@ vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
                    family = "binomial-probit", list_init = list_init_probit)
 
 # Binary outcomes with covariates
+#
 list_init_logit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
                               tau_vb = NULL, family = "binomial-logit",
                               q = q, mu_alpha_vb = mu_alpha_vb,
@@ -156,6 +166,41 @@ list_init_probit_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_probit,
 
 vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
                 family = "binomial-probit", list_init = list_init_probit_z)
+
+# Mix of continuous and binary outcomes
+#
+Y_mix <- cbind(dat_g$phenos, dat_b$phenos)
+ind_bin <- (d+1):(2*d)
+p0_mix <- sum(rowSums(cbind(dat_g$pat, dat_b$pat)) > 0)
+
+
+# gam_vb chosen so that the prior mean number of responses associated with
+# each candidate predictor is 1/4.
+gam_vb_mix <- matrix(rbeta(p * 2*d, shape1 = 1, shape2 = 8*d-1), nrow = p)
+mu_beta_vb_mix <- matrix(rnorm(p * 2*d), nrow = p)
+sig2_beta_vb_mix <- 1 / c(rgamma(d, shape = 2, rate = 1 / tau_vb),
+                          rgamma(d, shape = 2, rate = 1))
+
+
+list_init_mix <- set_init(2*d, p, gam_vb_mix, mu_beta_vb_mix,
+                          sig2_beta_vb_mix, tau_vb, family = "mixed",
+                          ind_bin = ind_bin)
+
+vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, family = "mixed",
+                ind_bin = ind_bin, list_init = list_init_mix)
+
+mu_alpha_vb_mix <- matrix(rnorm(q * 2*d), nrow = q)
+sig2_alpha_vb_mix <- 1 / matrix(rgamma(q * 2*d, shape = 2, rate = 1), nrow = q)
+
+list_init_mix_z <- set_init(2*d, p, gam_vb_mix, mu_beta_vb_mix,
+                            sig2_beta_vb_mix, tau_vb, family = "mixed",
+                            ind_bin = ind_bin, q = q,
+                            mu_alpha_vb = mu_alpha_vb_mix,
+                            sig2_alpha_vb = sig2_alpha_vb_mix)
+
+vb_mix_z <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, Z = Z,
+                  family = "mixed", ind_bin = ind_bin,
+                  list_init = list_init_mix_z)
 
 }
 \seealso{

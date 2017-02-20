@@ -20,7 +20,7 @@ independent SNPs.}
 number of blocks of correlated SNPs. Must be smaller than p. Set to
 \code{NULL} if independent SNPs.}
 
-\item{vec_maf}{Vector of size p containing the reference minor allele
+\item{vec_maf}{Vector of length p containing the reference minor allele
 frequencies used to generate the SNPs. If \code{NULL}, the minor allele
 frequencies drawn uniformly at random between 0.05 and 0.5.}
 

@@ -11,7 +11,7 @@
 #' @param vec_rho Vector of correlation coefficients. Its length determines the
 #'   number of blocks of correlated SNPs. Must be smaller than p. Set to
 #'   \code{NULL} if independent SNPs.
-#' @param vec_maf Vector of size p containing the reference minor allele
+#' @param vec_maf Vector of length p containing the reference minor allele
 #'   frequencies used to generate the SNPs. If \code{NULL}, the minor allele
 #'   frequencies drawn uniformly at random between 0.05 and 0.5.
 #' @param n_cpus Number of CPUs used when simulating correlated SNP blocks.

@@ -2,8 +2,8 @@
 #'
 #' The cross-validation procedure uses the variational lower bound as objective
 #' function and is used to select the prior average number of predictors
-#' \code{p0_av} expected to be included in the model used to set the model
-#' hyperparameters and ensure sparse predictor selections.
+#' \code{p0_av} expected to be included in the model. \code{p0_av} is used to
+#' set the model hyperparameters and ensure sparse predictor selections.
 #'
 #' @param n Number of observations.
 #' @param p Number of candidate predictors.
@@ -211,8 +211,10 @@ cross_validate_ <- function(Y, X, Z, list_cv, user_seed, verbose) {
 
         if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
 
-        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, family = "gaussian")
-        list_init_pg <- auto_set_init_(Y_tr, p, pg, q, user_seed, family = "gaussian")
+        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, family = "gaussian",
+                                         ind_bin = NULL)
+        list_init_pg <- auto_set_init_(Y_tr, p, pg, q, user_seed,
+                                       family = "gaussian", ind_bin = NULL)
 
         if (is.null(q)) {
           vb_tr <- locus_core_(Y_tr, X_tr, list_hyper_pg,

@@ -29,14 +29,14 @@ prepare_data_ <- function(Y, X, Z, family, ind_bin, user_seed, tol, maxit, batch
     check_structure_(Y, "matrix", "numeric")
     d <- ncol(Y)
 
-    if(!identical(as.vector(Y[, ind_bin]), as.numeric(as.logical(Y[, ind_bin]))))
+    if(!all(as.vector(Y[, ind_bin]) == as.numeric(as.logical(Y[, ind_bin]))))
       stop("The responses in Y correspinding to indices ind_bin must be a binary.")
 
   } else {
 
     check_structure_(Y, "matrix", "numeric")
     d <- ncol(Y)
-    if(!identical(as.vector(Y), as.numeric(as.logical(Y))))
+    if(!all(as.vector(Y) == as.numeric(as.logical(Y))))
       stop("Y must be a binary matrix for logistic/probit regression.")
 
   }
@@ -238,9 +238,11 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, family, ind_bin,
       stop(paste("The argument family is not consistent with the variable
                  family_hyper in list_hyper", sep=""))
 
-    if (list_hyper$ind_bin_hyper != ind_bin)
-      stop(paste("The argument ind_bin is not consistent with the variable
-                 ind_bin_hyper in list_hyper", sep=""))
+    if(family == "mixed") {
+      if (!all(list_hyper$ind_bin_hyper == ind_bin))
+        stop(paste("The argument ind_bin is not consistent with the variable
+                   ind_bin_hyper in list_hyper", sep=""))
+    }
 
     if (inherits(list_hyper, "hyper")) {
       # remove the entries corresponding to the removed constant predictors in X
@@ -335,7 +337,6 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family, ind_bin,
       p_init_match <- p
     }
 
-
     if (list_init$d_init != d)
       stop(paste("The dimensions (d) of the provided initial parameters ",
                  "(list_init) are not consistent with that of Y.\n", sep=""))
@@ -348,9 +349,11 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, family, ind_bin,
       stop(paste("The argument family is not consistent with the variable
                  family_init in list_init", sep=""))
 
-    if (list_init$ind_bin_init != ind_bin)
-      stop(paste("The argument ind_bin is not consistent with the variable
-                 ind_bin_init in list_init", sep=""))
+    if(family == "mixed") {
+      if (!all(list_init$ind_bin_init == ind_bin))
+        stop(paste("The argument ind_bin is not consistent with the variable
+                   ind_bin_init in list_init", sep=""))
+    }
 
     if (inherits(list_init, "init")) {
       # remove the entries corresponding to the removed constant predictors in X
@@ -587,7 +590,7 @@ prepare_ind_bin_ <- function(d, ind_bin, family) {
       stop(paste("All indices provided in ind_bin must be integers between 1 ",
                  "and the total number of responses, d = ", d, ".", sep = ""))
 
-    if (identical(ind_bin, 1:d))
+    if (all(ind_bin == 1:d))
       stop(paste("Argument ind_bin indicates that all responses are binary. \n",
                  "Please set family to logit or probit, or change ind_bin to ",
                  "the indices of the binary responses only.", sep = ""))
