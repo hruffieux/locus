@@ -238,10 +238,15 @@ cross_validate_ <- function(Y, X, Z, list_cv, user_seed, verbose) {
                                  full_output = TRUE)
 
           lb_vec[ind_pg] <- with(vb_tr, {
+
+            mat_z_mu <-  Z_test %*% mu_alpha_vb
+            mat_x_m1 <-  X_test %*% m1_beta
+
             lower_bound_z_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, eta,
                            gam_vb, kappa, lambda, mu_alpha_vb, nu, phi, phi_vb,
                            sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
-                           xi, zeta2_inv_vb, m2_alpha, m1_beta, m2_beta, sum_gam)
+                           xi, zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
+                           mat_x_m1, mat_z_mu, sum_gam)
           })
         }
 

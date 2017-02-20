@@ -12,13 +12,7 @@ locus_mixed_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
   rm(Y)
 
   # Y must have its continuous variables centered,
-  # and X and must be standardized (except intercept in Z).                               ## center the continuous variables of Y
-                                                                                          # check that at least one binary response and at least one continuous response (i.e. ind_bin != 1:d and not empty)
-
-                                                                                          # the entries of tau_vb[ind_bin] must all be = 1 (set in set_init and auto_set_init) # ask the user to set a vector of length |C|
-                                                                                          # and complete it with the 1s at the correct position. For eta and kappa, ask to set them of length |C| directly (and keep them at this size)
-
-                                                                                          # add the intercept in Z. add an argument to update_kappa to tell if intercept in Z or not.
+  # and X and must be standardized (except intercept in Z).
 
   with(list_hyper, {  # list_init not used with the with() function to avoid
                       # copy-on-write for large objects
@@ -68,14 +62,14 @@ locus_mixed_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
       # % #
       eta_vb <- update_eta_z_vb_(n, q, eta, gam_vb[, -ind_bin, drop = FALSE])
 
-      kappa_vb <- update_kappa_mixed_vb_(W[, -ind_bin, drop = FALSE], X, Z,
-                                         kappa, mu_alpha_vb[, -ind_bin, drop = FALSE],
-                                         m1_beta[, -ind_bin, drop = FALSE],
-                                         m2_alpha[, -ind_bin, drop = FALSE],
-                                         m2_beta[, -ind_bin, drop = FALSE],
-                                         mat_x_m1[, -ind_bin, drop = FALSE],
-                                         mat_z_mu[, -ind_bin, drop = FALSE],
-                                         sig2_inv_vb, zeta2_inv_vb, intercept = TRUE)
+      kappa_vb <- update_kappa_z_vb_(W[, -ind_bin, drop = FALSE], X, Z,
+                                     kappa, mu_alpha_vb[, -ind_bin, drop = FALSE],
+                                     m1_beta[, -ind_bin, drop = FALSE],
+                                     m2_alpha[, -ind_bin, drop = FALSE],
+                                     m2_beta[, -ind_bin, drop = FALSE],
+                                     mat_x_m1[, -ind_bin, drop = FALSE],
+                                     mat_z_mu[, -ind_bin, drop = FALSE],
+                                     sig2_inv_vb, zeta2_inv_vb, intercept = TRUE)
 
       tau_vb[-ind_bin] <- eta_vb / kappa_vb
       # % #
@@ -249,27 +243,6 @@ locus_mixed_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 }
 
 
-
-update_kappa_mixed_vb_ <- function(Y, X, Z, kappa, mu_alpha_vb, m1_beta,
-                                   m2_alpha, m2_beta, mat_x_m1, mat_z_mu,
-                                   sig2_inv_vb, zeta2_inv_vb, intercept = FALSE) {
-  n <- nrow(Y)
-
-  kappa_vb <- kappa + (colSums(Y^2) - 2 * colSums(Y * (mat_x_m1 + mat_z_mu))  +
-                         (n - 1 + sig2_inv_vb) * colSums(m2_beta) +
-                         colSums(mat_x_m1^2) - (n - 1) * colSums(m1_beta^2) +
-                         (n - 1) * colSums(m2_alpha) +
-                         crossprod(m2_alpha, zeta2_inv_vb) +
-                         colSums(mat_z_mu^2) - (n - 1) * colSums(mu_alpha_vb^2) +
-                         2 * colSums(mat_x_m1 * mat_z_mu))/ 2
-
-  if (intercept)
-    kappa_vb <- kappa_vb + (m2_alpha[1, ] - (mu_alpha_vb[1, ])^2) / 2
-
-  kappa_vb
-}
-
-
 lower_bound_mixed_ <- function(Y_bin, ind_bin, W, X, Z, a, a_vb, b, b_vb, eta,
                                gam_vb, kappa, lambda, mu_alpha_vb, nu, phi,
                                phi_vb, sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb,
@@ -284,14 +257,14 @@ lower_bound_mixed_ <- function(Y_bin, ind_bin, W, X, Z, a, a_vb, b, b_vb, eta,
   eta_vb <- update_eta_z_vb_(n, q, eta, gam_vb[, -ind_bin, drop = FALSE])
 
 
-  kappa_vb <- update_kappa_mixed_vb_(W[, -ind_bin, drop = FALSE], X, Z,
-                                     kappa, mu_alpha_vb[, -ind_bin, drop = FALSE],
-                                     m1_beta[, -ind_bin, drop = FALSE],
-                                     m2_alpha[, -ind_bin, drop = FALSE],
-                                     m2_beta[, -ind_bin, drop = FALSE],
-                                     mat_x_m1[, -ind_bin, drop = FALSE],
-                                     mat_z_mu[, -ind_bin, drop = FALSE],
-                                     sig2_inv_vb, zeta2_inv_vb, intercept = TRUE)
+  kappa_vb <- update_kappa_z_vb_(W[, -ind_bin, drop = FALSE], X, Z,
+                                 kappa, mu_alpha_vb[, -ind_bin, drop = FALSE],
+                                 m1_beta[, -ind_bin, drop = FALSE],
+                                 m2_alpha[, -ind_bin, drop = FALSE],
+                                 m2_beta[, -ind_bin, drop = FALSE],
+                                 mat_x_m1[, -ind_bin, drop = FALSE],
+                                 mat_z_mu[, -ind_bin, drop = FALSE],
+                                 sig2_inv_vb, zeta2_inv_vb, intercept = TRUE)
 
   lambda_vb <- update_lambda_vb_(lambda, sum_gam)
   nu_vb <- update_nu_vb_(nu, m2_beta, tau_vb)
