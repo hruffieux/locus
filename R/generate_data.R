@@ -238,6 +238,7 @@ replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NUL
 
   vec_real_maf <- apply(real_snps, 2, mean) / 2
 
+  n_real <- nrow(real_snps)
   n_bl <- floor(p / bl_lgth)
   ind_bl <- make_chunks_(1:p, n_bl)
 
@@ -246,7 +247,7 @@ replicate_real_snps <- function(n, real_snps, bl_lgth, p = NULL, maf_thres = NUL
     p_bl <- length(ind_bl[[bl]])
 
     # we add some noise to avoid undefined correlation in case of constant phenotypes.
-    R <- cor(real_snps[, ind_bl[[bl]]] + matrix(rnorm(n*p_bl), nrow = n))
+    R <- cor(real_snps[, ind_bl[[bl]]] + matrix(rnorm(n_real*p_bl), nrow = n_real))
     R <- Matrix::nearPD(R, corr = TRUE, do2eigen = TRUE)$mat
 
     L <- t(chol(R))
@@ -544,6 +545,7 @@ replicate_real_phenos <- function(n, real_phenos, input_family = "gaussian",
                  "of phenotypes available: ", bl_lgth, " > ", d, sep = ""))
   }
 
+  n_real <- nrow(real_phenos)
   n_bl <- floor(d / bl_lgth)
   ind_bl <- make_chunks_(1:d, n_bl)
 
@@ -551,7 +553,7 @@ replicate_real_phenos <- function(n, real_phenos, input_family = "gaussian",
     d_bl <- length(ind_bl[[bl]])
 
     # we add some noise to avoid undefined correlation in case of constant phenotypes.
-    R <- cor(real_phenos[, ind_bl[[bl]]] + matrix(rnorm(n*d_bl), nrow = n))
+    R <- cor(real_phenos[, ind_bl[[bl]]] + matrix(rnorm(n_real*d_bl), nrow = n_real))
     R <- Matrix::nearPD(R, corr = TRUE, do2eigen = TRUE)$mat
     L <- t(chol(R))
     tZ <- matrix(sapply(var_err[ind_bl[[bl]]], function(ve) rnorm(n, 0, sqrt(ve))),
