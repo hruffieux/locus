@@ -2,7 +2,7 @@ Package: locus
 Type: Package
 Title: Large-scale variational inference for combined selection of predictor and
     outcome variables
-Version: 0.2.0
+Version: 0.3.0
 Date: 2016-10-02
 Authors@R: c(
     person("Helene", "Ruffieux", email = "helene.ruffieux@epfl.ch",
