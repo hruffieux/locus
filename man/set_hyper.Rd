@@ -5,7 +5,8 @@
 \title{Gather model hyperparameters provided by the user.}
 \usage{
 set_hyper(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
-  ind_bin = NULL, q = NULL, phi = NULL, xi = NULL)
+  ind_bin = NULL, q = NULL, phi = NULL, xi = NULL, r = NULL,
+  s2 = NULL)
 }
 \arguments{
 \item{d}{Number of responses.}

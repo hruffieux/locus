@@ -236,14 +236,11 @@ lower_bound_probit_ <- function(Y, W, X, Z, a, a_vb, b, b_vb, gam_vb, lambda, nu
 
   U <- mat_x_m1 + mat_z_mu
   W_2 <- 1 + U * W
-  H <- log((2 * pi * exp(1))^(1/2) *
-             exp(Y * pnorm(U, log.p = TRUE) + (1-Y) * pnorm(U, lower.tail = FALSE, log.p = TRUE))) -
-    U * inv_mills_ratio_(Y, U) / 2
 
   A <- sum(- log(2*pi) / 2 - W_2 / 2 +
              W_2 - 1  - (X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 +
                 Z^2 %*% m2_alpha + mat_z_mu^2 - Z^2 %*% mu_alpha_vb^2 +
-                2 * mat_x_m1 * mat_z_mu) / 2 + H)
+                2 * mat_x_m1 * mat_z_mu) / 2 + entropy_(Y, U))
 
   #A <- sum(Y * log(pnorm(U) + eps) + (1 - Y) * log(1 - pnorm(U) + eps)) # if one wants a bound for p(Y)
                                                                          # rather than for p(W) (W = Gaussian latent variable)
@@ -254,20 +251,20 @@ lower_bound_probit_ <- function(Y, W, X, Z, a, a_vb, b, b_vb, gam_vb, lambda, nu
              gam_vb * (log(sig2_beta_vb) + 1) / 2 -
              gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
 
-  J <- sum((lambda - lambda_vb) * log_sig2_inv_vb - (nu - nu_vb) * sig2_inv_vb +
+  G <- sum((lambda - lambda_vb) * log_sig2_inv_vb - (nu - nu_vb) * sig2_inv_vb +
              lambda * log(nu) - lambda_vb * log(nu_vb) - lgamma(lambda) +
              lgamma(lambda_vb))
 
-  K <- sum((a - a_vb) * log_om_vb + (b - b_vb) * log_1_min_om_vb - lbeta(a, b) +
+  H <- sum((a - a_vb) * log_om_vb + (b - b_vb) * log_1_min_om_vb - lbeta(a, b) +
              lbeta(a_vb, b_vb))
 
-  L <- 1 / 2 * sum(sweep(sweep(-sweep(m2_alpha, 1, zeta2_inv_vb, `*`), 1,
+  J <- 1 / 2 * sum(sweep(sweep(-sweep(m2_alpha, 1, zeta2_inv_vb, `*`), 1,
                          log_zeta2_inv_vb, `+`), 1, log(sig2_alpha_vb), `*`) + 1)
 
-  O <- sum((phi - phi_vb) * log_zeta2_inv_vb - (xi - xi_vb) * zeta2_inv_vb +
+  K <- sum((phi - phi_vb) * log_zeta2_inv_vb - (xi - xi_vb) * zeta2_inv_vb +
              phi * log(xi) - phi_vb * log(xi_vb) - lgamma(phi) + lgamma(phi_vb))
 
-  A + B + J + K + L + O
+  A + B + G + H + J + K
 
 }
 

@@ -164,14 +164,14 @@
 #'
 #' @export
 #'
-locus <- function(Y, X, p0_av, Z = NULL, link = "identity", ind_bin = NULL,
-                  list_hyper = NULL, list_init = NULL, list_cv = NULL,
-                  list_blocks = NULL, user_seed = NULL, tol = 1e-4,
-                  maxit = 1000, batch = TRUE, save_hyper = FALSE,
+locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
+                  ind_bin = NULL, list_hyper = NULL, list_init = NULL,
+                  list_cv = NULL, list_blocks = NULL, user_seed = NULL,
+                  tol = 1e-4, maxit = 1000, batch = TRUE, save_hyper = FALSE,
                   save_init = FALSE, verbose = TRUE) { ##
 
   if (verbose) cat("== Preparing the data ... \n")
-  dat <- prepare_data_(Y, X, Z, link, ind_bin, user_seed, tol, maxit, batch,
+  dat <- prepare_data_(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, batch,
                        verbose)
 
   bool_rmvd_x <- dat$bool_rmvd_x
@@ -180,19 +180,30 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity", ind_bin = NULL,
   X <- dat$X
   Y <- dat$Y
   Z <- dat$Z
+  V <- dat$V
 
   n <- nrow(X)
   p <- ncol(X)
   d <- ncol(Y)
+  r <- ncol(V)
 
   names_x <- colnames(X)
   names_y <- colnames(Y)
+
   if (!is.null(Z)) {
     q <- ncol(Z)
     names_z <- colnames(Z)
   } else {
     q <- NULL
     names_z <- NULL
+  }
+
+  if (!is.null(V)) {
+    r <- ncol(V)
+    names_v <- colnames(V)
+  } else {
+    r <- NULL
+    names_v <- NULL
   }
 
   if (verbose) cat("... done. == \n\n")
@@ -206,7 +217,7 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity", ind_bin = NULL,
         cat("===== Cross-validation... ===== \n")
         cat("=============================== \n")
       }
-      list_cv <- prepare_cv_(list_cv, n, p, bool_rmvd_x, p0_av, link,
+      list_cv <- prepare_cv_(list_cv, n, p, r, bool_rmvd_x, p0_av, link,
                              list_hyper, list_init, verbose)
 
       p_star <- cross_validate_(Y, X, Z, list_cv, user_seed, verbose)
@@ -215,7 +226,7 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity", ind_bin = NULL,
 
     if (!is.null(list_blocks)) {
 
-      list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, list_cv)
+      list_blocks <- prepare_blocks_(list_blocks, r, bool_rmvd_x, list_cv)
 
       n_bl <- list_blocks$n_bl
       n_cpus <- list_blocks$n_cpus
@@ -243,14 +254,15 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity", ind_bin = NULL,
   }
 
   if (verbose) cat("== Preparing the hyperparameters ... \n\n")
-  list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, link, ind_bin,
+  list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, r, link, ind_bin,
                                     bool_rmvd_x, bool_rmvd_z, names_x, names_y,
                                     names_z, verbose)
   if (verbose) cat("... done. == \n\n")
 
   if (verbose) cat("== Preparing the parameter initialization ... \n\n")
-  list_init <- prepare_list_init_(list_init, Y, p, p_star, q, link, ind_bin,
-                                  bool_rmvd_x, bool_rmvd_z, user_seed, verbose)
+  list_init <- prepare_list_init_(list_init, Y, p, p_star, q, r, link, ind_bin,
+                                  bool_rmvd_x, bool_rmvd_z, bool_rmvd_v,
+                                  user_seed, verbose)
   if (verbose) cat("... done. == \n\n")
 
 
@@ -300,6 +312,14 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity", ind_bin = NULL,
     colnames(Z)[1] <- "Intercept"
   }
 
+  if (!is.null(r)) {
+    V <- cbind(rep(1, p), V)
+
+    list_init$mu_c_vb <- rbind(rep(0, d), list_init$mu_c_vb)
+
+    colnames(V)[1] <- "Annot_intercept"
+  }
+
   if (verbose){
     cat(paste("============================================================== \n",
               "== Variational inference for sparse multivariate regression == \n",
@@ -312,15 +332,25 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity", ind_bin = NULL,
 
     if (link == "identity") {
 
-      if (is.null(q))
-        vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
-                          list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                          list_init$tau_vb, tol, maxit, batch, verbose)
-      else
+      if (is.null(q)) {
+
+        if (is.null(r)) {
+          vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
+                            list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                            list_init$tau_vb, tol, maxit, batch, verbose)
+        } else {
+          vb <- locus_ext_core_(Y, X, V, list_hyper, list_init$gam_vb,
+                                list_init$mu_beta_vb, list_init$mu_c_vb,
+                                list_init$sig2_beta_vb, list_init$tau_vb,
+                                tol, maxit, batch, verbose)
+        }
+
+      } else {
         vb <- locus_z_core_(Y, X, Z, list_hyper, list_init$gam_vb,
                             list_init$mu_alpha_vb, list_init$mu_beta_vb,
                             list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                             list_init$tau_vb, tol, maxit, batch, verbose)
+      }
 
     } else if (link == "logit"){
 

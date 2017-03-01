@@ -171,7 +171,8 @@
 #' @export
 #'
 set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
-                      ind_bin = NULL, q = NULL, phi = NULL, xi = NULL) {
+                      ind_bin = NULL, q = NULL, phi = NULL, xi = NULL,
+                      r = NULL, s2 = NULL) {
 
   check_structure_(d, "vector", "numeric", 1)
   check_natural_(d)
@@ -182,17 +183,35 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
   check_structure_(q, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(q)) check_natural_(q)
 
+  check_structure_(r, "vector", "numeric", 1, null_ok = TRUE)
+  if (!is.null(r)) check_natural_(r)
+
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
   ind_bin <- prepare_ind_bin_(d, ind_bin, link)
 
-  check_structure_(a, "vector", "double", c(1, p))
-  check_positive_(a)
-  if (length(a) == 1) a <- rep(a, p)
+  if (is.null(r)) {
 
-  check_structure_(b, "vector", "double", c(1, p))
-  check_positive_(b)
-  if (length(b) == 1) b <- rep(b, p)
+    check_structure_(a, "vector", "double", c(1, p))
+    check_positive_(a)
+    if (length(a) == 1) a <- rep(a, p)
+
+    check_structure_(b, "vector", "double", c(1, p))
+    check_positive_(b)
+    if (length(b) == 1) b <- rep(b, p)
+
+    if (!is.null(s2))
+      stop("Provided r = NULL, not consitent with s2 being non-null.")
+
+  } else {
+
+    check_structure_(s2, "vector", "double", 1)
+    check_positive_(s2)
+
+    if (!is.null(a) | !is.null(b))
+      stop("Provided r != NULL, not consitent with a and b being non-null.")
+
+  }
 
   check_structure_(lambda, "vector", "double", 1)
   check_positive_(lambda)
@@ -238,13 +257,14 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
   d_hyper <- d
   p_hyper <- p
   q_hyper <- q
+
   ind_bin_hyper <- ind_bin
 
   link_hyper <- link
 
   list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, link_hyper,
                                    ind_bin_hyper, eta, kappa, lambda, nu, a, b,
-                                   phi, xi)
+                                   phi, xi, s2)
 
   class(list_hyper) <- "hyper"
 
@@ -253,7 +273,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 }
 
 
-auto_set_hyper_ <- function(Y, p, p_star, q, link, ind_bin) {
+auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin) {
 
   d <- ncol(Y)
 
@@ -285,13 +305,25 @@ auto_set_hyper_ <- function(Y, p, p_star, q, link, ind_bin) {
   if (length(p_star) == 1) p0 <- p_star
   else p0 <- sum(p_star / p)
 
-  a <- rep(1, p)
-  b <- d * (p - p_star) / p_star
-  if (length(b) == 1) b <- rep(b, p)
+  if (is.null(r)) {
 
-  # hyperparameters of beta distributions
-  check_positive_(a)
-  check_positive_(b)
+    a <- rep(1, p)
+    b <- d * (p - p_star) / p_star
+    if (length(b) == 1) b <- rep(b, p)
+
+    # hyperparameters of beta distributions
+    check_positive_(a)
+    check_positive_(b)
+
+    s2 <- NULL
+
+  } else {
+
+    s2 <- 1
+
+    a <- b <- NULL
+
+  }
 
   if (!is.null(q)) {
 
@@ -306,13 +338,14 @@ auto_set_hyper_ <- function(Y, p, p_star, q, link, ind_bin) {
   d_hyper <- d
   p_hyper <- p
   q_hyper <- q
+
   ind_bin_hyper <- ind_bin
 
   link_hyper <- link
 
   list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, link_hyper,
-                                   ind_bin_hyper, eta,
-                                   kappa, lambda, nu, a, b, phi, xi)
+                                   ind_bin_hyper, eta, kappa, lambda, nu, a, b,
+                                   phi, xi, s2)
 
   class(list_hyper) <- "out_hyper"
 
@@ -504,7 +537,8 @@ auto_set_hyper_ <- function(Y, p, p_star, q, link, ind_bin) {
 #'
 set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
                      link = "identity", ind_bin = NULL, q = NULL,
-                     mu_alpha_vb = NULL, sig2_alpha_vb = NULL) {
+                     mu_alpha_vb = NULL, sig2_alpha_vb = NULL, r = NULL,
+                     mu_c_vb = NULL) {
 
   check_structure_(d, "vector", "numeric", 1)
   check_natural_(d)
@@ -514,6 +548,9 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
   check_structure_(q, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(q)) check_natural_(q)
+
+  check_structure_(r, "vector", "numeric", 1, null_ok = TRUE)
+  if (!is.null(r)) check_natural_(r)
 
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
@@ -582,16 +619,29 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
   }
 
+
+  if (!is.null(r)) {
+
+    check_structure_(mu_c_vb, "matrix", "double", c(r, d))
+
+  } else if (!is.null(mu_c_vb)) {
+
+    stop("Provided r = NULL, not consistent with mu_c_vb or  being non-null.")
+
+  }
+
+
   d_init <- d
   p_init <- p
   q_init <- q
+  r_init <- r
   ind_bin_init <- ind_bin
 
   link_init <- link
 
-  list_init <- create_named_list_(d_init, p_init, q_init, link_init,
+  list_init <- create_named_list_(d_init, p_init, q_init, r_init, link_init,
                                   ind_bin_init, gam_vb, mu_beta_vb, sig2_beta_vb,
-                                  tau_vb, mu_alpha_vb, sig2_alpha_vb)
+                                  tau_vb, mu_alpha_vb, sig2_alpha_vb, mu_c_vb)
 
   class(list_init) <- "init"
 
@@ -599,7 +649,7 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 }
 
 
-auto_set_init_ <- function(Y, p, p_star, q, user_seed, link, ind_bin) {
+auto_set_init_ <- function(Y, p, p_star, q, r, user_seed, link, ind_bin) {
 
   d <- ncol(Y)
 
@@ -693,17 +743,28 @@ auto_set_init_ <- function(Y, p, p_star, q, user_seed, link, ind_bin) {
 
   }
 
+  if (!is.null(r)) {
+
+    mu_c_vb <- matrix(rnorm(r * d), nrow = r)
+
+  } else {
+
+    mu_c_vb <- NULL
+
+  }
+
 
   d_init <- d
   p_init <- p
   q_init <- q
+  r_init <- r
   ind_bin_init <- ind_bin
 
   link_init <- link
 
-  list_init <- create_named_list_(d_init, p_init, q_init, link_init,
+  list_init <- create_named_list_(d_init, p_init, q_init, r_init, link_init,
                                   ind_bin_init, gam_vb, mu_beta_vb, sig2_beta_vb,
-                                  tau_vb, mu_alpha_vb, sig2_alpha_vb)
+                                  tau_vb, mu_alpha_vb, sig2_alpha_vb, mu_c_vb)
 
   class(list_init) <- "out_init"
 

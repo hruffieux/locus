@@ -1,5 +1,5 @@
-prepare_data_ <- function(Y, X, Z, link, ind_bin, user_seed, tol, maxit, batch,
-                          verbose) {
+prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit,
+                          batch, verbose) {
 
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
@@ -98,7 +98,6 @@ prepare_data_ <- function(Y, X, Z, link, ind_bin, user_seed, tol, maxit, batch,
     rmvd_coll_z <- NULL
   }
 
-
   X <- scale(X)
 
   list_X_cst <- rm_constant_(X, verbose)
@@ -108,12 +107,57 @@ prepare_data_ <- function(Y, X, Z, link, ind_bin, user_seed, tol, maxit, batch,
 
   list_X_coll <- rm_collinear_(X, verbose)
   X <- list_X_coll$mat
-  p <- ncol(X)
+
   bool_coll_x <- list_X_coll$bool_coll
   rmvd_coll_x <- list_X_coll$rmvd_coll
 
   bool_rmvd_x <- bool_cst_x
   bool_rmvd_x[!bool_cst_x] <- bool_coll_x
+
+  if (!is.null(V)) {
+
+    if (link != "identity" | !is.null(Z))
+      stop("Inference with external information is for now only available for identity link and null matrix Z.")
+
+    check_structure_(V, "matrix", "numeric")
+
+    r <- ncol(V)
+    if (nrow(V) != p) stop("The number of rows of V must match the number of candidate predictors in X.")
+
+    V <- V[!bool_rmvd_x, , drop = FALSE] # remove the rows corresponding to the removed candidate predictors
+
+    if (is.null(rownames(V))) rownames(V) <- colnames(X)
+    else if(any(rownames(V) != colnames(X)))
+      stop("The provided rownames of Z must be the same than those of X and Y or NULL.")
+
+    if (is.null(colnames(V))) colnames(V) <- paste("Annot_z_", 1:r, sep="")
+
+    V <- scale(V)
+
+    list_V_cst <- rm_constant_(V, verbose)
+    V <- list_V_cst$mat
+    bool_cst_v <- list_V_cst$bool_cst
+    rmvd_cst_v <- list_V_cst$rmvd_cst
+
+    list_V_coll <- rm_collinear_(V, verbose)
+    V <- list_V_coll$mat
+    q <- ncol(V)
+    bool_coll_v <- list_V_coll$bool_coll
+    rmvd_coll_v <- list_V_coll$rmvd_coll
+
+    bool_rmvd_v <- bool_cst_v
+    bool_rmvd_v[!bool_cst_v] <- bool_coll_v
+
+  } else {
+
+    r <- NULL
+    bool_rmvd_v <- NULL
+    rmvd_cst_v <- NULL
+    rmvd_coll_v <- NULL
+
+  }
+
+  p <- ncol(X)
 
   if (link == "identity") {
 
@@ -132,9 +176,12 @@ prepare_data_ <- function(Y, X, Z, link, ind_bin, user_seed, tol, maxit, batch,
   if (p < 1) stop(paste("There must be at least 1 non-constant candidate predictor ",
                         " stored in X.", sep=""))
   if (is.null(q) || q < 1) Z <- NULL
+  if (is.null(r) || r < 1) V <- NULL
 
-  create_named_list_(Y, X, Z, bool_rmvd_x, bool_rmvd_z,
-                     rmvd_cst_x, rmvd_cst_z, rmvd_coll_x, rmvd_coll_z)
+  create_named_list_(Y, X, Z, V,
+                     bool_rmvd_x, bool_rmvd_z, bool_rmvd_v,
+                     rmvd_cst_x, rmvd_cst_z, rmvd_cst_v,
+                     rmvd_coll_x, rmvd_coll_z, rmvd_coll_v)
 
 }
 
@@ -198,9 +245,9 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
 }
 
 
-prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, link, ind_bin,
-                                bool_rmvd_x, bool_rmvd_z,
-                                names_x, names_y, names_z, verbose) {
+prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
+                                bool_rmvd_x, bool_rmvd_z, names_x, names_y,
+                                names_z, verbose) {
 
   d <- ncol(Y)
 
@@ -208,7 +255,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, link, ind_bin,
 
     if (verbose) cat("list_hyper set automatically. \n")
 
-    list_hyper <- auto_set_hyper_(Y, p, p_star, q, link, ind_bin)
+    list_hyper <- auto_set_hyper_(Y, p, p_star, q, r, link, ind_bin)
 
   } else {
 
@@ -245,18 +292,22 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, link, ind_bin,
                    ind_bin_hyper in list_hyper", sep=""))
     }
 
-    if (inherits(list_hyper, "hyper")) {
-      # remove the entries corresponding to the removed constant predictors in X
-      # (if any)
-      list_hyper$a <- list_hyper$a[!bool_rmvd_x]
-      list_hyper$b <- list_hyper$b[!bool_rmvd_x]
+    if (is.null(r)) {
+
+      if (inherits(list_hyper, "hyper")) {
+        # remove the entries corresponding to the removed constant predictors in X
+        # (if any)
+        list_hyper$a <- list_hyper$a[!bool_rmvd_x]
+        list_hyper$b <- list_hyper$b[!bool_rmvd_x]
+      }
+
+      if (!is.null(names(list_hyper$a)) && names(list_hyper$a) != names_x)
+        stop("Provided names for the entries of a do not match the colnames of X.")
+
+      if (!is.null(names(list_hyper$b)) && names(list_hyper$b) != names_x)
+        stop("Provided names for the entries of b do not match the colnames of X.")
+
     }
-
-    if (!is.null(names(list_hyper$a)) && names(list_hyper$a) != names_x)
-      stop("Provided names for the entries of a do not match the colnames of X.")
-
-    if (!is.null(names(list_hyper$b)) && names(list_hyper$b) != names_x)
-      stop("Provided names for the entries of b do not match the colnames of X.")
 
     if (link %in% c("identity", "mix")) {
 
@@ -303,8 +354,9 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, link, ind_bin,
 
 
 
-prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
-                               bool_rmvd_x, bool_rmvd_z, user_seed, verbose) {
+prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
+                               bool_rmvd_x, bool_rmvd_z, bool_rmvd_v, user_seed,
+                               verbose) {
 
   d <- ncol(Y)
   n <- nrow(Y)
@@ -316,7 +368,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
 
     if (verbose) cat(paste("list_init set automatically. \n", sep=""))
 
-    list_init <- auto_set_init_(Y, p, p_star, q, user_seed, link, ind_bin)
+    list_init <- auto_set_init_(Y, p, p_star, q, r, user_seed, link, ind_bin)
 
   } else {
 
@@ -393,6 +445,23 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
                    "(list_init) are not consistent with that of Z.", sep=""))
     }
 
+    if (!is.null(r)) {
+
+      if (inherits(list_init, "init")) {
+        r_init_match <- length(bool_rmvd_v)
+        # remove the entries corresponding to the removed constant predictors in X
+        # (if any)
+        list_init$mu_c_vb <- list_init$mu_c_vb[!bool_rmvd_v,, drop = FALSE]
+
+      } else {
+        r_init_match <- r
+      }
+
+      if (list_init$r_init != r_init_match)
+        stop(paste("The dimensions of the provided initial parameters ",
+                   "(list_init) are not consistent with that of V.", sep=""))
+    }
+
   }
 
   class(list_init) <- "out_init"
@@ -401,7 +470,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
 }
 
 
-prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, link, list_hyper,
+prepare_cv_ <- function(list_cv, n, p, r, bool_rmvd_x, p0_av, link, list_hyper,
                         list_init, verbose) {
 
   if (!inherits(list_cv, "cv"))
@@ -413,6 +482,9 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, link, list_hyper,
 
   if (link != "identity")
     stop("Cross-validation implemented only for purely continuous response. Please, set list_cv to NULL.")
+
+  if (!is.null(r))
+    stop("Cross-validation implemented only models with no external information (V set to NULL). Please, set list_cv to NULL.")
 
   if (!is.null(p0_av) | !is.null(list_hyper) | !is.null(list_init))
     stop(paste("p0_av, list_hyper and list_init must all be NULL if non NULL ",
@@ -452,7 +524,7 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, link, list_hyper,
 
 
 
-prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv) {
+prepare_blocks_ <- function(list_blocks, r, bool_rmvd_x, list_cv) {
 
   if (!inherits(list_blocks, "blocks"))
     stop(paste("The provided list_blocks must be an object of class ``blocks''. \n",
@@ -461,6 +533,11 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv) {
                "predictors or set list_blocks to NULL to apply locus jointly on ",
                "all the candidate predictors (sufficient RAM required). ***",
                sep=""))
+
+  if (!is.null(r))
+    stop(paste("Inference on partitioned predictor space implemented only models ",
+               "with no external information (V set to NULL). Please, set list_blocks to NULL.", sep = ""))
+
 
   if (!is.null(list_cv))
     stop(paste("list_cv must be NULL if non NULL ",

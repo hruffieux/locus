@@ -5,7 +5,8 @@
 \title{Gather initial variational parameters provided by the user.}
 \usage{
 set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, link = "identity",
-  ind_bin = NULL, q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL)
+  ind_bin = NULL, q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL,
+  r = NULL, mu_c_vb = NULL)
 }
 \arguments{
 \item{d}{Number of responses.}

@@ -4,8 +4,8 @@
 \alias{locus}
 \title{Fit sparse multivariate regression models using variational inference.}
 \usage{
-locus(Y, X, p0_av, Z = NULL, link = "identity", ind_bin = NULL,
-  list_hyper = NULL, list_init = NULL, list_cv = NULL,
+locus(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
+  ind_bin = NULL, list_hyper = NULL, list_init = NULL, list_cv = NULL,
   list_blocks = NULL, user_seed = NULL, tol = 1e-04, maxit = 1000,
   batch = TRUE, save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
 }

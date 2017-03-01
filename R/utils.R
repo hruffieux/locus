@@ -151,6 +151,15 @@ inv_mills_ratio_ <- function(Y, U) {
 
 }
 
+entropy_ <- function(Y, U) {
+
+  log((2 * pi * exp(1))^(1/2) *
+           exp(Y * pnorm(U, log.p = TRUE) +
+                 (1-Y) * pnorm(U, lower.tail = FALSE, log.p = TRUE))) -
+  U * inv_mills_ratio_(Y, U) / 2
+
+}
+
 rm_constant_ <- function(mat, verbose) {
 
   bool_cst <- is.nan(colSums(mat))

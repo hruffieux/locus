@@ -283,10 +283,6 @@ lower_bound_mix_ <- function(Y_bin, ind_bin, W, X, Z, a, a_vb, b, b_vb, eta,
 
   U <- mat_x_m1[, ind_bin, drop = FALSE] + mat_z_mu[, ind_bin, drop = FALSE]
   W_2 <- 1 + U * W[, ind_bin, drop = FALSE]
-  H <- log((2 * pi * exp(1))^(1/2) *
-             exp(Y_bin * pnorm(U, log.p = TRUE) +
-                   (1-Y_bin) * pnorm(U, lower.tail = FALSE, log.p = TRUE))) -
-    U * inv_mills_ratio_(Y_bin, U) / 2
 
   A_bin <- sum(- log(2*pi) / 2 - W_2 / 2 +
                  W_2 - 1  - (X^2 %*% m2_beta[, ind_bin, drop = FALSE] +
@@ -295,7 +291,8 @@ lower_bound_mix_ <- function(Y_bin, ind_bin, W, X, Z, a, a_vb, b, b_vb, eta,
                                Z^2 %*% m2_alpha[, ind_bin, drop = FALSE] +
                                (mat_z_mu[, ind_bin, drop = FALSE])^2 -
                                Z^2 %*% (mu_alpha_vb[, ind_bin, drop = FALSE])^2 +
-                               2 * mat_x_m1[, ind_bin, drop = FALSE] * mat_z_mu[, ind_bin, drop = FALSE]) / 2 + H)
+                               2 * mat_x_m1[, ind_bin, drop = FALSE] * mat_z_mu[, ind_bin, drop = FALSE]) / 2 +
+                 entropy_(Y_bin, U))
 
   eps <- .Machine$double.eps # to control the argument of the log when gamma is very small
   B <- sum(log_sig2_inv_vb * gam_vb / 2 +
