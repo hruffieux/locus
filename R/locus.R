@@ -176,6 +176,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
   bool_rmvd_x <- dat$bool_rmvd_x
   bool_rmvd_z <- dat$bool_rmvd_z
+  bool_rmvd_v <- dat$bool_rmvd_v
 
   X <- dat$X
   Y <- dat$Y
@@ -312,13 +313,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
     colnames(Z)[1] <- "Intercept"
   }
 
-  if (!is.null(r)) {
-    V <- cbind(rep(1, p), V)
-
-    list_init$mu_c_vb <- rbind(rep(0, d), list_init$mu_c_vb)
-
-    colnames(V)[1] <- "Annot_intercept"
-  }
 
   if (verbose){
     cat(paste("============================================================== \n",
@@ -339,10 +333,10 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                             list_init$mu_beta_vb, list_init$sig2_beta_vb,
                             list_init$tau_vb, tol, maxit, batch, verbose)
         } else {
-          vb <- locus_ext_core_(Y, X, V, list_hyper, list_init$gam_vb,
-                                list_init$mu_beta_vb, list_init$mu_c_vb,
-                                list_init$sig2_beta_vb, list_init$tau_vb,
-                                tol, maxit, batch, verbose)
+          vb <- locus_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
+                                list_init$mu_beta_vb, list_init$mu_c0_vb,
+                                list_init$mu_c_vb, list_init$sig2_beta_vb,
+                                list_init$tau_vb, tol, maxit, batch, verbose)
         }
 
       } else {
@@ -467,6 +461,10 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   if (!is.null(Z)) {
     vb$rmvd_cst_z <- dat$rmvd_cst_z
     vb$rmvd_coll_z <- dat$rmvd_coll_z
+  }
+  if (!is.null(V)) {
+    vb$rmvd_cst_v <- dat$rmvd_cst_v
+    vb$rmvd_coll_v <- dat$rmvd_coll_v
   }
 
   if (save_hyper) vb$list_hyper <- list_hyper

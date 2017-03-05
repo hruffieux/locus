@@ -141,12 +141,15 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit,
 
     list_V_coll <- rm_collinear_(V, verbose)
     V <- list_V_coll$mat
-    q <- ncol(V)
+    r <- ncol(V)
     bool_coll_v <- list_V_coll$bool_coll
     rmvd_coll_v <- list_V_coll$rmvd_coll
 
     bool_rmvd_v <- bool_cst_v
     bool_rmvd_v[!bool_cst_v] <- bool_coll_v
+
+    if (sum(!bool_rmvd_v) == 0)
+      stop("All variables provided in V are constants and hence useless. Please set V to NULL.")
 
   } else {
 
@@ -176,7 +179,7 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit,
   if (p < 1) stop(paste("There must be at least 1 non-constant candidate predictor ",
                         " stored in X.", sep=""))
   if (is.null(q) || q < 1) Z <- NULL
-  if (is.null(r) || r < 1) V <- NULL
+  if (is.null(r) || r < 1) V <- NULL # in principle useless given the above assert.
 
   create_named_list_(Y, X, Z, V,
                      bool_rmvd_x, bool_rmvd_z, bool_rmvd_v,
@@ -307,6 +310,17 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
       if (!is.null(names(list_hyper$b)) && names(list_hyper$b) != names_x)
         stop("Provided names for the entries of b do not match the colnames of X.")
 
+    } else {
+
+      if (inherits(list_hyper, "hyper")) {
+        # remove the entries corresponding to the removed constant predictors in X
+        # (if any)
+        list_hyper$m0 <- list_hyper$m0[!bool_rmvd_x]
+      }
+
+      if (!is.null(names(list_hyper$m0)) && names(list_hyper$m0) != names_x)
+        stop("Provided names for the entries of m0 do not match the colnames of X.")
+
     }
 
     if (link %in% c("identity", "mix")) {
@@ -416,6 +430,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
 
       if (link == "logit")
         list_init$sig2_beta_vb <- list_init$sig2_beta_vb[!bool_rmvd_x,, drop = FALSE]
+
     }
 
     if (!is.null(q)) {
@@ -451,6 +466,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
         r_init_match <- length(bool_rmvd_v)
         # remove the entries corresponding to the removed constant predictors in X
         # (if any)
+        list_init$mu_c0_vb <- list_init$mu_c0_vb[!bool_rmvd_x]
         list_init$mu_c_vb <- list_init$mu_c_vb[!bool_rmvd_v,, drop = FALSE]
 
       } else {

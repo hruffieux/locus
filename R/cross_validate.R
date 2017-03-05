@@ -212,9 +212,9 @@ cross_validate_ <- function(Y, X, Z, list_cv, user_seed, verbose) {
 
         if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
 
-        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, link = "identity",
+        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, r = NULL, link = "identity",
                                          ind_bin = NULL)
-        list_init_pg <- auto_set_init_(Y_tr, p, pg, q, user_seed,
+        list_init_pg <- auto_set_init_(Y_tr, p, pg, q, r = NULL, user_seed,
                                        link = "identity", ind_bin = NULL)
 
         if (is.null(q)) {
@@ -256,7 +256,7 @@ cross_validate_ <- function(Y, X, Z, list_cv, user_seed, verbose) {
 
 
         if (verbose) { cat(paste("Lower bound on test set, fold ", k, ", p0_av ",
-                                 pg, ": ", lb_vec[ind_pg], ". \n", sep = ""))
+                                 pg, ": ", format(lb_vec[ind_pg]), ". \n", sep = ""))
           cat("-------------------------\n") }
       }
       lb_vec
