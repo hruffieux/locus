@@ -57,6 +57,18 @@ for \code{link = "logit"} and for \code{link = "mix"} with initial values
 for the variational parameter yielding estimates of effect variances for
 covariate-response pairs. Vector of length q for \code{link = "probit"}.
 Default is \code{NULL}, for \code{Z} \code{NULL}.}
+
+\item{r}{Number of variables representing external information on the
+candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.}
+
+\item{mu_c0_vb}{Vector of length p with initial values for the variational
+parameter linked to the proportion of responses associated with each
+candidate predictor. Default is \code{NULL}, for \code{V} \code{NULL}.}
+
+\item{mu_c_vb}{Matrix of size r x d with initial values for the variational
+parameter yielding regression coefficient estimates for the influence of
+external information on the candidate predictors on their selection.
+Default is \code{NULL}, for \code{V} \code{NULL}.}
 }
 \value{
 An object of class "\code{init}" preparing user initial values for

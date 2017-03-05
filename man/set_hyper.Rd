@@ -69,6 +69,15 @@ repeated q times. Default is \code{NULL}, for \code{Z} \code{NULL}.}
 \eqn{\xi} for the prior distributions for the sizes of the nonzero
 covariate effects, \eqn{\zeta}. If of length 1, the provided value is
 repeated q times. Default is \code{NULL}, for \code{Z} \code{NULL}.}
+
+\item{r}{Number of variables representing external information on the
+candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.}
+
+\item{m0}{Vector of length 1 or p providing the values of hyperparameter
+\eqn{m0} for the prior distribution of \eqn{c0} linked to the proportion of
+responses associated with each candidate predictor. If of length 1, the
+provided value is repeated p times. Default is \code{NULL}, for \code{V}
+\code{NULL}.}
 }
 \value{
 An object of class "\code{hyper}" preparing user hyperparameter in a

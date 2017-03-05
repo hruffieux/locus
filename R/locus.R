@@ -26,6 +26,10 @@
 #'   covariates. Variables in \code{Z} are not subject to selection. \code{NULL}
 #'   if no covariate. Factor covariates must be supplied after transformation to
 #'   dummy coding. No intercept must be supplied.
+#' @param V Covariates matrix of dimension p x r, where r is the number of
+#'   variables representing external information on the candidate predictors
+#'   which may make their selection more or less likely. \code{NULL} if no such
+#'   information.
 #' @param link Response link. Must be "\code{identity}" for linear regression,
 #'   "\code{logit}" for logistic regression, "\code{probit}" for probit
 #'   regression, or "\code{mix}" for a mix of identity and probit link functions
@@ -256,8 +260,8 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
   if (verbose) cat("== Preparing the hyperparameters ... \n\n")
   list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, r, link, ind_bin,
-                                    bool_rmvd_x, bool_rmvd_z, names_x, names_y,
-                                    names_z, verbose)
+                                    bool_rmvd_x, bool_rmvd_z, bool_rmvd_v,
+                                    names_x, names_y, names_z, verbose)
   if (verbose) cat("... done. == \n\n")
 
   if (verbose) cat("== Preparing the parameter initialization ... \n\n")

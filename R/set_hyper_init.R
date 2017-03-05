@@ -55,6 +55,13 @@
 #'   \eqn{\xi} for the prior distributions for the sizes of the nonzero
 #'   covariate effects, \eqn{\zeta}. If of length 1, the provided value is
 #'   repeated q times. Default is \code{NULL}, for \code{Z} \code{NULL}.
+#' @param r Number of variables representing external information on the
+#'   candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.
+#' @param m0 Vector of length 1 or p providing the values of hyperparameter
+#'   \eqn{m0} for the prior distribution of \eqn{c0} linked to the proportion of
+#'   responses associated with each candidate predictor. If of length 1, the
+#'   provided value is repeated p times. Default is \code{NULL}, for \code{V}
+#'   \code{NULL}.
 #'
 #' @return An object of class "\code{hyper}" preparing user hyperparameter in a
 #'   form that can be passed to the \code{\link{locus}} function.
@@ -202,6 +209,9 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 
     s02 <- s2 <- NULL
 
+    if (!is.null(m0))
+      stop("Provided r = NULL, not consitent with m0 being non-null.")
+
   } else {
 
     check_structure_(m0, "vector", "double", c(1, p))
@@ -260,12 +270,13 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
   d_hyper <- d
   p_hyper <- p
   q_hyper <- q
+  r_hyper <- r
 
   ind_bin_hyper <- ind_bin
 
   link_hyper <- link
 
-  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, link_hyper,
+  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, r_hyper, link_hyper,
                                    ind_bin_hyper, eta, kappa, lambda, nu, a, b,
                                    phi, xi, m0, s02, s2)
 
@@ -345,12 +356,13 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin) {
   d_hyper <- d
   p_hyper <- p
   q_hyper <- q
+  r_hyper <- r
 
   ind_bin_hyper <- ind_bin
 
   link_hyper <- link
 
-  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, link_hyper,
+  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, r_hyper, link_hyper,
                                    ind_bin_hyper, eta, kappa, lambda, nu, a, b,
                                    phi, xi, m0, s02, s2)
 
@@ -407,6 +419,16 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin) {
 #'   for the variational parameter yielding estimates of effect variances for
 #'   covariate-response pairs. Vector of length q for \code{link = "probit"}.
 #'   Default is \code{NULL}, for \code{Z} \code{NULL}.
+#' @param r Number of variables representing external information on the
+#'   candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.
+#' @param mu_c0_vb Vector of length p with initial values for the variational
+#'   parameter linked to the proportion of responses associated with each
+#'   candidate predictor. Default is \code{NULL}, for \code{V} \code{NULL}.
+#' @param mu_c_vb Matrix of size r x d with initial values for the variational
+#'   parameter yielding regression coefficient estimates for the influence of
+#'   external information on the candidate predictors on their selection.
+#'   Default is \code{NULL}, for \code{V} \code{NULL}.
+#'
 #'
 #' @return An object of class "\code{init}" preparing user initial values for
 #'   the variational parameters in a form that can be passed to the
