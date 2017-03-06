@@ -127,6 +127,15 @@
 #' vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  Z = Z,
 #'                 link = "identity", user_seed = user_seed)
 #'
+#' # Continuous outcomes with external annotation
+#' #
+#' r <- 4
+#' V <- matrix(rnorm(p * r), nrow = p)
+#' bool_p0 <- rowSums(dat_g$pat) > 0
+#' V[bool_p0, ] <- rnorm(sum(bool_p0) * r, mean = 2) # informative annotations
+#' vb_g_v <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  V = V,
+#'                 link = "identity", user_seed = user_seed)
+#'
 #' # Binary outcomes
 #' #
 #' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,

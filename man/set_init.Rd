@@ -130,6 +130,23 @@ list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
                 link = "identity", list_init = list_init_g_z)
 
+# Continuous outcomes with external annotation
+#
+r <- 4
+V <- matrix(rnorm(p * r), nrow = p)
+bool_p0 <- rowSums(dat_g$pat) > 0
+V[bool_p0, ] <- rnorm(sum(bool_p0) * r, mean = 2) # informative annotations
+
+mu_c0_vb <- rnorm(p, mean = -1)
+mu_c_vb <- matrix(rnorm(r * d, mean = 0, sd = 0.01), nrow = r)
+
+list_init_g_v <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
+                          link = "identity", r = r, mu_c0_vb = mu_c0_vb,
+                          mu_c_vb = mu_c_vb)
+
+vb_g_v <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  V = V,
+                link = "identity", list_init = list_init_g_v)
+
 # Binary outcomes
 #
 dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
