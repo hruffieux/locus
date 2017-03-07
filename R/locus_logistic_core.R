@@ -210,28 +210,6 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 }
 
 
-update_xi_bin_vb_ <- function(xi, m2_alpha) {
-
-  xi + rowSums(m2_alpha) / 2
-
-}
-
-update_psi_logit_vb_ <- function(chi_vb) {
-
-  sig <- function(chi) {
-    1 / (1 + exp(-chi))
-  }
-
-  (sig(chi_vb) - 1 / 2) / (2 * chi_vb)
-
-}
-
-update_nu_bin_vb_ <- function(nu, m2_beta) {
-
-  nu + sum(m2_beta) / 2
-
-}
-
 lower_bound_logit_ <- function(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
                              lambda, nu, phi, phi_vb, psi_vb, sig2_alpha_vb,
                              sig2_beta_vb, sig2_inv_vb, xi, zeta2_inv_vb,

@@ -27,7 +27,7 @@ covariates. Variables in \code{Z} are not subject to selection. \code{NULL}
 if no covariate. Factor covariates must be supplied after transformation to
 dummy coding. No intercept must be supplied.}
 
-\item{V}{Covariates matrix of dimension p x r, where r is the number of
+\item{V}{Annotation matrix of dimension p x r, where r is the number of
 variables representing external information on the candidate predictors
 which may make their selection more or less likely. \code{NULL} if no such
 information.}

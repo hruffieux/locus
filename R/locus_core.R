@@ -170,33 +170,6 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 }
 
 
-update_lambda_vb_ <- function(lambda, sum_gam) {
-
-  lambda + sum_gam / 2
-
-}
-
-update_nu_vb_ <- function(nu, m2_beta, tau_vb) {
-
-  as.numeric(nu + crossprod(tau_vb, colSums(m2_beta)) / 2)
-
-}
-
-update_eta_vb_ <- function(n, eta, gam_vb) {
-
-  eta + n / 2 + colSums(gam_vb) / 2
-
-}
-
-update_kappa_vb_ <- function(Y, X, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb) {
-  n <- nrow(Y)
-
-  kappa + (colSums(Y^2) - 2 * colSums(Y * mat_x_m1)  +
-             (n - 1 + sig2_inv_vb) * colSums(m2_beta) +
-             colSums(mat_x_m1^2) - (n - 1) * colSums(m1_beta^2))/ 2
-
-}
-
 
 lower_bound_ <- function(Y, X, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, nu,
                          sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta, m2_beta,

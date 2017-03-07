@@ -19,7 +19,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
     mat_z_mu <-  Z %*% mu_alpha_vb
     mat_x_m1 <-  X %*% m1_beta
 
-    W <- update_W_probit_vb_(Y, mat_z_mu, mat_x_m1)
+    W <- update_W_probit_(Y, mat_z_mu, mat_x_m1)
 
     rowsums_gam <- rowSums(gam_vb)
     sum_gam <- sum(rowsums_gam)
@@ -150,7 +150,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
         mat_x_m1 <-  X %*% m1_beta
       }
 
-      W <- update_W_probit_vb_(Y, mat_z_mu, mat_x_m1)
+      W <- update_W_probit_(Y, mat_z_mu, mat_x_m1)
 
       a_vb <- a + rowsums_gam
       b_vb <- b - rowsums_gam + d
@@ -207,12 +207,6 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
 
 }
 
-
-update_W_probit_vb_ <- function(Y, mat_z_mu, mat_x_m1) {
-
-  mat_z_mu + mat_x_m1 + inv_mills_ratio_(Y, mat_z_mu + mat_x_m1)
-
-}
 
 
 

@@ -12,7 +12,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
   with(list_hyper, {  # list_init not used with the with() function to avoid
                       # copy-on-write for large objects
-    m2_alpha <- (sig2_alpha_vb + mu_alpha_vb ^ 2)
+    m2_alpha <- sig2_alpha_vb + mu_alpha_vb ^ 2
 
     m1_beta <- mu_beta_vb * gam_vb
     m2_beta <- sweep(mu_beta_vb ^ 2, 2, sig2_beta_vb, `+`) * gam_vb
@@ -151,7 +151,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
       }
 
-      m2_alpha <- (sig2_alpha_vb + mu_alpha_vb ^ 2)
+      m2_alpha <- sig2_alpha_vb + mu_alpha_vb ^ 2
       m2_beta <- sweep(mu_beta_vb ^ 2, 2, sig2_beta_vb, `+`) * gam_vb
 
       if (!batch) {
@@ -213,44 +213,6 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
       create_named_list_(lb_opt, gam_vb, om_vb, mu_alpha_vb)
     }
   })
-}
-
-update_phi_z_vb_ <- function(phi, d) {
-
-  phi + d / 2
-
-}
-
-update_xi_z_vb_ <- function(xi, tau_vb, m2_alpha) {
-
-  xi + m2_alpha %*% tau_vb / 2
-
-}
-
-update_eta_z_vb_ <- function(n, q, eta, gam_vb) {
-
-  eta + n / 2 + colSums(gam_vb) / 2 + q / 2
-
-}
-
-
-update_kappa_z_vb_ <- function(Y, X, Z, kappa, mu_alpha_vb, m1_beta, m2_alpha,
-                               m2_beta, mat_x_m1, mat_z_mu, sig2_inv_vb,
-                               zeta2_inv_vb, intercept = FALSE) {
-  n <- nrow(Y)
-
-  kappa_vb <- kappa + (colSums(Y^2) - 2 * colSums(Y * (mat_x_m1 + mat_z_mu))  +
-                         (n - 1 + sig2_inv_vb) * colSums(m2_beta) +
-                         colSums(mat_x_m1^2) - (n - 1) * colSums(m1_beta^2) +
-                         (n - 1) * colSums(m2_alpha) +
-                         crossprod(m2_alpha, zeta2_inv_vb) +
-                         colSums(mat_z_mu^2) - (n - 1) * colSums(mu_alpha_vb^2) +
-                         2 * colSums(mat_x_m1 * mat_z_mu))/ 2
-
-  if (intercept)
-    kappa_vb <- kappa_vb + (m2_alpha[1, ] - (mu_alpha_vb[1, ])^2) / 2
-
-  kappa_vb
 }
 
 
