@@ -97,6 +97,27 @@ update_W_probit_ <- function(Y, mat_z_mu, mat_x_m1) mat_z_mu + mat_x_m1 + inv_mi
 
 update_m2_alpha_ <- function(mu_alpha_vb, sig2_alpha_vb) sig2_alpha_vb + mu_alpha_vb ^ 2
 
+update_sig2_alpha_vb_ <- function(n, tau_vb, zeta2_inv_vb, intercept = FALSE) {
+
+  if (intercept) {
+
+    sig2_alpha_vb <- n - 1 + zeta2_inv_vb
+    sig2_alpha_vb[1] <- sig2_alpha_vb[1] + 1 # the first column of Z was not scaled, it is the intercept.
+
+    1 / sig2_alpha_vb
+
+
+  } else {
+
+    1 / tcrossprod(n - 1 + zeta2_inv_vb, tau_vb)
+
+  }
+
+}
+
+
+
+
 update_mat_z_mu_ <- function(Z, mu_alpha_vb) Z %*% mu_alpha_vb
 
 update_phi_z_vb_ <- function(phi, d) phi + d / 2
@@ -104,6 +125,8 @@ update_phi_z_vb_ <- function(phi, d) phi + d / 2
 update_xi_z_vb_ <- function(xi, tau_vb, m2_alpha) xi + m2_alpha %*% tau_vb / 2
 
 update_xi_bin_vb_ <- function(xi, m2_alpha) xi + rowSums(m2_alpha) / 2
+
+update_log_zeta2_inv_vb_ <- function(phi_vb, xi_vb) digamma(phi_vb) - log(xi_vb)
 
 ## --------- ##
 

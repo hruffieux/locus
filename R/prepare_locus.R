@@ -116,8 +116,8 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit,
 
   if (!is.null(V)) {
 
-    if (link != "identity" | !is.null(Z))
-      stop("Inference with external information is for now only available for identity link and null matrix Z.")
+    if (link != "identity")
+      stop("Inference with external information is for now only available for identity link.")
 
     check_structure_(V, "matrix", "numeric")
 

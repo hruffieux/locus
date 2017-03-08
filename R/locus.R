@@ -353,10 +353,20 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
         }
 
       } else {
-        vb <- locus_z_core_(Y, X, Z, list_hyper, list_init$gam_vb,
-                            list_init$mu_alpha_vb, list_init$mu_beta_vb,
-                            list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                            list_init$tau_vb, tol, maxit, batch, verbose)
+
+        if (is.null(r)) {
+          vb <- locus_z_core_(Y, X, Z, list_hyper, list_init$gam_vb,
+                              list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                              list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
+                              list_init$tau_vb, tol, maxit, batch, verbose)
+        } else {
+          vb <- locus_z_info_core_(Y, X, Z, V, list_hyper, list_init$gam_vb,
+                                   list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                                   list_init$mu_c0_vb, list_init$mu_c_vb,
+                                   list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
+                                   list_init$tau_vb, tol, maxit, batch, verbose)
+        }
+
       }
 
     } else if (link == "logit"){
