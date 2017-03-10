@@ -116,8 +116,8 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit,
 
   if (!is.null(V)) {
 
-    if (link != "identity")
-      stop("Inference with external information is for now only available for identity link.")
+    if (link %in% c("logit", "mix"))
+      stop("Inference with external information is for now only available for identity and probit links.")
 
     check_structure_(V, "matrix", "numeric")
 

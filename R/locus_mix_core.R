@@ -10,6 +10,7 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 
   W <- Y
   Y_bin <- Y[, ind_bin, drop = FALSE]
+  Y_cont <- Y[, -ind_bin, drop = FALSE]
   rm(Y)
 
   # Y must have its continuous variables centered,
@@ -26,8 +27,8 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
     mat_x_m1 <-  X %*% m1_beta
 
     W[, ind_bin] <- update_W_probit_(Y_bin,
-                                        mat_z_mu[, ind_bin, drop = FALSE],
-                                        mat_x_m1[, ind_bin, drop = FALSE])
+                                     mat_z_mu[, ind_bin, drop = FALSE],
+                                     mat_x_m1[, ind_bin, drop = FALSE])
 
     rowsums_gam <- rowSums(gam_vb)
     sum_gam <- sum(rowsums_gam)
@@ -63,7 +64,7 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
       # % #
       eta_vb <- update_eta_z_vb_(n, q, eta, gam_vb[, -ind_bin, drop = FALSE])
 
-      kappa_vb <- update_kappa_z_vb_(W[, -ind_bin, drop = FALSE], X, Z,
+      kappa_vb <- update_kappa_z_vb_(Y_cont, X, Z,
                                      kappa, mu_alpha_vb[, -ind_bin, drop = FALSE],
                                      m1_beta[, -ind_bin, drop = FALSE],
                                      m2_alpha[, -ind_bin, drop = FALSE],
@@ -190,7 +191,7 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 
       sum_gam <- sum(rowsums_gam)
 
-      lb_new <- lower_bound_mix_(Y_bin, ind_bin, W, X, Z, a, a_vb, b, b_vb,
+      lb_new <- lower_bound_mix_(Y_bin, Y_cont, ind_bin, X, Z, a, a_vb, b, b_vb,
                                  eta, gam_vb, kappa, lambda, mu_alpha_vb, nu,
                                  phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
                                  sig2_inv_vb, tau_vb, log_tau_vb, xi,
@@ -198,8 +199,9 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
                                  mat_x_m1, mat_z_mu, sum_gam)
 
 
-      if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+      # if (verbose & (it == 1 | it %% 5 == 0))
+      #  cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+      cat(paste("Lower bound = ", lb_new, "\n\n", sep = ""))
 
       converged <- (abs(lb_new-lb_old) < tol)
 
@@ -221,12 +223,11 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
     lb_opt <- lb_new
 
     if (full_output) { # for internal use only
-      create_named_list_(ind_bin, W, X, Z, a, a_vb, b, b_vb,
-                         eta, gam_vb, kappa, lambda, mu_alpha_vb, nu,
-                         phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
-                         sig2_inv_vb, tau_vb, log_tau_vb, xi,
-                         zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
-                         mat_x_m1, mat_z_mu, sum_gam)
+      create_named_list_(ind_bin, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
+                         mu_alpha_vb, nu, phi, phi_vb, sig2_alpha_vb,
+                         sig2_beta_vb, sig2_inv_vb, tau_vb, log_tau_vb, xi,
+                         zeta2_inv_vb, m2_alpha, m1_beta, m2_beta, mat_x_m1,
+                         mat_z_mu, sum_gam)
     } else {
       names_x <- colnames(X)
       names_y <- colnames(W)
@@ -244,13 +245,13 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 }
 
 
-lower_bound_mix_ <- function(Y_bin, ind_bin, W, X, Z, a, a_vb, b, b_vb, eta,
+lower_bound_mix_ <- function(Y_bin, Y_cont, ind_bin, X, Z, a, a_vb, b, b_vb, eta,
                              gam_vb, kappa, lambda, mu_alpha_vb, nu, phi,
                              phi_vb, sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb,
                              tau_vb, log_tau_vb, xi, zeta2_inv_vb, m2_alpha,
                              m1_beta, m2_beta, mat_x_m1, mat_z_mu, sum_gam) {
 
-  n <- nrow(W)
+  n <- nrow(Z)
   q <- ncol(Z)
 
   xi_vb <- update_xi_z_vb_(xi, tau_vb, m2_alpha)
@@ -258,7 +259,7 @@ lower_bound_mix_ <- function(Y_bin, ind_bin, W, X, Z, a, a_vb, b, b_vb, eta,
   eta_vb <- update_eta_z_vb_(n, q, eta, gam_vb[, -ind_bin, drop = FALSE])
 
 
-  kappa_vb <- update_kappa_z_vb_(W[, -ind_bin, drop = FALSE], X, Z,
+  kappa_vb <- update_kappa_z_vb_(Y_cont, X, Z,
                                  kappa, mu_alpha_vb[, -ind_bin, drop = FALSE],
                                  m1_beta[, -ind_bin, drop = FALSE],
                                  m2_alpha[, -ind_bin, drop = FALSE],
@@ -282,17 +283,12 @@ lower_bound_mix_ <- function(Y_bin, ind_bin, W, X, Z, a, a_vb, b, b_vb, eta,
                                    crossprod(m2_alpha[, -ind_bin, drop = FALSE], zeta2_inv_vb) / 2 - kappa))
 
   U <- mat_x_m1[, ind_bin, drop = FALSE] + mat_z_mu[, ind_bin, drop = FALSE]
-  W_2 <- 1 + U * W[, ind_bin, drop = FALSE]
 
-  A_bin <- sum(- log(2*pi) / 2 - W_2 / 2 +
-                 W_2 - 1  - (X^2 %*% m2_beta[, ind_bin, drop = FALSE] +
-                               (mat_x_m1[, ind_bin, drop = FALSE])^2 -
-                               X^2 %*% (m1_beta[, ind_bin, drop = FALSE])^2 +
-                               Z^2 %*% m2_alpha[, ind_bin, drop = FALSE] +
-                               (mat_z_mu[, ind_bin, drop = FALSE])^2 -
-                               Z^2 %*% (mu_alpha_vb[, ind_bin, drop = FALSE])^2 +
-                               2 * mat_x_m1[, ind_bin, drop = FALSE] * mat_z_mu[, ind_bin, drop = FALSE]) / 2 +
-                 entropy_(Y_bin, U))
+  A_bin <- sum(Y_bin * pnorm(U, log.p = TRUE) +
+                 (1 - Y_bin) * pnorm(U, lower.tail = FALSE, log.p = TRUE) -
+                 Z^2 %*% sig2_alpha_vb[, ind_bin, drop = FALSE]  / 2 -
+                 X^2 %*% (m2_beta[, ind_bin, drop = FALSE] - m1_beta[, ind_bin, drop = FALSE]^2) / 2)
+
 
   eps <- .Machine$double.eps # to control the argument of the log when gamma is very small
   B <- sum(log_sig2_inv_vb * gam_vb / 2 +

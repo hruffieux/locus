@@ -18,7 +18,7 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
     m2_alpha <- update_m2_alpha_(mu_alpha_vb, sig2_alpha_vb)
 
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
-    m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb)
+    m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
     mat_x_m1 <- update_mat_x_m1_(X, m1_beta)
     mat_z_mu <- update_mat_z_mu_(Z, mu_alpha_vb)
@@ -60,7 +60,7 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
       tau_vb <- eta_vb / kappa_vb
       # % #
 
-      sig2_alpha_vb <- update_sig2_alpha_vb_(n, tau_vb, zeta2_inv_vb)
+      sig2_alpha_vb <- update_sig2_alpha_vb_(n, zeta2_inv_vb, tau_vb)
       sig2_beta_vb <- update_sig2_beta_vb_(n, sig2_inv_vb, tau_vb)
 
       log_tau_vb <- update_log_tau_vb_(eta_vb, kappa_vb)
@@ -172,8 +172,8 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
       }
 
-
-      m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb)
+      m2_alpha <- update_m2_alpha_(mu_alpha_vb, sig2_alpha_vb)
+      m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
 
 

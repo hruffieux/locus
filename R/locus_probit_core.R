@@ -2,12 +2,12 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
                                mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, tol,
                                maxit, batch, verbose, full_output = FALSE) {
 
+  # an intercept must be present in Z (column of ones), and X must be standardized.
+
   d <- ncol(Y)
   n <- nrow(Y)
   p <- ncol(X)
   q <- ncol(Z)
-
-  # intercept must be present in Z, and X must be standardized.
 
   with(list_hyper, { # list_init not used with the with() function to avoid
     # copy-on-write for large objects
@@ -24,13 +24,11 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
     rowsums_gam <- rowSums(gam_vb)
     sum_gam <- sum(rowsums_gam)
 
-    lambda_vb <- nu_vb <- a_vb <- b_vb <- phi_vb <- xi_vb <- NULL
+    phi_vb <- update_phi_z_vb_(phi, d)
 
     converged <- FALSE
     lb_old <- -Inf
     it <- 1
-
-    phi_vb <- update_phi_z_vb_(phi, d)
 
     while ((!converged) & (it <= maxit)) {
 
@@ -64,13 +62,13 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
         log_om_vb <- digamma(a + rowsums_gam) - vec_part_digam
         log_1_min_om_vb <- digamma(b - rowsums_gam + d) - vec_part_digam
 
-        for (r in 1:q) {
+        for (i in 1:q) {
 
-          mat_z_mu <- mat_z_mu - tcrossprod(Z[, r], mu_alpha_vb[r, ])
+          mat_z_mu <- mat_z_mu - tcrossprod(Z[, i], mu_alpha_vb[i, ])
 
-          mu_alpha_vb[r, ] <- sig2_alpha_vb[r] * crossprod(W  - mat_z_mu - mat_x_m1, Z[, r])
+          mu_alpha_vb[i, ] <- sig2_alpha_vb[i] * crossprod(W  - mat_z_mu - mat_x_m1, Z[, i])
 
-          mat_z_mu <- mat_z_mu + tcrossprod(Z[, r], mu_alpha_vb[r, ])
+          mat_z_mu <- mat_z_mu + tcrossprod(Z[, i], mu_alpha_vb[i, ])
 
         }
 
@@ -105,13 +103,13 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
           vec_z_r_k <-  Z %*% mu_alpha_vb[, k]
           vec_x_j_k <-  X %*% m1_beta[, k]
 
-          for (r in 1:q) {
+          for (i in 1:q) {
 
-            vec_z_r_k <- vec_z_r_k - Z[, r] * mu_alpha_vb[r, k]
+            vec_z_r_k <- vec_z_r_k - Z[, i] * mu_alpha_vb[i, k]
 
-            mu_alpha_vb[r, k] <- sig2_alpha_vb[r] * crossprod(Z[, r], W[, k] - vec_z_r_k - vec_x_j_k)
+            mu_alpha_vb[i, k] <- sig2_alpha_vb[i] * crossprod(Z[, i], W[, k] - vec_z_r_k - vec_x_j_k)
 
-            vec_z_r_k <- vec_z_r_k + Z[, r] * mu_alpha_vb[r, k]
+            vec_z_r_k <- vec_z_r_k + Z[, i] * mu_alpha_vb[i, k]
           }
 
           for (j in 1:p) {
@@ -157,7 +155,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
       om_vb <- a_vb / (a_vb + b_vb)
 
 
-      lb_new <- lower_bound_probit_(Y, W, X, Z, a, a_vb, b, b_vb, gam_vb, lambda,
+      lb_new <- lower_bound_probit_(Y, X, Z, a, a_vb, b, b_vb, gam_vb, lambda,
                                     nu, phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
                                     sig2_inv_vb, xi, zeta2_inv_vb, mu_alpha_vb,
                                     m1_beta, m2_alpha, m2_beta, mat_x_m1,
@@ -165,6 +163,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+
 
       converged <- (abs(lb_new - lb_old) < tol)
 
@@ -185,7 +184,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
     lb_opt <- lb_new
 
     if (full_output) { # for internal use only
-      create_named_list_(W, a, a_vb, b, b_vb, gam_vb, lambda, nu, phi, phi_vb,
+      create_named_list_(a, a_vb, b, b_vb, gam_vb, lambda, nu, phi, phi_vb,
                          sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, xi,
                          zeta2_inv_vb, mu_alpha_vb, m1_beta, m2_alpha, m2_beta,
                          mat_x_m1, mat_z_mu, sum_gam)
@@ -210,7 +209,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
 
 
 
-lower_bound_probit_ <- function(Y, W, X, Z, a, a_vb, b, b_vb, gam_vb, lambda, nu,
+lower_bound_probit_ <- function(Y, X, Z, a, a_vb, b, b_vb, gam_vb, lambda, nu,
                                 phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
                                 sig2_inv_vb, xi, zeta2_inv_vb, mu_alpha_vb,
                                 m1_beta, m2_alpha, m2_beta, mat_x_m1, mat_z_mu,
@@ -229,15 +228,10 @@ lower_bound_probit_ <- function(Y, W, X, Z, a, a_vb, b, b_vb, gam_vb, lambda, nu
   eps <- .Machine$double.eps # to control the argument of the log when gamma is very small
 
   U <- mat_x_m1 + mat_z_mu
-  W_2 <- 1 + U * W
 
-  A <- sum(- log(2*pi) / 2 - W_2 / 2 +
-             W_2 - 1  - (X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 +
-                Z^2 %*% m2_alpha + mat_z_mu^2 - Z^2 %*% mu_alpha_vb^2 +
-                2 * mat_x_m1 * mat_z_mu) / 2 + entropy_(Y, U))
-
-  #A <- sum(Y * log(pnorm(U) + eps) + (1 - Y) * log(1 - pnorm(U) + eps)) # if one wants a bound for p(Y)
-                                                                         # rather than for p(W) (W = Gaussian latent variable)
+  A <- sum(Y * pnorm(U, log.p = TRUE) +
+             sweep((1 - Y) * pnorm(U, lower.tail = FALSE, log.p = TRUE), 1, Z^2 %*% sig2_alpha_vb / 2, `-`) -
+             X^2 %*% (m2_beta - m1_beta^2) / 2)
 
   B <- sum(gam_vb * log_sig2_inv_vb / 2 - m2_beta * sig2_inv_vb / 2 +
              sweep(gam_vb, 1, log_om_vb, `*`) +
@@ -252,8 +246,8 @@ lower_bound_probit_ <- function(Y, W, X, Z, a, a_vb, b, b_vb, gam_vb, lambda, nu
   H <- sum((a - a_vb) * log_om_vb + (b - b_vb) * log_1_min_om_vb - lbeta(a, b) +
              lbeta(a_vb, b_vb))
 
-  J <- 1 / 2 * sum(sweep(sweep(-sweep(m2_alpha, 1, zeta2_inv_vb, `*`), 1,
-                         log_zeta2_inv_vb, `+`), 1, log(sig2_alpha_vb), `*`) + 1)
+  J <- sum(sweep(-sweep(m2_alpha, 1, zeta2_inv_vb, `*`), 1,
+                 log_zeta2_inv_vb + log(sig2_alpha_vb), `+`) + 1) / 2
 
   K <- sum((phi - phi_vb) * log_zeta2_inv_vb - (xi - xi_vb) * zeta2_inv_vb +
              phi * log(xi) - phi_vb * log(xi_vb) - lgamma(phi) + lgamma(phi_vb))

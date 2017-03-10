@@ -12,7 +12,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
                      # copy-on-write for large objects
 
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
-    m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb)
+    m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
     mat_x_m1 <- update_mat_x_m1_(X, m1_beta)
     mat_v_mu <- update_mat_v_mu_(V, mu_c0_vb, mu_c_vb)
@@ -52,7 +52,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
       if (batch) { # some updates are made batch-wise
 
-        for (j in 1:p) { # no modularisation here, too costly
+        for (j in 1:p) {
 
           mat_x_m1 <- mat_x_m1 - tcrossprod(X[, j], m1_beta[j, ])
 
@@ -67,11 +67,6 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
           gam_vb[j, ] <- exp(log_part_gam_vb - log_sum_exp_mat_(list(log_part_gam_vb, log_part2_gam_vb)))
 
           m1_beta[j, ] <- gam_vb[j, ] * mu_beta_vb[j, ]
-
-          # mu_beta_vb[j, ] <- update_mu_beta_(X, Y, mat_x_m1, sig2_beta_vb, tau_vb, j)
-          # gam_vb[j, ] <- update_info_gam_vb_(log_sig2_inv_vb, log_tau_vb,
-          #                                   mat_v_mu, mu_beta_vb, sig2_beta_vb, j)
-          # m1_beta[j, ] <- update_m1_beta_(gam_vb, mu_beta_vb, j)
 
           mat_x_m1 <- mat_x_m1 + tcrossprod(X[, j], m1_beta[j, ])
 
@@ -114,13 +109,6 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
             m1_beta[j, k] <- gam_vb[j, k] * mu_beta_vb[j, k]
 
-            # mu_beta_vb[j, k] <- update_mu_beta_(X, Y, mat_x_m1, sig2_beta_vb, tau_vb, j, k)
-            #
-            # gam_vb[j, k] <- update_info_gam_vb_(log_sig2_inv_vb, log_tau_vb,
-            #                                     mat_v_mu, mu_beta_vb, sig2_beta_vb, j, k)
-            #
-            # m1_beta[j, k] <- update_m1_beta_(gam_vb, mu_beta_vb, j, k)
-
             mat_x_m1[, k] <- mat_x_m1[, k] + X[, j] * m1_beta[j, k]
 
           }
@@ -146,7 +134,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
       }
 
 
-      m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb)
+      m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
       lb_new <- lower_bound_info_(Y, X, V, W, eta, gam_vb, kappa, lambda, m0,
                                   mu_c0_vb, mu_c_vb, nu, sig2_beta_vb,
@@ -154,10 +142,8 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
                                   tau_vb, m1_beta, m2_beta, mat_x_m1, mat_v_mu)
 
 
-      # if (verbose & (it == 1 | it %% 5 == 0))
-      #   cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
-
-      cat(paste("Lower bound = ", lb_new, "\n\n", sep = ""))
+      if (verbose & (it == 1 | it %% 5 == 0))
+        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
 
       converged <- (abs(lb_new - lb_old) < tol)
 
