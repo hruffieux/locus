@@ -2,12 +2,12 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
                               mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, tol,
                               maxit, batch, verbose, full_output = FALSE) {
 
+  # 1/2 must have been substracted from Y, and X and V must have been standardized (except intercept in Z)
+
   d <- ncol(Y)
   n <- nrow(Y)
   p <- ncol(X)
   q <- ncol(Z)
-
-  # 1/2 must have been substracted from Y, and X must be standardized.
 
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects

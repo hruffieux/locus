@@ -1,11 +1,11 @@
 locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
                         tau_vb, tol, maxit, batch, verbose, full_output = FALSE) {
 
+  # Y must have been centered, and X, standardized.
+
   d <- ncol(Y)
   n <- nrow(Y)
   p <- ncol(X)
-
-  # Y must have been centered, and X, standardized.
 
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects

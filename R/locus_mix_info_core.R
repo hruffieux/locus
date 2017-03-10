@@ -4,7 +4,7 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
                                  maxit, batch, verbose, full_output = FALSE) {
 
   # Y must have its continuous variables centered,
-  # and X and must be standardized (except intercept in Z).
+  # and X, Z and V must have been standardized (except intercept in Z).
 
   d <- ncol(Y)
   n <- nrow(Y)

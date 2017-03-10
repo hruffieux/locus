@@ -1,12 +1,13 @@
 locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
                              mu_c_vb, sig2_beta_vb, tau_vb, tol, maxit, batch,
                              verbose, full_output = FALSE) {
+
+  # Y must have been centered, and X, V standardized.
+
   d <- ncol(Y)
   n <- nrow(Y)
   p <- ncol(X)
   r <- ncol(V)
-
-  # Y must have been centered, and X, standardized.
 
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects
@@ -136,7 +137,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
       m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
-      lb_new <- lower_bound_info_(Y, X, V, W, eta, gam_vb, kappa, lambda, m0,
+      lb_new <- lower_bound_info_(Y, X, V, eta, gam_vb, kappa, lambda, m0,
                                   mu_c0_vb, mu_c_vb, nu, sig2_beta_vb,
                                   sig2_c0_vb, sig2_c_vb, sig2_inv_vb, s02, s2,
                                   tau_vb, m1_beta, m2_beta, mat_x_m1, mat_v_mu)
@@ -167,7 +168,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
     if (full_output) { # for internal use only
 
-      create_named_list_(W, eta, gam_vb, kappa, lambda, m0, mu_c0_vb, mu_c_vb,
+      create_named_list_(eta, gam_vb, kappa, lambda, m0, mu_c0_vb, mu_c_vb,
                          nu, sig2_beta_vb, sig2_c0_vb, sig2_c_vb, sig2_inv_vb,
                          s02, s2, tau_vb, m1_beta, m2_beta, mat_x_m1, mat_v_mu)
 
@@ -195,7 +196,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
 
 
-lower_bound_info_ <- function(Y, X, V, W, eta, gam_vb, kappa, lambda, m0,
+lower_bound_info_ <- function(Y, X, V, eta, gam_vb, kappa, lambda, m0,
                               mu_c0_vb, mu_c_vb, nu, sig2_beta_vb, sig2_c0_vb,
                               sig2_c_vb, sig2_inv_vb, s02, s2, tau_vb, m1_beta,
                               m2_beta, mat_x_m1, mat_v_mu) {

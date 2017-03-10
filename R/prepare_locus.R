@@ -108,9 +108,6 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit,
 
   if (!is.null(V)) {
 
-    if (link == "logit")
-      stop("Inference with external information is for now not available for logit links.")
-
     check_structure_(V, "matrix", "numeric")
 
     r <- ncol(V)

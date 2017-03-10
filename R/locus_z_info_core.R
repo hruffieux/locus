@@ -3,14 +3,13 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
                                sig2_beta_vb, tau_vb, tol, maxit, batch,
                                verbose, full_output = FALSE) {
 
+  # Y must have been centered, and X, Z and V standardized (except intercept in Z).
+
   d <- ncol(Y)
   n <- nrow(Y)
   p <- ncol(X)
   q <- ncol(Z)
   r <- ncol(V)
-
-
-  # Y must have been centered, and X, standardized.
 
   with(list_hyper, { # list_init not used with the with() function to avoid
     # copy-on-write for large objects
@@ -177,7 +176,7 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
 
 
-      lb_new <- lower_bound_z_info_(Y, X, Z, V, W, eta, gam_vb, kappa, lambda,
+      lb_new <- lower_bound_z_info_(Y, X, Z, V, eta, gam_vb, kappa, lambda,
                                     m0, mu_alpha_vb, mu_c0_vb, mu_c_vb, nu,
                                     phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
                                     sig2_c0_vb, sig2_c_vb, sig2_inv_vb, s02, s2,
@@ -211,7 +210,7 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
     if (full_output) { # for internal use only
 
-      create_named_list_(W, eta, gam_vb, kappa, lambda,
+      create_named_list_(eta, gam_vb, kappa, lambda,
                          m0, mu_alpha_vb, mu_c0_vb, mu_c_vb, nu,
                          phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
                          sig2_c0_vb, sig2_c_vb, sig2_inv_vb, s02, s2,
@@ -246,7 +245,7 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
 
 
-lower_bound_z_info_ <- function(Y, X, Z, V, W, eta, gam_vb, kappa, lambda,
+lower_bound_z_info_ <- function(Y, X, Z, V, eta, gam_vb, kappa, lambda,
                                 m0, mu_alpha_vb, mu_c0_vb, mu_c_vb, nu,
                                 phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
                                 sig2_c0_vb, sig2_c_vb, sig2_inv_vb, s02, s2,
