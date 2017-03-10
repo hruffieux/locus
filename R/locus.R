@@ -226,15 +226,15 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
   if (!is.null(list_cv) & is.null(list_blocks)) { ## TODO: allow cross-validation when list_blocks is used.
 
-      if (verbose) {
-        cat("=============================== \n")
-        cat("===== Cross-validation... ===== \n")
-        cat("=============================== \n")
-      }
-      list_cv <- prepare_cv_(list_cv, n, p, r, bool_rmvd_x, p0_av, link,
-                             list_hyper, list_init, verbose)
+    if (verbose) {
+      cat("=============================== \n")
+      cat("===== Cross-validation... ===== \n")
+      cat("=============================== \n")
+    }
+    list_cv <- prepare_cv_(list_cv, n, p, r, bool_rmvd_x, p0_av, link,
+                           list_hyper, list_init, verbose)
 
-      p_star <- cross_validate_(Y, X, Z, list_cv, user_seed, verbose)
+    p_star <- cross_validate_(Y, X, Z, list_cv, user_seed, verbose)
 
   } else {
 
@@ -279,10 +279,12 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                   user_seed, verbose)
   if (verbose) cat("... done. == \n\n")
 
+  nq <- is.null(q)
+  nr <- is.null(r)
 
   if (link != "identity") { # adds an intercept for logistic/probit regression
 
-    if (is.null(q)) {
+    if (nq) {
 
       Z <- matrix(1, nrow = n, ncol = 1)
 
@@ -339,35 +341,36 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     if (link == "identity") {
 
-      if (is.null(q)) {
 
-        if (is.null(r)) {
-          vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
-                            list_init$mu_beta_vb, list_init$sig2_beta_vb,
+      if (nq & nr) {
+
+        vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
+                          list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                          list_init$tau_vb, tol, maxit, batch, verbose)
+
+      } else if (nq) { # r non-null
+
+        vb <- locus_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
+                               list_init$mu_beta_vb, list_init$mu_c0_vb,
+                               list_init$mu_c_vb, list_init$sig2_beta_vb,
+                               list_init$tau_vb, tol, maxit, batch, verbose)
+
+      } else if (nr) { # q non-null
+
+        vb <- locus_z_core_(Y, X, Z, list_hyper, list_init$gam_vb,
+                            list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                            list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                             list_init$tau_vb, tol, maxit, batch, verbose)
-        } else {
-          vb <- locus_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
-                                list_init$mu_beta_vb, list_init$mu_c0_vb,
-                                list_init$mu_c_vb, list_init$sig2_beta_vb,
-                                list_init$tau_vb, tol, maxit, batch, verbose)
-        }
 
-      } else {
+      } else { # both q and r non - null
 
-        if (is.null(r)) {
-          vb <- locus_z_core_(Y, X, Z, list_hyper, list_init$gam_vb,
-                              list_init$mu_alpha_vb, list_init$mu_beta_vb,
-                              list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                              list_init$tau_vb, tol, maxit, batch, verbose)
-        } else {
-          vb <- locus_z_info_core_(Y, X, Z, V, list_hyper, list_init$gam_vb,
-                                   list_init$mu_alpha_vb, list_init$mu_beta_vb,
-                                   list_init$mu_c0_vb, list_init$mu_c_vb,
-                                   list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                                   list_init$tau_vb, tol, maxit, batch, verbose)
-        }
-
+        vb <- locus_z_info_core_(Y, X, Z, V, list_hyper, list_init$gam_vb,
+                                 list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                                 list_init$mu_c0_vb, list_init$mu_c_vb,
+                                 list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
+                                 list_init$tau_vb, tol, maxit, batch, verbose)
       }
+
 
     } else if (link == "logit"){
 
@@ -378,13 +381,15 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     } else if (link == "probit"){
 
+      if (nr) {
 
-      if (is.null(r)) {
         vb <- locus_probit_core_(Y, X, Z, list_hyper, list_init$gam_vb,
                                  list_init$mu_alpha_vb, list_init$mu_beta_vb,
                                  list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                                  tol, maxit, batch, verbose)
+
       } else {
+
         vb <- locus_probit_info_core_(Y, X, Z, V, list_hyper, list_init$gam_vb,
                                       list_init$mu_alpha_vb, list_init$mu_beta_vb,
                                       list_init$mu_c0_vb, list_init$mu_c_vb,
@@ -394,10 +399,21 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     } else {
 
-      vb <- locus_mix_core_(Y, X, Z, ind_bin, list_hyper, list_init$gam_vb,
-                            list_init$mu_alpha_vb, list_init$mu_beta_vb,
-                            list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                            list_init$tau_vb, tol, maxit, batch, verbose)
+      if (nr) {
+
+        vb <- locus_mix_core_(Y, X, Z, ind_bin, list_hyper, list_init$gam_vb,
+                              list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                              list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
+                              list_init$tau_vb, tol, maxit, batch, verbose)
+      } else {
+
+        vb <- locus_mix_info_core_(Y, X, Z, V, ind_bin, list_hyper, list_init$gam_vb,
+                                   list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                                   list_init$mu_c0_vb, list_init$mu_c_vb,
+                                   list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
+                                   list_init$tau_vb, tol, maxit, batch,
+                                   verbose)
+      }
     }
 
   } else {

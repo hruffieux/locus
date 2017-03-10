@@ -3,6 +3,9 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
                             mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, tau_vb,
                             tol, maxit, batch, verbose, full_output = FALSE) {
 
+  # Y must have its continuous variables centered,
+  # and X and must be standardized (except intercept in Z).
+
   d <- ncol(Y)
   n <- nrow(Y)
   p <- ncol(X)
@@ -13,12 +16,9 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
   Y_cont <- Y[, -ind_bin, drop = FALSE]
   rm(Y)
 
-  # Y must have its continuous variables centered,
-  # and X and must be standardized (except intercept in Z).
-
   with(list_hyper, {  # list_init not used with the with() function to avoid
                       # copy-on-write for large objects
-    m2_alpha <- (sig2_alpha_vb + mu_alpha_vb ^ 2)
+    m2_alpha <- sig2_alpha_vb + mu_alpha_vb ^ 2
 
     m1_beta <- mu_beta_vb * gam_vb
     m2_beta <- sweep(mu_beta_vb ^ 2, 2, sig2_beta_vb, `+`) * gam_vb
@@ -26,14 +26,15 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
     mat_z_mu <-  Z %*% mu_alpha_vb
     mat_x_m1 <-  X %*% m1_beta
 
+    # no drop = FALSE for W, as replacement not allowed in this case
     W[, ind_bin] <- update_W_probit_(Y_bin,
                                      mat_z_mu[, ind_bin, drop = FALSE],
                                      mat_x_m1[, ind_bin, drop = FALSE])
 
+    phi_vb <- update_phi_z_vb_(phi, d)
+
     rowsums_gam <- rowSums(gam_vb)
     sum_gam <- sum(rowsums_gam)
-
-    lambda_vb <- nu_vb <- eta_vb <- kappa_vb <- a_vb <- b_vb <- phi_vb <- xi_vb <- NULL ###
 
     log_tau_vb <- rep(0, d)
 
@@ -41,15 +42,13 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
     lb_old <- -Inf
     it <- 1
 
-    phi_vb <- update_phi_z_vb_(phi, d) ###
-
     while ((!converged) & (it <= maxit)) {
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("Iteration ", format(it), "... \n", sep = ""))
 
       # % #
-      xi_vb <- update_xi_z_vb_(xi, tau_vb, m2_alpha) ###
+      xi_vb <- update_xi_z_vb_(xi, tau_vb, m2_alpha)
 
       zeta2_inv_vb <- phi_vb / xi_vb
       # % #
@@ -137,7 +136,7 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
             vec_z_i_k <- vec_z_i_k - Z[, i] * mu_alpha_vb[i, k]
 
             mu_alpha_vb[i, k] <- sig2_alpha_vb[i, k] * tau_vb[k] *
-              crossprod(Z[, i], W[,k]  - vec_z_i_k - vec_x_j_k)
+              crossprod(Z[, i], W[, k]  - vec_z_i_k - vec_x_j_k)
 
             vec_z_i_k <- vec_z_i_k + Z[, i] * mu_alpha_vb[i, k]
           }
@@ -199,9 +198,9 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
                                  mat_x_m1, mat_z_mu, sum_gam)
 
 
-      # if (verbose & (it == 1 | it %% 5 == 0))
-      #  cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
-      cat(paste("Lower bound = ", lb_new, "\n\n", sep = ""))
+      if (verbose & (it == 1 | it %% 5 == 0))
+        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+
 
       converged <- (abs(lb_new-lb_old) < tol)
 
@@ -296,7 +295,7 @@ lower_bound_mix_ <- function(Y_bin, Y_cont, ind_bin, X, Z, a, a_vb, b, b_vb, eta
              sweep(m2_beta, MARGIN = 2, tau_vb, `*`) * sig2_inv_vb / 2 +
              sweep(gam_vb, MARGIN = 1, log_om_vb, `*`) +
              sweep(1 - gam_vb, MARGIN = 1, log_1_min_om_vb, `*`) +
-             1 / 2 * sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) -
+             sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) / 2 -
              gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
 
   G <- sum((eta - eta_vb) * log_tau_vb[-ind_bin] - (kappa - kappa_vb) * tau_vb[-ind_bin] +
@@ -317,6 +316,7 @@ lower_bound_mix_ <- function(Y_bin, Y_cont, ind_bin, X, Z, a, a_vb, b, b_vb, eta
 
   L <- sum((phi - phi_vb) * log_zeta2_inv_vb - (xi - xi_vb) * zeta2_inv_vb +
              phi * log(xi) - phi_vb * log(xi_vb) - lgamma(phi) + lgamma(phi_vb))
+
 
   A_cont + A_bin + B + G + H + J + K + L
 

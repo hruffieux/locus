@@ -20,30 +20,22 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit,
   n <- nrow(X)
   p <- ncol(X)
 
-  if (link == "identity") {
+  check_structure_(Y, "matrix", "numeric")
+  d <- ncol(Y)
 
-    check_structure_(Y, "matrix", "double")
-    d <- ncol(Y)
+  if (link == "mix") {
 
-  } else if (link == "mix") {
-
-    check_structure_(Y, "matrix", "numeric")
-    d <- ncol(Y)
+    ind_bin <- prepare_ind_bin_(d, ind_bin, link)
 
     if(!all(as.vector(Y[, ind_bin]) == as.numeric(as.logical(Y[, ind_bin]))))
-      stop("The responses in Y correspinding to indices ind_bin must be a binary.")
+      stop("The responses in Y corresponding to indices ind_bin must be a binary.")
 
-  } else {
+  } else if (link != "identity"){
 
-    check_structure_(Y, "matrix", "numeric")
-    d <- ncol(Y)
     if(!all(as.vector(Y) == as.numeric(as.logical(Y))))
       stop("Y must be a binary matrix for logistic/probit regression.")
 
   }
-
-
-  ind_bin <- prepare_ind_bin_(d, ind_bin, link)
 
   if (nrow(Y) != n) stop("X and Y must have the same number of observations.")
 
@@ -116,8 +108,8 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit,
 
   if (!is.null(V)) {
 
-    if (link %in% c("logit", "mix"))
-      stop("Inference with external information is for now only available for identity and probit links.")
+    if (link == "logit")
+      stop("Inference with external information is for now not available for logit links.")
 
     check_structure_(V, "matrix", "numeric")
 
@@ -700,7 +692,7 @@ prepare_ind_bin_ <- function(d, ind_bin, link) {
       stop(paste("All indices provided in ind_bin must be integers between 1 ",
                  "and the total number of responses, d = ", d, ".", sep = ""))
 
-    if (all(ind_bin == 1:d))
+    if (length(ind_bin) == d)
       stop(paste("Argument ind_bin indicates that all responses are binary. \n",
                  "Please set link to logit or probit, or change ind_bin to ",
                  "the indices of the binary responses only.", sep = ""))

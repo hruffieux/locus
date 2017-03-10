@@ -260,7 +260,7 @@ lower_bound_probit_info_ <- function(Y, X, V, Z, gam_vb, lambda, m0,
            m2_beta * sig2_inv_vb / 2 +
            gam_vb * pnorm(mat_v_mu, log.p = TRUE) +
            sweep((1 - gam_vb) * pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE), 1, sig2_c_vb * rowSums(V^2) / 2, `-`) -
-           sig2_c0_vb / 2 + 1 / 2 * sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) -
+           sig2_c0_vb / 2 + gam_vb * (log(sig2_beta_vb) + 1) / 2 -
            gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
 
   G <- sum(log(sig2_c0_vb) + 1 - log(s02) - (mu_c0_vb^2 + sig2_c0_vb - 2*mu_c0_vb * m0 + m0^2) / s02) / 2

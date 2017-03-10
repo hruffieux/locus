@@ -27,20 +27,23 @@ update_m2_alpha_ <- function(mu_alpha_vb, sig2_alpha_vb, sweep = FALSE) {
 
 update_sig2_alpha_vb_ <- function(n, zeta2_inv_vb, tau_vb = NULL, intercept = FALSE) {
 
-  if (intercept) {
+  den <- n - 1 + zeta2_inv_vb
 
-    sig2_alpha_vb <- n - 1 + zeta2_inv_vb
-    sig2_alpha_vb[1] <- sig2_alpha_vb[1] + 1 # the first column of Z was not scaled, it is the intercept.
+  if (intercept)
+    den[1] <- den[1] + 1 # the first column of Z was not scaled, it is the intercept.
 
-    1 / sig2_alpha_vb
+  if (is.null(tau_vb)) {
 
+    1 / den
 
   } else {
 
-    1 / tcrossprod(n - 1 + zeta2_inv_vb, tau_vb)
+    1 / tcrossprod(den, as.matrix(tau_vb))
 
   }
+
 }
+
 
 update_mat_z_mu_ <- function(Z, mu_alpha_vb) Z %*% mu_alpha_vb
 
