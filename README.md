@@ -20,6 +20,19 @@ install.packages("devtools")
 devtools::install_github("hruffieux/locus")
 ```
 
+## Algorithms
+
+The algorithms for joint predictor and response selection provided in **locus**
+implement inference for regression models with 
+
+* identity link;
+* logistic link;
+* probit link; 
+* identity-probit link.
+
+Moreover, predictor-level external knowledge can be incorportated to inform the
+selection.
+
 ## License and authors
 
 This software uses the GPL v2 license, see [LICENSE](LICENSE).
