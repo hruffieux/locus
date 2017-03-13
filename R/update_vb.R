@@ -118,14 +118,28 @@ update_chi_vb_ <- function(X, Z, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sig2_alph
 }
 
 
+#####################
+## omega's updates ##
+#####################
+
+
+a_vb <- update_a_vb <- function(a, rs_gam) a + rs_gam
+
+b_vb <- update_b_vb <- function(b, d, rs_gam) b - rs_gam + d
+
+update_log_om_vb <- function(a, digam_sum, rs_gam) digamma(a + rs_gam) - digam_sum
+
+update_log_1_min_om_vb <- function(b, d, digam_sum, rs_gam) digamma(b - rs_gam + d) - digam_sum
+
+
 ###################
 ## psi's updates ##
 ###################
 
-log_sigmoid <- function(chi) { # log(Sig(chi_vb)) = - log(1 + exp(- chi_vb))
-                               # = - log(exp(chi_vb) + 1) + chi_vb
-                               # = - log_one_plus_exp(chi_vb) + chi_vb # avoids numerical overflow
-  - log_one_plus_exp_(chi) + chi
+log_sigmoid <- function(chi) {
+
+  - log(1 + exp(- chi)) # chi is always positive so no overflow possible (underflow neither, thanks to the "+1")
+
 }
 
 update_psi_logit_vb_ <- function(chi_vb) {

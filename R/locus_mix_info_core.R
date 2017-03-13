@@ -39,8 +39,8 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
 
     phi_vb <- update_phi_z_vb_(phi, d)
 
-    rowsums_gam <- rowSums(gam_vb)
-    sum_gam <- sum(rowsums_gam)
+    rs_gam <- rowSums(gam_vb)
+    sum_gam <- sum(rs_gam)
 
     log_tau_vb <- rep(0, d)
 
@@ -138,7 +138,7 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
 
         }
 
-        rowsums_gam <- rowSums(gam_vb)
+        rs_gam <- rowSums(gam_vb)
 
       } else {
 
@@ -190,7 +190,7 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
 
           }
 
-          rowsums_gam <- rowSums(gam_vb)
+          rs_gam <- rowSums(gam_vb)
 
         }
 
@@ -203,7 +203,7 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
                                         mat_z_mu[, ind_bin, drop = FALSE],
                                         mat_x_m1[, ind_bin, drop = FALSE])
 
-      sum_gam <- sum(rowsums_gam)
+      sum_gam <- sum(rs_gam)
 
       lb_new <- lower_bound_mix_info_(Y_bin, Y_cont, ind_bin, X, V, Z, eta, gam_vb,
                                       kappa, lambda, m0, mu_alpha_vb, mu_c0_vb,

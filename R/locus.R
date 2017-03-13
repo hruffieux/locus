@@ -341,7 +341,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     if (link == "identity") {
 
-
       if (nq & nr) {
 
         vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
