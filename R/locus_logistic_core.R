@@ -82,13 +82,10 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
           mu_beta_vb[j, ] <- sig2_beta_vb[j, ] * crossprod(Y - 2 * psi_vb * (mat_x_m1 + mat_z_mu), X[, j])
 
-          log_part_gam_vb <- log_om_vb[j] + log(sig2_beta_vb[j, ]) / 2 +
-            mu_beta_vb[j, ] ^ 2 / (2 * sig2_beta_vb[j, ])
-
-          log_part2_gam_vb <- log_1_min_om_vb[j] - rep(log_sig2_inv_vb, d) / 2
-
-          gam_vb[j, ] <- exp(log_part_gam_vb -
-                               log_sum_exp_mat_(list(log_part_gam_vb, log_part2_gam_vb)))
+          gam_vb[j, ] <- exp(-log_one_plus_exp_(log_1_min_om_vb[j] - log_om_vb[j] -
+                                                  log_sig2_inv_vb / 2 -
+                                                  mu_beta_vb[j, ] ^ 2 / (2 * sig2_beta_vb[j, ]) -
+                                                  log(sig2_beta_vb[j, ]) / 2))
 
           m1_beta[j, ] <- mu_beta_vb[j, ] * gam_vb[j, ]
 
@@ -121,13 +118,10 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
             mu_beta_vb[j, k] <- sig2_beta_vb[j, k] * crossprod(X[, j], Y[, k] - 2 * psi_vb[, k] * (vec_z_i_k + vec_x_j_k))
 
-            log_part_gam_vb <- log_om_vb[j] + log(sig2_beta_vb[j, k]) / 2 +
-              mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[j, k])
-
-            log_part2_gam_vb <- log_1_min_om_vb[j] - log_sig2_inv_vb / 2
-
-            gam_vb[j, k] <- exp(log_part_gam_vb -
-                                  log_sum_exp_(c(log_part_gam_vb, log_part2_gam_vb)))
+            gam_vb[j, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb[j] - log_om_vb[j] -
+                                                    log_sig2_inv_vb / 2 -
+                                                    mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[j, k]) -
+                                                    log(sig2_beta_vb[j, k]) / 2))
 
             m1_beta[j, k] <- mu_beta_vb[j, k] * gam_vb[j, k]
 
@@ -165,8 +159,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
 
       if (verbose & (it == 1 | it %% 5 == 0))
-       cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
-
+        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
 
       converged <- (abs(lb_new - lb_old) < tol)
 
@@ -226,9 +219,7 @@ lower_bound_logit_ <- function(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
   log_om_vb <- digamma(a_vb) - digamma(a_vb + b_vb)
   log_1_min_om_vb <- digamma(b_vb) - digamma(a_vb + b_vb)
 
-
-  A <- sum(chi_vb / 2 - log_sum_exp_mat_(list(-chi_vb/2, chi_vb/2)) +
-             Y * (mat_x_m1 + mat_z_mu)  -  chi_vb / 2 -
+  A <- sum(log_sigmoid(chi_vb) + Y * (mat_x_m1 + mat_z_mu)  -  chi_vb / 2 -
              psi_vb * (X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 +
                          Z^2 %*% m2_alpha + mat_z_mu^2 - Z^2 %*% mu_alpha_vb^2 +
                          2 * mat_x_m1 * mat_z_mu - chi_vb^2))

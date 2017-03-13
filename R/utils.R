@@ -94,41 +94,15 @@ create_named_list_ <- function(...) {
   setNames(list(...), as.character(match.call()[-1]))
 }
 
-log_sum_exp_ <- function(x) { # avoid numerical underflow or overflow
-  if ( max(abs(x)) > max(x) )
-    offset <- min(x)
-  else
-    offset <- max(x)
-  log(sum(exp(x - offset))) + offset
+
+log_one_plus_exp_ <- function(x) { # computes log(1 + exp(x)) avoiding
+                                     # numerical overflow
+  m <- x
+  m[x < 0] <- 0
+
+  log(exp(x - m) + exp(- m)) + m
 }
 
-log_sum_exp_mat_ <- function(list_vec) { # avoid numerical underflow or overflow
-                                         # for a list of two matrices (or vectors)
-  stopifnot(length(list_vec) == 2)
-
-  a <- list_vec[[1]]
-  b <- list_vec[[2]]
-  rm(list_vec)
-
-  bool_max <- (a - b > 0)
-  M <- b
-  M[bool_max] <- a[bool_max]
-  m <- a
-  m[bool_max] <- b[bool_max]
-
-  absa <- abs(a)
-  absb <- abs(b)
-  bool_absmax <- (absa - absb > 0)
-  absM <- absb
-  absM[bool_absmax] <- absb[bool_absmax]
-
-  bool_off <- absM > M
-  offset <- M
-  offset[bool_off] <- m[bool_off]
-
-  log(exp(a - offset) + exp(b - offset)) + offset
-
-}
 
 inv_mills_ratio_ <- function(Y, U) {
 
@@ -151,14 +125,14 @@ inv_mills_ratio_ <- function(Y, U) {
 
 }
 
-entropy_ <- function(Y, U) {
-
-  log((2 * pi * exp(1))^(1/2) *
-           exp(Y * pnorm(U, log.p = TRUE) +
-                 (1-Y) * pnorm(U, lower.tail = FALSE, log.p = TRUE))) -
-  U * inv_mills_ratio_(Y, U) / 2
-
-}
+# entropy_ <- function(Y, U) {
+#
+#   log((2 * pi * exp(1))^(1/2) *
+#            exp(Y * pnorm(U, log.p = TRUE) +
+#                  (1-Y) * pnorm(U, lower.tail = FALSE, log.p = TRUE))) -
+#   U * inv_mills_ratio_(Y, U) / 2
+#
+# }
 
 rm_constant_ <- function(mat, verbose) {
 

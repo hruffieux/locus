@@ -46,7 +46,7 @@ update_sig2_alpha_vb_ <- function(n, zeta2_inv_vb, tau_vb = NULL, intercept = FA
 
 
 update_sig2_alpha_logit_vb_ <- function(Z, psi_vb, zeta2_inv_vb) {
-  
+
   1 / sweep(2 * crossprod(Z ^ 2, psi_vb), 1, zeta2_inv_vb, `+`)
 
 }
@@ -88,9 +88,9 @@ update_sig2_beta_vb_ <- function(n, sig2_inv_vb, tau_vb = NULL) {
 }
 
 update_sig2_beta_logit_vb_ <- function(X, psi_vb, sig2_inv_vb) {
-  
+
   1 / (2 * crossprod(X ^ 2, psi_vb) + sig2_inv_vb)
-  
+
 }
 
 
@@ -111,11 +111,9 @@ update_mat_v_mu_ <- function(V, mu_c0_vb, mu_c_vb) sweep(V %*% mu_c_vb, 1, mu_c0
 
 
 
-
-
 update_chi_vb_ <- function(X, Z, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sig2_alpha_vb) {
-  
-  sqrt(X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 + Z^2 %*% sig2_alpha_vb + 
+
+  sqrt(X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 + Z^2 %*% sig2_alpha_vb +
          mat_z_mu^2 + 2 * mat_x_m1 * mat_z_mu)
 }
 
@@ -124,13 +122,15 @@ update_chi_vb_ <- function(X, Z, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sig2_alph
 ## psi's updates ##
 ###################
 
+log_sigmoid <- function(chi) { # log(Sig(chi_vb)) = - log(1 + exp(- chi_vb))
+                               # = - log(exp(chi_vb) + 1) + chi_vb
+                               # = - log_one_plus_exp(chi_vb) + chi_vb # avoids numerical overflow
+  - log_one_plus_exp_(chi) + chi
+}
+
 update_psi_logit_vb_ <- function(chi_vb) {
 
-  sig <- function(chi) {
-    1 / (1 + exp(-chi))
-  }
-
-  (sig(chi_vb) - 1 / 2) / (2 * chi_vb)
+  exp(log(exp(log_sigmoid(chi_vb)) - 1 / 2) - log(2 * chi_vb))
 
 }
 

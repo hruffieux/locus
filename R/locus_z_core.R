@@ -87,13 +87,11 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
           mu_beta_vb[j,] <- sig2_beta_vb * (tau_vb *
                                               crossprod(Y - mat_x_m1 - mat_z_mu, X[, j]))
 
-          log_part_gam_vb <- log_om_vb[j] + log(sig2_beta_vb) / 2 +
-            mu_beta_vb[j, ] ^ 2 / (2 * sig2_beta_vb)
+          gam_vb[j, ] <- exp(-log_one_plus_exp_(log_1_min_om_vb[j] - log_om_vb[j] -
+                                                  log_tau_vb / 2 - log_sig2_inv_vb / 2 -
+                                                  mu_beta_vb[j, ] ^ 2 / (2 * sig2_beta_vb) -
+                                                  log(sig2_beta_vb) / 2))
 
-          log_part2_gam_vb <- log_1_min_om_vb[j] - log_tau_vb / 2 -
-            log_sig2_inv_vb / 2
-
-          gam_vb[j, ] <- exp(log_part_gam_vb - log_sum_exp_mat_(list(log_part_gam_vb, log_part2_gam_vb)))
           m1_beta[j, ] <- mu_beta_vb[j, ] * gam_vb[j, ]
 
           mat_x_m1 <- mat_x_m1 +  tcrossprod(X[, j], m1_beta[j, ])
@@ -130,14 +128,10 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
             mu_beta_vb[j, k] <- sig2_beta_vb[k] * tau_vb[k] *
               crossprod(X[, j], Y[,k] - vec_x_j_k - vec_z_i_k)
 
-            log_part_gam_vb <- log_om_vb[j] + log(sig2_beta_vb[k]) / 2 +
-              mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[k])
-
-            log_part2_gam_vb <- log_1_min_om_vb[j] - log_tau_vb[k] / 2 -
-              log_sig2_inv_vb / 2
-
-            gam_vb[j, k] <- exp(log_part_gam_vb -
-                                  log_sum_exp_(c(log_part_gam_vb, log_part2_gam_vb)))
+            gam_vb[j, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb[j] - log_om_vb[j] -
+                                                     log_tau_vb[k] / 2 - log_sig2_inv_vb / 2 -
+                                                     mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[k]) -
+                                                     log(sig2_beta_vb[k]) / 2))
 
             m1_beta[j, k] <- mu_beta_vb[j, k] * gam_vb[j, k]
 
@@ -172,8 +166,8 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
                                mat_x_m1, mat_z_mu, sum_gam)
 
 
-    if (verbose & (it == 1 | it %% 5 == 0))
-       cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+      if (verbose & (it == 1 | it %% 5 == 0))
+        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
 
       converged <- (abs(lb_new-lb_old) < tol)
 
