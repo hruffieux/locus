@@ -6,7 +6,7 @@
 *.pdf
 .DS_Store
 
-# temporary files emacs 
+# temporary files emacs
 *~
 [#]*[#]
 .\#*

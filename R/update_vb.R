@@ -110,14 +110,6 @@ update_sig2_c_vb_ <- function(p, s2) 1 / (p - 1 + (1/s2))
 update_mat_v_mu_ <- function(V, mu_c0_vb, mu_c_vb) sweep(V %*% mu_c_vb, 1, mu_c0_vb, `+`)
 
 
-
-update_chi_vb_ <- function(X, Z, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sig2_alpha_vb) {
-
-  sqrt(X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 + Z^2 %*% sig2_alpha_vb +
-         mat_z_mu^2 + 2 * mat_x_m1 * mat_z_mu)
-}
-
-
 #####################
 ## omega's updates ##
 #####################
@@ -133,8 +125,14 @@ update_log_1_min_om_vb <- function(b, d, digam_sum, rs_gam) digamma(b - rs_gam +
 
 
 ###################
-## psi's updates ##
+## chi's updates ##
 ###################
+
+update_chi_vb_ <- function(X, Z, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sig2_alpha_vb) {
+
+  sqrt(X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 + Z^2 %*% sig2_alpha_vb +
+         mat_z_mu^2 + 2 * mat_x_m1 * mat_z_mu)
+}
 
 log_sigmoid <- function(chi) {
 

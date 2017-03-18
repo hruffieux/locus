@@ -78,23 +78,9 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
           mat_z_mu <- mat_z_mu + tcrossprod(Z[, i], mu_alpha_vb[i, ])
         }
 
-        for (j in 1:p) {
-
-          mat_x_m1 <- mat_x_m1 -  tcrossprod(X[, j], m1_beta[j, ])
-
-          mu_beta_vb[j,] <- sig2_beta_vb * (tau_vb *
-                                              crossprod(Y - mat_x_m1 - mat_z_mu, X[, j]))
-
-          gam_vb[j, ] <- exp(-log_one_plus_exp_(log_1_min_om_vb[j] - log_om_vb[j] -
-                                                  log_tau_vb / 2 - log_sig2_inv_vb / 2 -
-                                                  mu_beta_vb[j, ] ^ 2 / (2 * sig2_beta_vb) -
-                                                  log(sig2_beta_vb) / 2))
-
-          m1_beta[j, ] <- mu_beta_vb[j, ] * gam_vb[j, ]
-
-          mat_x_m1 <- mat_x_m1 +  tcrossprod(X[, j], m1_beta[j, ])
-
-        }
+        coreZLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
+                  log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb,
+                  sig2_beta_vb, tau_vb)
 
         rs_gam <- rowSums(gam_vb)
 

@@ -78,24 +78,13 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
           mat_z_mu <- mat_z_mu + tcrossprod(Z[, i], mu_alpha_vb[i, ])
         }
 
-        for (j in 1:p) { # no modularisation here, too costly
+        log_Phi_mat_v_mu <- pnorm(mat_v_mu, log.p = TRUE)
+        log_1_min_Phi_mat_v_mu <- pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE)
 
-          mat_x_m1 <- mat_x_m1 - tcrossprod(X[, j], m1_beta[j, ])
+        coreZInfoLoop(X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu,
+                      log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu,
+                      mu_beta_vb, sig2_beta_vb, tau_vb)
 
-          mu_beta_vb[j,] <- sig2_beta_vb * (tau_vb *
-                                              crossprod(Y - mat_x_m1 - mat_z_mu, X[, j]))
-
-          gam_vb[j, ] <- exp(-log_one_plus_exp_(pnorm(mat_v_mu[j, ], lower.tail = FALSE, log.p = TRUE) -
-                                                  pnorm(mat_v_mu[j, ], log.p = TRUE) -
-                                                  log_tau_vb / 2 - log_sig2_inv_vb / 2 -
-                                                  mu_beta_vb[j, ] ^ 2 / (2 * sig2_beta_vb) -
-                                                  log(sig2_beta_vb) / 2))
-
-          m1_beta[j, ] <- gam_vb[j, ] * mu_beta_vb[j, ]
-
-          mat_x_m1 <- mat_x_m1 + tcrossprod(X[, j], m1_beta[j, ])
-
-        }
 
         mat_v_mu <- sweep(mat_v_mu, 1, mu_c0_vb, `-`)
 
@@ -169,7 +158,6 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
       m2_alpha <- update_m2_alpha_(mu_alpha_vb, sig2_alpha_vb)
       m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
-
 
 
       lb_new <- lower_bound_z_info_(Y, X, Z, V, eta, gam_vb, kappa, lambda,

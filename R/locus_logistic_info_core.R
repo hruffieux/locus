@@ -72,21 +72,13 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
           mat_z_mu <- mat_z_mu + tcrossprod(Z[, i], mu_alpha_vb[i, ])
         }
 
-        for (j in 1:p) {
-          mat_x_m1 <- mat_x_m1 - tcrossprod(X[, j], m1_beta[j, ])
+        log_Phi_mat_v_mu <- pnorm(mat_v_mu, log.p = TRUE)
+        log_1_min_Phi_mat_v_mu <- pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE)
 
-          mu_beta_vb[j, ] <- sig2_beta_vb[j, ] * crossprod(Y - 2 * psi_vb * (mat_x_m1 + mat_z_mu), X[, j])
+        coreLogitInfoLoop(X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu,
+                      log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb,
+                      psi_vb, sig2_beta_vb)
 
-          gam_vb[j, ] <- exp(-log_one_plus_exp_(pnorm(mat_v_mu[j, ], lower.tail = FALSE, log.p = TRUE) -
-                                                  pnorm(mat_v_mu[j, ], log.p = TRUE) -
-                                                  log_sig2_inv_vb / 2 -
-                                                  mu_beta_vb[j, ] ^ 2 / (2 * sig2_beta_vb[j, ]) -
-                                                  log(sig2_beta_vb[j, ]) / 2))
-
-          m1_beta[j, ] <- mu_beta_vb[j, ] * gam_vb[j, ]
-
-          mat_x_m1 <- mat_x_m1 + tcrossprod(X[, j], m1_beta[j, ])
-        }
 
         mat_v_mu <- sweep(mat_v_mu, 1, mu_c0_vb, `-`)
 

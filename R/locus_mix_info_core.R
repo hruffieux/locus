@@ -102,24 +102,12 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
 
         }
 
-        for (j in 1:p) {
+        log_Phi_mat_v_mu <- pnorm(mat_v_mu, log.p = TRUE)
+        log_1_min_Phi_mat_v_mu <- pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE)
 
-          mat_x_m1 <- mat_x_m1 - tcrossprod(X[, j], m1_beta[j, ])
-
-          mu_beta_vb[j,] <- sig2_beta_vb * (tau_vb *
-                                              crossprod(Wy - mat_x_m1 - mat_z_mu, X[, j]))
-
-          gam_vb[j, ] <- exp(-log_one_plus_exp_(pnorm(mat_v_mu[j, ], lower.tail = FALSE, log.p = TRUE) -
-                                                  pnorm(mat_v_mu[j, ], log.p = TRUE) -
-                                                  log_tau_vb / 2 - log_sig2_inv_vb / 2 -
-                                                  mu_beta_vb[j, ] ^ 2 / (2 * sig2_beta_vb) -
-                                                  log(sig2_beta_vb) / 2))
-
-          m1_beta[j, ] <- mu_beta_vb[j, ] * gam_vb[j, ]
-
-          mat_x_m1 <- mat_x_m1 + tcrossprod(X[, j], m1_beta[j, ])
-        }
-
+        coreZInfoLoop(X, Wy, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu,
+                      log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu,
+                      mu_beta_vb, sig2_beta_vb, tau_vb)
 
         mat_v_mu <- sweep(mat_v_mu, 1, mu_c0_vb, `-`)
 
