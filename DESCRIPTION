@@ -12,7 +12,7 @@ Authors@R: c(
 Description: Variational inference for a sparse multivariate regression model
     that allows combined selection of covariates and associated responses in
     high-dimensional set-ups (Helene Ruffieux, Anthony C. Davison, Jorg Hager,
-    Irina Irincheeva, 2016, arXiv:1609.03400). This software used on genetic data
+    Irina Irincheeva, 2017, Biostatistics). This software used on genetic data
     from molecular quantitative trait locus (QTL) problems with over 200K single
     nucleotide polymorphisms (SNPs), hundreds of molecular expression levels and
     hundreds of individuals.

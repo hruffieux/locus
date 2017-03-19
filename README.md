@@ -8,8 +8,8 @@
 simultaneous variable selection of predictors and associated outcomes based
 on multivariate regression models. Dependence across outcomes linked to the 
 same predictors is captured through the model hierarchical structure 
-(Hélène Ruffieux, Anthony C. Davison, Jörg Hager, Irina Irincheeva, 2016, 
-arXiv:1609.03400, to appear in *Biostatistics*). 
+(Hélène Ruffieux, Anthony C. Davison, Jörg Hager, Irina Irincheeva, 2017, 
+*Biostatistics*). 
 
 ## Installation
 
