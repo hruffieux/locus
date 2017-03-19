@@ -1,23 +1,26 @@
 #include "utils.h"
 
-// NOTE: typedefs can't be used as not properly copied to RcppExports...
+/* Using Eigen::Map to pass large matrices by reference from R.
+ * Given dimensionalities involved in some applications, copying
+ * such matrices would imply a prohibitive RAM overconsumption.
+ */
 
 // for locus_core function
 // [[Rcpp::export]]
-void coreLoop(const Eigen::Map<Eigen::MatrixXd> X,
-              const Eigen::Map<Eigen::MatrixXd> Y,
-              Eigen::Map<Eigen::ArrayXXd> gam_vb,
-              const Eigen::Map<Eigen::ArrayXd> log_om_vb,
-              const Eigen::Map<Eigen::ArrayXd> log_1_min_om_vb,
+void coreLoop(const MapMat X,
+              const MapMat Y,
+              MapArr2D gam_vb,
+              const MapArr1D log_om_vb,
+              const MapArr1D log_1_min_om_vb,
               const double log_sig2_inv_vb,
-              const Eigen::Map<Eigen::ArrayXd> log_tau_vb,
-              Eigen::Map<Eigen::MatrixXd> m1_beta,
-              Eigen::Map<Eigen::MatrixXd> mat_x_m1,
-              Eigen::Map<Eigen::ArrayXXd> mu_beta_vb,
-              const Eigen::Map<Eigen::ArrayXd> sig2_beta_vb,
-              const Eigen::Map<Eigen::ArrayXd> tau_vb) {
+              const MapArr1D log_tau_vb,
+              MapMat m1_beta,
+              MapMat mat_x_m1,
+              MapArr2D mu_beta_vb,
+              const MapArr1D sig2_beta_vb,
+              const MapArr1D tau_vb) {
 
-  const Eigen::ArrayXd c = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
+  const Arr1D c = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
   for (int j = 0; j < X.cols(); ++j) {
 
@@ -40,21 +43,21 @@ void coreLoop(const Eigen::Map<Eigen::MatrixXd> X,
 
 // for locus_z_core and locus_mix_core function
 // [[Rcpp::export]]
-void coreZLoop(const Eigen::Map<Eigen::MatrixXd> X,
-               const Eigen::Map<Eigen::MatrixXd> Y,
-               Eigen::Map<Eigen::ArrayXXd> gam_vb,
-               const Eigen::Map<Eigen::ArrayXd> log_om_vb,
-               const Eigen::Map<Eigen::ArrayXd> log_1_min_om_vb,
+void coreZLoop(const MapMat X,
+               const MapMat Y,
+               MapArr2D gam_vb,
+               const MapArr1D log_om_vb,
+               const MapArr1D log_1_min_om_vb,
                const double log_sig2_inv_vb,
-               const Eigen::Map<Eigen::ArrayXd> log_tau_vb,
-               Eigen::Map<Eigen::MatrixXd> m1_beta,
-               Eigen::Map<Eigen::MatrixXd> mat_x_m1,
-               Eigen::Map<Eigen::MatrixXd> mat_z_mu,
-               Eigen::Map<Eigen::ArrayXXd> mu_beta_vb,
-               const Eigen::Map<Eigen::ArrayXd> sig2_beta_vb,
-               const Eigen::Map<Eigen::ArrayXd> tau_vb) {
+               const MapArr1D log_tau_vb,
+               MapMat m1_beta,
+               MapMat mat_x_m1,
+               MapMat mat_z_mu,
+               MapArr2D mu_beta_vb,
+               const MapArr1D sig2_beta_vb,
+               const MapArr1D tau_vb) {
 
-  const Eigen::ArrayXd c = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
+  const Arr1D c = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
   for (int j = 0; j < X.cols(); ++j) {
 
@@ -77,18 +80,18 @@ void coreZLoop(const Eigen::Map<Eigen::MatrixXd> X,
 
 // for locus_logit_core function
 // [[Rcpp::export]]
-void coreLogitLoop(const Eigen::Map<Eigen::MatrixXd> X,
-                   const Eigen::Map<Eigen::ArrayXXd> Y,
-                   Eigen::Map<Eigen::ArrayXXd> gam_vb,
-                   const Eigen::Map<Eigen::ArrayXd> log_om_vb,
-                   const Eigen::Map<Eigen::ArrayXd> log_1_min_om_vb,
+void coreLogitLoop(const MapMat X,
+                   const MapArr2D Y,
+                   MapArr2D gam_vb,
+                   const MapArr1D log_om_vb,
+                   const MapArr1D log_1_min_om_vb,
                    const double log_sig2_inv_vb,
-                   Eigen::Map<Eigen::MatrixXd> m1_beta,
-                   Eigen::Map<Eigen::ArrayXXd> mat_x_m1,
-                   Eigen::Map<Eigen::ArrayXXd> mat_z_mu,
-                   Eigen::Map<Eigen::ArrayXXd> mu_beta_vb,
-                   const Eigen::Map<Eigen::ArrayXXd> psi_vb,
-                   const Eigen::Map<Eigen::ArrayXXd> sig2_beta_vb) {
+                   MapMat m1_beta,
+                   MapArr2D mat_x_m1,
+                   MapArr2D mat_z_mu,
+                   MapArr2D mu_beta_vb,
+                   const MapArr2D psi_vb,
+                   const MapArr2D sig2_beta_vb) {
 
   for (int j = 0; j < X.cols(); ++j) {
 
@@ -112,16 +115,16 @@ void coreLogitLoop(const Eigen::Map<Eigen::MatrixXd> X,
 
 // for locus_probit_core function
 // [[Rcpp::export]]
-void coreProbitLoop(const Eigen::Map<Eigen::MatrixXd> X,
-                    const Eigen::Map<Eigen::MatrixXd> W,
-                    Eigen::Map<Eigen::ArrayXXd> gam_vb,
-                    const Eigen::Map<Eigen::ArrayXd> log_om_vb,
-                    const Eigen::Map<Eigen::ArrayXd> log_1_min_om_vb,
+void coreProbitLoop(const MapMat X,
+                    const MapMat W,
+                    MapArr2D gam_vb,
+                    const MapArr1D log_om_vb,
+                    const MapArr1D log_1_min_om_vb,
                     const double log_sig2_inv_vb,
-                    Eigen::Map<Eigen::MatrixXd> m1_beta,
-                    Eigen::Map<Eigen::MatrixXd> mat_x_m1,
-                    Eigen::Map<Eigen::MatrixXd> mat_z_mu,
-                    Eigen::Map<Eigen::ArrayXXd> mu_beta_vb,
+                    MapMat m1_beta,
+                    MapMat mat_x_m1,
+                    MapMat mat_z_mu,
+                    MapArr2D mu_beta_vb,
                     const double sig2_beta_vb) {
 
   const double c = -(log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;

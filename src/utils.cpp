@@ -1,7 +1,8 @@
 #include "utils.h"
 
-Eigen::ArrayXd logOnePlusExp(const  Eigen::ArrayXd& x){
-  Eigen::ArrayXd m = x;
+Arr1D logOnePlusExp(const Arr1D& x){
+
+  Arr1D m = x;
   for (int i = 0; i < x.size(); ++i) {
     if (x[i] < 0) m[i] = 0;
   }
