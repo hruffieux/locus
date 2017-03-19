@@ -115,7 +115,7 @@
 #'
 #' list_hyper_g_v <- set_hyper(d, p, lambda = 1, nu = 1, a = NULL, b = NULL,
 #'                             eta = 1, kappa = apply(dat_g$phenos, 2, var),
-#'                             link = "identity", r = r, m0 = -1)
+#'                             link = "identity", r = r, m0 = 0)
 #'
 #' vb_g_v <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  V = V,
 #'                 link = "identity", list_hyper = list_hyper_g_v,
@@ -347,7 +347,9 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin) {
     m0 <- s02 <- s2 <- NULL
 
   } else {
-    m0 <- rep(-1, p)                              ### TODO set it using p_star ## similarly to a and b
+    m0 <- -sqrt(d+1) * qnorm(((p-p_star)/p)^(1/d)) # sparsity control under the assumption that s02 = 1
+    m0[!is.finite(m0)] <- -sqrt(d+1) * 8 # cases for which the argument of qnorm is very close to 1.
+    if (length(m0) == 1) m0 <- rep(m0, p)
 
     # prior info
     s02 <- 1 # prior variance for the intercept, bernoulli-probit

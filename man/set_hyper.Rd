@@ -141,7 +141,7 @@ V[bool_p0, ] <- rnorm(sum(bool_p0) * r, mean = 2) # informative annotations
 
 list_hyper_g_v <- set_hyper(d, p, lambda = 1, nu = 1, a = NULL, b = NULL,
                             eta = 1, kappa = apply(dat_g$phenos, 2, var),
-                            link = "identity", r = r, m0 = -1)
+                            link = "identity", r = r, m0 = 0)
 
 vb_g_v <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  V = V,
                 link = "identity", list_hyper = list_hyper_g_v,
