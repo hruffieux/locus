@@ -347,7 +347,6 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin) {
     m0 <- s02 <- s2 <- NULL
 
   } else {
-
     m0 <- rep(-1, p)                              ### TODO set it using p_star ## similarly to a and b
 
     # prior info

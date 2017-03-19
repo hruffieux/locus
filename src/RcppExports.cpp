@@ -6,90 +6,6 @@
 
 using namespace Rcpp;
 
-// coreLoop
-void coreLoop(const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::MatrixXd> Y, Eigen::Map<Eigen::ArrayXXd> gam_vb, const Eigen::Map<Eigen::ArrayXd> log_om_vb, const Eigen::Map<Eigen::ArrayXd> log_1_min_om_vb, const double log_sig2_inv_vb, const Eigen::Map<Eigen::ArrayXd> log_tau_vb, Eigen::Map<Eigen::MatrixXd> m1_beta, Eigen::Map<Eigen::MatrixXd> mat_x_m1, Eigen::Map<Eigen::ArrayXXd> mu_beta_vb, const Eigen::Map<Eigen::ArrayXd> sig2_beta_vb, const Eigen::Map<Eigen::ArrayXd> tau_vb);
-RcppExport SEXP locus_coreLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type gam_vb(gam_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_om_vb(log_om_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_1_min_om_vb(log_1_min_om_vbSEXP);
-    Rcpp::traits::input_parameter< const double >::type log_sig2_inv_vb(log_sig2_inv_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_tau_vb(log_tau_vbSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type m1_beta(m1_betaSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type mat_x_m1(mat_x_m1SEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mu_beta_vb(mu_beta_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type sig2_beta_vb(sig2_beta_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type tau_vb(tau_vbSEXP);
-    coreLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb);
-    return R_NilValue;
-END_RCPP
-}
-// coreZLoop
-void coreZLoop(const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::MatrixXd> Y, Eigen::Map<Eigen::ArrayXXd> gam_vb, const Eigen::Map<Eigen::ArrayXd> log_om_vb, const Eigen::Map<Eigen::ArrayXd> log_1_min_om_vb, const double log_sig2_inv_vb, const Eigen::Map<Eigen::ArrayXd> log_tau_vb, Eigen::Map<Eigen::MatrixXd> m1_beta, Eigen::Map<Eigen::MatrixXd> mat_x_m1, Eigen::Map<Eigen::MatrixXd> mat_z_mu, Eigen::Map<Eigen::ArrayXXd> mu_beta_vb, const Eigen::Map<Eigen::ArrayXd> sig2_beta_vb, const Eigen::Map<Eigen::ArrayXd> tau_vb);
-RcppExport SEXP locus_coreZLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type gam_vb(gam_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_om_vb(log_om_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_1_min_om_vb(log_1_min_om_vbSEXP);
-    Rcpp::traits::input_parameter< const double >::type log_sig2_inv_vb(log_sig2_inv_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_tau_vb(log_tau_vbSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type m1_beta(m1_betaSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type mat_x_m1(mat_x_m1SEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type mat_z_mu(mat_z_muSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mu_beta_vb(mu_beta_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type sig2_beta_vb(sig2_beta_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type tau_vb(tau_vbSEXP);
-    coreZLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb);
-    return R_NilValue;
-END_RCPP
-}
-// coreLogitLoop
-void coreLogitLoop(const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::ArrayXXd> Y, Eigen::Map<Eigen::ArrayXXd> gam_vb, const Eigen::Map<Eigen::ArrayXd> log_om_vb, const Eigen::Map<Eigen::ArrayXd> log_1_min_om_vb, const double log_sig2_inv_vb, Eigen::Map<Eigen::MatrixXd> m1_beta, Eigen::Map<Eigen::ArrayXXd> mat_x_m1, Eigen::Map<Eigen::ArrayXXd> mat_z_mu, Eigen::Map<Eigen::ArrayXXd> mu_beta_vb, const Eigen::Map<Eigen::ArrayXXd> psi_vb, const Eigen::Map<Eigen::ArrayXXd> sig2_beta_vb);
-RcppExport SEXP locus_coreLogitLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP psi_vbSEXP, SEXP sig2_beta_vbSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXXd> >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type gam_vb(gam_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_om_vb(log_om_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_1_min_om_vb(log_1_min_om_vbSEXP);
-    Rcpp::traits::input_parameter< const double >::type log_sig2_inv_vb(log_sig2_inv_vbSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type m1_beta(m1_betaSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mat_x_m1(mat_x_m1SEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mat_z_mu(mat_z_muSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mu_beta_vb(mu_beta_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXXd> >::type psi_vb(psi_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXXd> >::type sig2_beta_vb(sig2_beta_vbSEXP);
-    coreLogitLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, psi_vb, sig2_beta_vb);
-    return R_NilValue;
-END_RCPP
-}
-// coreProbitLoop
-void coreProbitLoop(const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::MatrixXd> W, Eigen::Map<Eigen::ArrayXXd> gam_vb, const Eigen::Map<Eigen::ArrayXd> log_om_vb, const Eigen::Map<Eigen::ArrayXd> log_1_min_om_vb, const double log_sig2_inv_vb, Eigen::Map<Eigen::MatrixXd> m1_beta, Eigen::Map<Eigen::MatrixXd> mat_x_m1, Eigen::Map<Eigen::MatrixXd> mat_z_mu, Eigen::Map<Eigen::ArrayXXd> mu_beta_vb, const double sig2_beta_vb);
-RcppExport SEXP locus_coreProbitLoop(SEXP XSEXP, SEXP WSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type X(XSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type W(WSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type gam_vb(gam_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_om_vb(log_om_vbSEXP);
-    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_1_min_om_vb(log_1_min_om_vbSEXP);
-    Rcpp::traits::input_parameter< const double >::type log_sig2_inv_vb(log_sig2_inv_vbSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type m1_beta(m1_betaSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type mat_x_m1(mat_x_m1SEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type mat_z_mu(mat_z_muSEXP);
-    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mu_beta_vb(mu_beta_vbSEXP);
-    Rcpp::traits::input_parameter< const double >::type sig2_beta_vb(sig2_beta_vbSEXP);
-    coreProbitLoop(X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb);
-    return R_NilValue;
-END_RCPP
-}
 // coreInfoLoop
 void coreInfoLoop(const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::MatrixXd> Y, Eigen::Map<Eigen::ArrayXXd> gam_vb, const Eigen::Map<Eigen::ArrayXXd> log_Phi_mat_v_mu, const Eigen::Map<Eigen::ArrayXXd> log_1_min_Phi_mat_v_mu, const double log_sig2_inv_vb, const Eigen::Map<Eigen::ArrayXd> log_tau_vb, Eigen::Map<Eigen::MatrixXd> m1_beta, Eigen::Map<Eigen::MatrixXd> mat_x_m1, Eigen::Map<Eigen::ArrayXXd> mu_beta_vb, const Eigen::Map<Eigen::ArrayXd> sig2_beta_vb, const Eigen::Map<Eigen::ArrayXd> tau_vb);
 RcppExport SEXP locus_coreInfoLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_Phi_mat_v_muSEXP, SEXP log_1_min_Phi_mat_v_muSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
@@ -171,6 +87,90 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mu_beta_vb(mu_beta_vbSEXP);
     Rcpp::traits::input_parameter< const double >::type sig2_beta_vb(sig2_beta_vbSEXP);
     coreProbitInfoLoop(X, Wy, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb);
+    return R_NilValue;
+END_RCPP
+}
+// coreLoop
+void coreLoop(const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::MatrixXd> Y, Eigen::Map<Eigen::ArrayXXd> gam_vb, const Eigen::Map<Eigen::ArrayXd> log_om_vb, const Eigen::Map<Eigen::ArrayXd> log_1_min_om_vb, const double log_sig2_inv_vb, const Eigen::Map<Eigen::ArrayXd> log_tau_vb, Eigen::Map<Eigen::MatrixXd> m1_beta, Eigen::Map<Eigen::MatrixXd> mat_x_m1, Eigen::Map<Eigen::ArrayXXd> mu_beta_vb, const Eigen::Map<Eigen::ArrayXd> sig2_beta_vb, const Eigen::Map<Eigen::ArrayXd> tau_vb);
+RcppExport SEXP locus_coreLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type gam_vb(gam_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_om_vb(log_om_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_1_min_om_vb(log_1_min_om_vbSEXP);
+    Rcpp::traits::input_parameter< const double >::type log_sig2_inv_vb(log_sig2_inv_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_tau_vb(log_tau_vbSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type m1_beta(m1_betaSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type mat_x_m1(mat_x_m1SEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mu_beta_vb(mu_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type sig2_beta_vb(sig2_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type tau_vb(tau_vbSEXP);
+    coreLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb);
+    return R_NilValue;
+END_RCPP
+}
+// coreZLoop
+void coreZLoop(const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::MatrixXd> Y, Eigen::Map<Eigen::ArrayXXd> gam_vb, const Eigen::Map<Eigen::ArrayXd> log_om_vb, const Eigen::Map<Eigen::ArrayXd> log_1_min_om_vb, const double log_sig2_inv_vb, const Eigen::Map<Eigen::ArrayXd> log_tau_vb, Eigen::Map<Eigen::MatrixXd> m1_beta, Eigen::Map<Eigen::MatrixXd> mat_x_m1, Eigen::Map<Eigen::MatrixXd> mat_z_mu, Eigen::Map<Eigen::ArrayXXd> mu_beta_vb, const Eigen::Map<Eigen::ArrayXd> sig2_beta_vb, const Eigen::Map<Eigen::ArrayXd> tau_vb);
+RcppExport SEXP locus_coreZLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type gam_vb(gam_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_om_vb(log_om_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_1_min_om_vb(log_1_min_om_vbSEXP);
+    Rcpp::traits::input_parameter< const double >::type log_sig2_inv_vb(log_sig2_inv_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_tau_vb(log_tau_vbSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type m1_beta(m1_betaSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type mat_x_m1(mat_x_m1SEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type mat_z_mu(mat_z_muSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mu_beta_vb(mu_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type sig2_beta_vb(sig2_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type tau_vb(tau_vbSEXP);
+    coreZLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb);
+    return R_NilValue;
+END_RCPP
+}
+// coreLogitLoop
+void coreLogitLoop(const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::ArrayXXd> Y, Eigen::Map<Eigen::ArrayXXd> gam_vb, const Eigen::Map<Eigen::ArrayXd> log_om_vb, const Eigen::Map<Eigen::ArrayXd> log_1_min_om_vb, const double log_sig2_inv_vb, Eigen::Map<Eigen::MatrixXd> m1_beta, Eigen::Map<Eigen::ArrayXXd> mat_x_m1, Eigen::Map<Eigen::ArrayXXd> mat_z_mu, Eigen::Map<Eigen::ArrayXXd> mu_beta_vb, const Eigen::Map<Eigen::ArrayXXd> psi_vb, const Eigen::Map<Eigen::ArrayXXd> sig2_beta_vb);
+RcppExport SEXP locus_coreLogitLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP psi_vbSEXP, SEXP sig2_beta_vbSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXXd> >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type gam_vb(gam_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_om_vb(log_om_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_1_min_om_vb(log_1_min_om_vbSEXP);
+    Rcpp::traits::input_parameter< const double >::type log_sig2_inv_vb(log_sig2_inv_vbSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type m1_beta(m1_betaSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mat_x_m1(mat_x_m1SEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mat_z_mu(mat_z_muSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mu_beta_vb(mu_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXXd> >::type psi_vb(psi_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXXd> >::type sig2_beta_vb(sig2_beta_vbSEXP);
+    coreLogitLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, psi_vb, sig2_beta_vb);
+    return R_NilValue;
+END_RCPP
+}
+// coreProbitLoop
+void coreProbitLoop(const Eigen::Map<Eigen::MatrixXd> X, const Eigen::Map<Eigen::MatrixXd> W, Eigen::Map<Eigen::ArrayXXd> gam_vb, const Eigen::Map<Eigen::ArrayXd> log_om_vb, const Eigen::Map<Eigen::ArrayXd> log_1_min_om_vb, const double log_sig2_inv_vb, Eigen::Map<Eigen::MatrixXd> m1_beta, Eigen::Map<Eigen::MatrixXd> mat_x_m1, Eigen::Map<Eigen::MatrixXd> mat_z_mu, Eigen::Map<Eigen::ArrayXXd> mu_beta_vb, const double sig2_beta_vb);
+RcppExport SEXP locus_coreProbitLoop(SEXP XSEXP, SEXP WSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::MatrixXd> >::type W(WSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type gam_vb(gam_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_om_vb(log_om_vbSEXP);
+    Rcpp::traits::input_parameter< const Eigen::Map<Eigen::ArrayXd> >::type log_1_min_om_vb(log_1_min_om_vbSEXP);
+    Rcpp::traits::input_parameter< const double >::type log_sig2_inv_vb(log_sig2_inv_vbSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type m1_beta(m1_betaSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type mat_x_m1(mat_x_m1SEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::MatrixXd> >::type mat_z_mu(mat_z_muSEXP);
+    Rcpp::traits::input_parameter< Eigen::Map<Eigen::ArrayXXd> >::type mu_beta_vb(mu_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const double >::type sig2_beta_vb(sig2_beta_vbSEXP);
+    coreProbitLoop(X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb);
     return R_NilValue;
 END_RCPP
 }

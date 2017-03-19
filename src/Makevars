@@ -2,7 +2,7 @@
 ## no user-facing library. The include path to headers is already set by R.
 
 ## strips debug symbols (smaller .so size)
-PKG_LIBS=-Wl,-S
+PKG_LIBS = -Wl,-S
 
 ## With R 3.1.0 or later, you can uncomment the following line to tell R to
 ## enable compilation with C++11 (or even C++14) where available
