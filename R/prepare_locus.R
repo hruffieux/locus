@@ -11,7 +11,10 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit,
   check_structure_(maxit, "vector", "numeric", 1)
   check_natural_(maxit)
 
-  check_structure_(batch, "vector", "logical", 1)
+  if (is.null(Z) & is.null(V) & link == "identity")
+    stopifnot(batch %in% c("y", "x", "both", "none"))
+  else if (batch != "y")
+    stop ("This type of batch update is for now only implemented for V and Z NULL, and identity link.")
 
   check_structure_(verbose, "vector", "logical", 1)
 

@@ -51,7 +51,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
       W <- update_W_info_(gam_vb, mat_v_mu)
 
-      if (batch) { # some updates are made batch-wise
+      if (batch == "y") { # some updates are made batch-wise
 
         log_Phi_mat_v_mu <- pnorm(mat_v_mu, log.p = TRUE)
         log_1_min_Phi_mat_v_mu <- pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE)

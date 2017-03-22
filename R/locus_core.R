@@ -8,7 +8,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
   p <- ncol(X)
 
   with(list_hyper, { # list_init not used with the with() function to avoid
-                     # copy-on-write for large objects
+    # copy-on-write for large objects
 
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
     m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
@@ -48,7 +48,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       digam_sum <- digamma(a + b + d)
 
-      if (batch) { # some updates are made batch-wise
+      if (batch == "y") { # some updates are made batch-wise
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -59,7 +59,51 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
         rs_gam <- rowSums(gam_vb)
 
-      } else {
+      } else if (batch == "x") {
+
+        log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
+        log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
+
+        for (k in 1:d) {
+
+          # mu_beta_vb[, k] <- sapply(1:p, function(j) {
+          #   sig2_beta_vb[k] * tau_vb[k] * crossprod(Y[, k] - mat_x_m1[, k] + X[, j] * m1_beta[j, k], X[, j])
+          # })
+
+          mu_beta_vb[, k] <- sig2_beta_vb[k] * tau_vb[k] * (crossprod(Y[, k] - mat_x_m1[, k], X) + (n - 1) * m1_beta[, k]) # last term: X_j^T X_j = n - 1
+
+
+          gam_vb[, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb - log_om_vb -
+                                                  log_tau_vb[k] / 2 - log_sig2_inv_vb / 2 -
+                                                  mu_beta_vb[, k] ^ 2 / (2 * sig2_beta_vb[k]) -
+                                                  log(sig2_beta_vb[k]) / 2))
+
+          m1_beta[, k] <- mu_beta_vb[, k] * gam_vb[, k]
+
+          mat_x_m1[, k] <- X %*% m1_beta[, k]
+
+        }
+
+        rs_gam <- rowSums(gam_vb)
+
+      } else if (batch == "both"){
+
+        log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
+        log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
+
+
+        mu_beta_vb <- sweep(crossprod(X, Y - mat_x_m1) + (n - 1) * m1_beta, 2, sig2_beta_vb * tau_vb, `*`)
+
+        gam_vb <- exp(-log_one_plus_exp_(sweep(sweep(sweep(-mu_beta_vb ^ 2, 2, (2 * sig2_beta_vb), `/`), 2,
+                                                     (log_tau_vb / 2 + log(sig2_beta_vb) / 2),  `-`), 1,
+                                               log_1_min_om_vb - log_om_vb, `+`) - log_sig2_inv_vb / 2))
+
+        m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
+        mat_x_m1 <- update_mat_x_m1_(X, m1_beta)
+
+        rs_gam <- rowSums(gam_vb)
+
+      } else { # no batch
 
         for (k in 1:d) {
 
@@ -88,6 +132,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
         }
 
       }
+
 
       m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
@@ -175,8 +220,8 @@ lower_bound_ <- function(Y, X, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, nu,
              gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
 
   G <- sum((eta - eta_vb) * log_tau_vb -
-            (kappa - kappa_vb) * tau_vb + eta * log(kappa) -
-            eta_vb * log(kappa_vb) - lgamma(eta) + lgamma(eta_vb))
+             (kappa - kappa_vb) * tau_vb + eta * log(kappa) -
+             eta_vb * log(kappa_vb) - lgamma(eta) + lgamma(eta_vb))
 
   H <- (lambda - lambda_vb) * log_sig2_inv_vb - (nu - nu_vb) * sig2_inv_vb +
     lambda * log(nu) - lambda_vb * log(nu_vb) - lgamma(lambda) +

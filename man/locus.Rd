@@ -7,7 +7,7 @@
 locus(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL, list_cv = NULL,
   list_blocks = NULL, user_seed = NULL, tol = 1e-04, maxit = 1000,
-  batch = TRUE, save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
+  batch = "y", save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of
@@ -73,8 +73,10 @@ seed set.}
 
 \item{maxit}{Maximum number of iterations allowed.}
 
-\item{batch}{If \code{TRUE} a fast batch updating scheme is used
-(recommended).}
+\item{batch}{If \code{"y"}, all responses are updated by batch (recommended),
+if \code{"x"}, all candidate predictors are updated by batch, if
+\code{"both"} responses and candidate predictors are updated by batch, if
+\code{"none"}, no fast batch updating scheme is used (not recommended).}
 
 \item{save_hyper}{If \code{TRUE}, the hyperparameters used for the model are
 saved as output.}

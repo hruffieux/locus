@@ -62,8 +62,10 @@
 #'   seed set.
 #' @param tol Tolerance for the stopping criterion.
 #' @param maxit Maximum number of iterations allowed.
-#' @param batch If \code{TRUE} a fast batch updating scheme is used
-#'   (recommended).
+#' @param batch If \code{"y"}, all responses are updated by batch (recommended),
+#'   if \code{"x"}, all candidate predictors are updated by batch, if
+#'   \code{"both"} responses and candidate predictors are updated by batch, if
+#'   \code{"none"}, no fast batch updating scheme is used (not recommended).
 #' @param save_hyper If \code{TRUE}, the hyperparameters used for the model are
 #'   saved as output.
 #' @param save_init If \code{TRUE}, the initial variational parameters used for
@@ -180,7 +182,7 @@
 locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, user_seed = NULL,
-                  tol = 1e-4, maxit = 1000, batch = TRUE, save_hyper = FALSE,
+                  tol = 1e-4, maxit = 1000, batch = "y", save_hyper = FALSE,
                   save_init = FALSE, verbose = TRUE) { ##
 
   if (verbose) cat("== Preparing the data ... \n")

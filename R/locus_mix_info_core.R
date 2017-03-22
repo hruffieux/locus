@@ -89,7 +89,7 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
 
       W <- update_W_info_(gam_vb, mat_v_mu)
 
-      if (batch) { # some updates are made batch-wise
+      if (batch == "y") { # some updates are made batch-wise
 
         for (i in 1:q) {
 

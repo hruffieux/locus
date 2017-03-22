@@ -7,7 +7,7 @@
 generate_null(n_perm, Y, X, p0_av, Z = NULL, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
   list_blocks = NULL, user_seed = NULL, tol = 0.001, maxit = 1000,
-  batch = TRUE, verbose = TRUE, results_dir = NULL, n_cpus = 1)
+  batch = "y", verbose = TRUE, results_dir = NULL, n_cpus = 1)
 }
 \arguments{
 \item{n_perm}{Number of permuted datasets on which \code{\link{locus}} is
@@ -63,7 +63,10 @@ partitioning.}
 
 \item{maxit}{Maximum number of iterations allowed.}
 
-\item{batch}{If \code{TRUE} a fast batch updating scheme is used (recommended).}
+\item{batch}{If \code{"y"}, all responses are updated by batch (recommended),
+if \code{"x"}, all candidate predictors are updated by batch, if
+\code{"both"} responses and candidate predictors are updated by batch, if
+\code{"none"}, no fast batch updating scheme is used (not recommended).}
 
 \item{verbose}{If \code{TRUE}, messages are displayed during execution.}
 

@@ -59,7 +59,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
       digam_sum <- digamma(a + b + d)
 
-      if (batch) { # some updates are made batch-wise
+      if (batch == "y") { # some updates are made batch-wise
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)

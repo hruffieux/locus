@@ -67,7 +67,7 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
       W <- update_W_info_(gam_vb, mat_v_mu)
 
-      if (batch) { # some updates are made batch-wise
+      if (batch == "y") { # some updates are made batch-wise
 
         for (i in 1:q) {
           mat_z_mu <- mat_z_mu - tcrossprod(Z[, i], mu_alpha_vb[i, ])
