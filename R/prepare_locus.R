@@ -501,8 +501,8 @@ prepare_cv_ <- function(list_cv, n, p, r, bool_rmvd_x, p0_av, link, list_hyper,
                "cross-validation step. ***",
                sep=""))
 
-  if (link != "identity")
-    stop("Cross-validation implemented only for purely continuous response. Please, set list_cv to NULL.")
+  if (link == "logit")
+    stop("Cross-validation not implemented only for logistic regression. Please, set list_cv to NULL or use probit regression.")
 
   if (!is.null(r))
     stop("Cross-validation implemented only models with no external information (V set to NULL). Please, set list_cv to NULL.")

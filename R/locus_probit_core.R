@@ -159,7 +159,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
       create_named_list_(a, a_vb, b, b_vb, gam_vb, lambda, nu, phi, phi_vb,
                          sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, xi,
                          zeta2_inv_vb, mu_alpha_vb, m1_beta, m2_alpha, m2_beta,
-                         mat_x_m1, mat_z_mu, sum_gam)
+                         sum_gam)
     } else {
 
       names_x <- colnames(X)

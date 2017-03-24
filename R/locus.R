@@ -234,7 +234,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
     list_cv <- prepare_cv_(list_cv, n, p, r, bool_rmvd_x, p0_av, link,
                            list_hyper, list_init, verbose)
 
-    p_star <- cross_validate_(Y, X, Z, list_cv, user_seed, verbose)
+    p_star <- cross_validate_(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
   } else {
 

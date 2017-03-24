@@ -190,8 +190,7 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
       create_named_list_(ind_bin, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
                          mu_alpha_vb, nu, phi, phi_vb, sig2_alpha_vb,
                          sig2_beta_vb, sig2_inv_vb, tau_vb, log_tau_vb, xi,
-                         zeta2_inv_vb, m2_alpha, m1_beta, m2_beta, mat_x_m1,
-                         mat_z_mu, sum_gam)
+                         zeta2_inv_vb, m2_alpha, m1_beta, m2_beta, sum_gam)
     } else {
       names_x <- colnames(X)
       names_y <- colnames(W)
