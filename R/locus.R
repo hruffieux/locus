@@ -612,14 +612,17 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     names_mat <- "gam_vb"
 
-    vb <- c(lapply(names_vec, function(key) do.call(c, lapply(list_vb, `[[`, key))),
-            lapply(names_mat, function(key) do.call(rbind, lapply(list_vb, `[[`, key))))
+    vb <- c(lapply(names_vec, function(key) {
+      vec <- do.call(c, lapply(list_vb, `[[`, key))
+      names(vec) <- paste("bl_", 1:n_bl, sep = "")
+      vec}),
+      lapply(names_mat, function(key) do.call(rbind, lapply(list_vb, `[[`, key))))
 
     names(vb) <- c(names_vec, names_mat)
 
     if (!nr) {
       list_mu_c_vb <- lapply(list_vb, `[[`, "mu_c_vb")
-      names(list_mu_c_vb) <- paste("bl_", 1:list_blocks$n_bl, sep = "")
+      names(list_mu_c_vb) <- paste("bl_", 1:n_bl, sep = "")
       vb <- c(vb, "list_mu_c_vb" = list(list_mu_c_vb))
     }
 
