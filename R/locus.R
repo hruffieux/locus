@@ -72,8 +72,6 @@
 #'
 #' @return An object of class "\code{vb}" containing the following variational
 #'   estimates and settings:
-#'  \item{lb_opt}{Optimized variational lower bound for the marginal
-#'                log-likelihood.}
 #'  \item{gam_vb}{Posterior inclusion probability matrix of dimension p x d.
 #'                Entry (s, t) corresponds to the posterior probability of
 #'                association between candidate predictor s and response t.}
@@ -95,6 +93,11 @@
 #'  \item{om_vb}{Vector of length p containing the posterior mean of omega.
 #'               Entry s controls the proportion of responses associated with
 #'               candidate predictor s. NULL if \code{V} is non-\code{NULL}.}
+#'  \item{converged}{A boolean indicating whether the algorithm has converged
+#'                   before reaching \code{maxit} iterations.}
+#'  \item{it}{Final number of iterations.}
+#'  \item{lb_opt}{Optimized variational lower bound for the marginal
+#'                log-likelihood.}
 #'  \item{p_star}{Vector of length 1 or p defining the applied sparsity control.}
 #'  \item{rmvd_cst_x, rmvd_cst_z}{Vectors containing the indices of constant
 #'                                variables in \code{X} (resp. \code{Z}) removed
@@ -439,13 +442,16 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
   } else {
 
-
     list_pos_bl <- split(1:p, vec_fac_bl)
 
     split_bl_hyper <- lapply(list_pos_bl, function(pos_bl) {
       list_hyper$p_hyper <- length(n_bl)
-      list_hyper$a <- list_hyper$a[pos_bl]
-      list_hyper$b <- list_hyper$b[pos_bl]
+      if (nr) {
+        list_hyper$a <- list_hyper$a[pos_bl]
+        list_hyper$b <- list_hyper$b[pos_bl]
+      } else {
+        list_hyper$m0 <- list_hyper$m0[pos_bl]
+      }
       list_hyper
     })
 
@@ -455,7 +461,8 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
       list_init$mu_beta_vb <- list_init$mu_beta_vb[pos_bl,, drop = FALSE]
       if (link == "logit")
         list_init$sig2_beta_vb <- list_init$sig2_beta_vb[pos_bl,, drop = FALSE]
-
+      if (!nr)
+        list_init$mu_c0_vb <- list_init$mu_c0_vb[pos_bl]
       list_init
     })
 
@@ -463,48 +470,132 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
       X_bl <- X[, list_pos_bl[[k]], drop = FALSE]
 
+      if (!nr) {
+        V_bl <- scale(V[list_pos_bl[[k]],, drop = FALSE]) # we will assume that it is scaled in the algo
+
+        list_V_bl_cst <- rm_constant_(V_bl, verbose = FALSE)
+        V_bl <- list_V_bl_cst$mat
+        bool_cst_v_bl <- list_V_bl_cst$bool_cst
+        rmvd_cst_v_bl <- list_V_bl_cst$rmvd_cst
+
+        list_V_bl_coll <- rm_collinear_(V_bl, verbose = FALSE)
+        V_bl <- list_V_bl_coll$mat
+        r <- ncol(V_bl)
+        bool_coll_v_bl <- list_V_bl_coll$bool_coll
+        rmvd_coll_v_bl <- list_V_bl_coll$rmvd_coll
+
+        bool_rmvd_v_bl <- bool_cst_v_bl
+        bool_rmvd_v_bl[!bool_cst_v_bl] <- bool_coll_v_bl
+
+        if (sum(!bool_rmvd_v_bl) == 0)
+          stop(paste("There exist one or more blocks for which no non-constant ",
+                     "annotation variables remain. Try to use less blocks.", sep = ""))
+      }
+
       list_hyper_bl <- split_bl_hyper[[k]]
       list_init_bl <- split_bl_init[[k]]
+      if (!nr) list_init_bl$mu_c_vb <- list_init_bl$mu_c_vb[!bool_rmvd_v_bl,, drop = FALSE]
 
       if (link == "identity") {
-        if (is.null(q))
+
+        if (nq & nr) {
+
           vb_bl <- locus_core_(Y, X_bl, list_hyper_bl,
                                list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
                                list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
                                tol, maxit, batch, verbose = FALSE)
-        else
+
+        } else if (nq) { # r non-null
+
+          vb_bl <- locus_info_core_(Y, X_bl, V_bl, list_hyper_bl,
+                                    list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
+                                    list_init_bl$mu_c0_vb, list_init_bl$mu_c_vb,
+                                    list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
+                                    tol, maxit, batch, verbose = FALSE)
+
+        } else if (nr) { # q non-null
+
           vb_bl <- locus_z_core_(Y, X_bl, Z, list_hyper_bl, list_init_bl$gam_vb,
                                  list_init_bl$mu_alpha_vb,list_init_bl$mu_beta_vb,
                                  list_init_bl$sig2_alpha_vb,
                                  list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
                                  tol, maxit, batch, verbose = FALSE)
 
+        } else { # both q and r non - null
+
+          vb_bl <- locus_z_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
+                                      list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                      list_init_bl$mu_beta_vb, list_init_bl$mu_c0_vb,
+                                      list_init_bl$mu_c_vb, list_init_bl$sig2_alpha_vb,
+                                      list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
+                                      tol, maxit, batch, verbose = FALSE)
+        }
+
+
       } else if (link == "logit") {
 
-        vb_bl <- locus_logit_core_(Y, X_bl, Z, list_hyper_bl,
-                                   list_init_bl$chi_vb, list_init_bl$gam_vb,
-                                   list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
-                                   list_init_bl$sig2_alpha_vb,
-                                   list_init_bl$sig2_beta_vb, tol, maxit, batch,
-                                   verbose = FALSE)
+        if(nr) {
+
+          vb_bl <- locus_logit_core_(Y, X_bl, Z, list_hyper_bl,
+                                     list_init_bl$chi_vb, list_init_bl$gam_vb,
+                                     list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
+                                     list_init_bl$sig2_alpha_vb,
+                                     list_init_bl$sig2_beta_vb, tol, maxit, batch,
+                                     verbose = FALSE)
+
+        } else {
+
+          vb_bl <- locus_logit_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
+                                          list_init_bl$chi_vb, list_init_bl$gam_vb,
+                                          list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
+                                          list_init_bl$mu_c0_vb, list_init_bl$mu_c_vb,
+                                          list_init_bl$sig2_alpha_vb,
+                                          list_init_bl$sig2_beta_vb, tol, maxit,
+                                          batch, verbose = FALSE)
+        }
+
 
       } else  if (link == "probit") {
 
-        vb_bl <- locus_probit_core_(Y, X_bl, Z, list_hyper_bl,
-                                    list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
-                                    list_init_bl$mu_beta_vb,
-                                    list_init_bl$sig2_alpha_vb,
-                                    list_init_bl$sig2_beta_vb, tol, maxit, batch,
-                                    verbose = FALSE)
+        if (nr) {
+          vb_bl <- locus_probit_core_(Y, X_bl, Z, list_hyper_bl,
+                                      list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                      list_init_bl$mu_beta_vb,
+                                      list_init_bl$sig2_alpha_vb,
+                                      list_init_bl$sig2_beta_vb, tol, maxit, batch,
+                                      verbose = FALSE)
+
+        } else {
+
+          vb_bl <- locus_probit_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
+                                           list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                           list_init_bl$mu_beta_vb, list_init_bl$mu_c0_vb,
+                                           list_init_bl$mu_c_vb, list_init_bl$sig2_alpha_vb,
+                                           list_init_bl$sig2_beta_vb, tol, maxit,
+                                           batch, verbose = FALSE)
+        }
+
 
       } else {
 
-        vb_bl <- locus_mix_core_(Y, X_bl, Z, ind_bin, list_hyper_bl,
-                                 list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
-                                 list_init_bl$mu_beta_vb,
-                                 list_init_bl$sig2_alpha_vb,
-                                 list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                                 tol, maxit, batch, verbose = FALSE)
+        if (nr) {
+
+          vb_bl <- locus_mix_core_(Y, X_bl, Z, ind_bin, list_hyper_bl,
+                                   list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                   list_init_bl$mu_beta_vb,
+                                   list_init_bl$sig2_alpha_vb,
+                                   list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
+                                   tol, maxit, batch, verbose = FALSE)
+
+        } else {
+
+          vb_bl <- locus_mix_info_core_(Y, X_bl, Z, V_bl, ind_bin, list_hyper_bl,
+                                        list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                        list_init_bl$mu_beta_vb, list_init_bl$mu_c0_vb,
+                                        list_init_bl$mu_c_vb, list_init_bl$sig2_alpha_vb,
+                                        list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
+                                        tol, maxit, batch, verbose = FALSE)
+        }
       }
 
       vb_bl
@@ -513,13 +604,24 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     list_vb <- parallel::mclapply(1:n_bl, function(k) locus_bl_(k), mc.cores = n_cpus)
 
-    names_vec <- c("lb_opt", "om_vb", "p_star")
+    names_vec <- c("converged", "it", "lb_opt")
+    if (nr)
+      names_vec <- c(names_vec, "om_vb")
+    else
+      names_vec <- c(names_vec, "mu_c0_vb")
+
     names_mat <- "gam_vb"
 
     vb <- c(lapply(names_vec, function(key) do.call(c, lapply(list_vb, `[[`, key))),
             lapply(names_mat, function(key) do.call(rbind, lapply(list_vb, `[[`, key))))
 
     names(vb) <- c(names_vec, names_mat)
+
+    if (!nr) {
+      list_mu_c_vb <- lapply(list_vb, `[[`, "mu_c_vb")
+      names(list_mu_c_vb) <- paste("bl_", 1:list_blocks$n_bl, sep = "")
+      vb <- c(vb, "list_mu_c_vb" = list(list_mu_c_vb))
+    }
 
   }
 

@@ -87,8 +87,6 @@ the inference are saved as output.}
 \value{
 An object of class "\code{vb}" containing the following variational
   estimates and settings:
- \item{lb_opt}{Optimized variational lower bound for the marginal
-               log-likelihood.}
  \item{gam_vb}{Posterior inclusion probability matrix of dimension p x d.
                Entry (s, t) corresponds to the posterior probability of
                association between candidate predictor s and response t.}
@@ -110,6 +108,11 @@ An object of class "\code{vb}" containing the following variational
  \item{om_vb}{Vector of length p containing the posterior mean of omega.
               Entry s controls the proportion of responses associated with
               candidate predictor s. NULL if \code{V} is non-\code{NULL}.}
+ \item{converged}{A boolean indicating whether the algorithm has converged
+                  before reaching \code{maxit} iterations.}
+ \item{it}{Final number of iterations.}
+ \item{lb_opt}{Optimized variational lower bound for the marginal
+               log-likelihood.}
  \item{p_star}{Vector of length 1 or p defining the applied sparsity control.}
  \item{rmvd_cst_x, rmvd_cst_z}{Vectors containing the indices of constant
                                variables in \code{X} (resp. \code{Z}) removed

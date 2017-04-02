@@ -564,11 +564,6 @@ prepare_blocks_ <- function(list_blocks, r, bool_rmvd_x, list_cv) {
                "all the candidate predictors (sufficient RAM required). ***",
                sep=""))
 
-  if (!is.null(r))
-    stop(paste("Inference on partitioned predictor space implemented only models ",
-               "with no external information (V set to NULL). Please, set list_blocks to NULL.", sep = ""))
-
-
   if (!is.null(list_cv))
     stop(paste("list_cv must be NULL if non NULL ",
                "list_blocks is provided (parallel applications of locus on blocks of candidate predictors).\n",
