@@ -83,9 +83,18 @@
 #'                     \code{link = "logit"} or
 #'                     \code{link = "mix"} also for the intercept).
 #'                     \code{NULL} if \code{Z} is \code{NULL}.}
+#'  \item{mu_c0_vb}{Vector of length p whose entries are the posterior intercept
+#'                  coefficients at the level of probabilities of associations.
+#'                  Entry s represents the control of the proportion of
+#'                  responses associated with candidate predictor s which is not
+#'                  due to external annotations. \code{NULL} if \code{V} is
+#'                  \code{NULL}.}
+#'  \item{mu_c_vb}{Matrix of dimension r x d. Entry (l, k) contains the effect
+#'                 of annotation l for response k on the probabilities of
+#'                 associations. \code{NULL} if \code{V} is \code{NULL}.}
 #'  \item{om_vb}{Vector of length p containing the posterior mean of omega.
 #'               Entry s controls the proportion of responses associated with
-#'               candidate predictor s.}
+#'               candidate predictor s. NULL if \code{V} is non-\code{NULL}.}
 #'  \item{rmvd_cst_x, rmvd_cst_z}{Vectors containing the indices of constant
 #'                                variables in \code{X} (resp. \code{Z}) removed
 #'                                prior to the analysis.}
