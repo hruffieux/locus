@@ -110,6 +110,7 @@ An object of class "\code{vb}" containing the following variational
  \item{om_vb}{Vector of length p containing the posterior mean of omega.
               Entry s controls the proportion of responses associated with
               candidate predictor s. NULL if \code{V} is non-\code{NULL}.}
+ \item{p_star}{Vector of length 1 or p defining the applied sparsity control.}
  \item{rmvd_cst_x, rmvd_cst_z}{Vectors containing the indices of constant
                                variables in \code{X} (resp. \code{Z}) removed
                                prior to the analysis.}
