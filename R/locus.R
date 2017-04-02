@@ -259,7 +259,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     if (is.null(list_hyper) | is.null(list_init)) {
 
-      p_star <- convert_p0_av_(p0_av, p, verbose)
+      p_star <- convert_p0_av_(p0_av, p, list_blocks, verbose)
 
       # remove the entries corresponding to the removed constant covariates in X (if any)
       if (length(p_star) > 1) p_star <- p_star[!bool_rmvd_x]

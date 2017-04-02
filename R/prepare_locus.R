@@ -178,7 +178,7 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit,
 }
 
 
-convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
+convert_p0_av_ <- function(p0_av, p, list_blocks, verbose, eps = .Machine$double.eps^0.5) {
 
   check_structure_(p0_av, "vector", "numeric", c(1, p))
 
@@ -217,7 +217,7 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
                            "response. \n\n",
                            sep = ""))
 
-    if (any(p0_av) < eps | any(p0_av) > 1 - eps)
+    if (any(p0_av < eps) | any(p0_av > 1 - eps))
       stop(paste("Invalid provided vector of p0_av.\n",
                  "All entries must lie between 0 and 1 (strictly).",
                  sep = ""))
@@ -231,6 +231,15 @@ convert_p0_av_ <- function(p0_av, p, verbose, eps = .Machine$double.eps^0.5) {
 
     p_star <- p0_av * p
 
+  }
+
+  # the sparsity level needs to be adapted when block-wise inference is used
+  # otherwise the selected models may be too small (empirical considerations here)
+  if (!is.null(list_blocks)) {
+    p_star <- sapply(p_star, function(p_star_j) min(p_star_j * list_blocks$n_bl, 0.975 * p))
+
+    if (verbose) cat(paste("The sparsity level is adapted for block-wise inference ",
+                           "to ensure only sufficiently large models are selected.\n\n", sep = ""))
   }
 
   p_star
@@ -628,6 +637,9 @@ set_blocks <- function(p, pos_bl, n_cpus, verbose = TRUE) {
   check_structure_(pos_bl, "vector", "numeric")
   check_natural_(pos_bl)
 
+  if (length(pos_bl) > 25)
+    warning(paste("The provided number of blocks may be too large for accurate ",
+                  "inference. If possible, use less blocks.", sep = ""))
 
   if (any(pos_bl < 1) | any(pos_bl > p))
     stop("The positions provided in pos_bl must range between 1 and total number of variables in X, p.")
