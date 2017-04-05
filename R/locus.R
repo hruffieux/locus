@@ -7,11 +7,19 @@
 #' The responses can be purely continuous, purely binary (logit or probit link
 #' fits), or a mix of continuous and binary variables.
 #'
+#'
+#' The optimization is made using efficient block coordinate ascent schemes, for
+#' which convergence is ensured as the objective (lower_bound) in multiconcave
+#' for the selected blocks, i.e., it is concave in each block of parameters
+#' whose updates are made simultaneously, see Wu et al. (reference Section
+#' below).
+#'
 #' The continuous response variables in \code{Y} (if any) will be centered
 #' before application of the variational algorithm, and the candidate predictors
 #' and covariates resp. in \code{X} and \code{Z} will be standardized. An
 #' intercept will be added if \code{link} is \code{"logit"}, \code{"probit"} or
 #' \code{"mix"} (do not supply it in \code{X} or \code{Z}).
+#'
 #'
 #' @param Y Response data matrix of dimension n x d, where n is the number of
 #'   observations and d is the number of response variables.
@@ -64,8 +72,8 @@
 #' @param maxit Maximum number of iterations allowed.
 #' @param batch If \code{"y"}, all responses are updated by batch (recommended),
 #'   if \code{"x"}, all candidate predictors are updated by batch, if
-#'   \code{"both"} responses and candidate predictors are updated by batch, if
-#'   \code{"none"}, no fast batch updating scheme is used (not recommended).
+#'   \code{"x-y"} responses and candidate predictors are updated by batch, if
+#'   \code{"0"}, no fast batch updating scheme is used (not recommended).
 #' @param save_hyper If \code{TRUE}, the hyperparameters used for the model are
 #'   saved as output.
 #' @param save_init If \code{TRUE}, the initial variational parameters used for
@@ -186,6 +194,15 @@
 #' #
 #' vb_mix_z <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0,  Z = Z,
 #'                   link = "mix", ind_bin = ind_bin, user_seed = user_seed)
+#'
+#' @references
+#' H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva. Efficient inference for
+#'   genetic association studies with multiple outcomes. Biostatistics, 2017.
+#'
+#' Y. Xu, and W. Yin. A block coordinate descent method for
+#'   regularized multiconvex optimization with applications to nonnegative
+#'   tensor factorization and completion. SIAM Journal on imaging sciences, 6,
+#'   pp.1758-1789, 2013.
 #'
 #' @seealso \code{\link{set_hyper}}, \code{\link{set_init}},
 #'   \code{\link{set_cv}}, \code{\link{set_blocks}}

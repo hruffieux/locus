@@ -46,8 +46,8 @@
 #' @param maxit Maximum number of iterations allowed.
 #' @param batch If \code{"y"}, all responses are updated by batch (recommended),
 #'   if \code{"x"}, all candidate predictors are updated by batch, if
-#'   \code{"both"} responses and candidate predictors are updated by batch, if
-#'   \code{"none"}, no fast batch updating scheme is used (not recommended).
+#'   \code{"x-y"} responses and candidate predictors are updated by batch, if
+#'   \code{"0"}, no fast batch updating scheme is used (not recommended).
 #' @param verbose If \code{TRUE}, messages are displayed during execution.
 #' @param results_dir Path where the output of each of the \code{n_perm} runs
 #'   will be saved. Default is \code{NULL}, the output is not saved to files and

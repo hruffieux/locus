@@ -36,6 +36,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       # % #
       eta_vb <- update_eta_vb_(n, eta, gam_vb)
+
       kappa_vb <- update_kappa_vb_(Y, X, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb)
 
       tau_vb <- eta_vb / kappa_vb
@@ -48,7 +49,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       digam_sum <- digamma(a + b + d)
 
-      if (batch == "y") { # some updates are made batch-wise
+      if (batch == "y") { # used only internally
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -59,16 +60,12 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
         rs_gam <- rowSums(gam_vb)
 
-      } else if (batch == "x") {
+      } else if (batch == "x") { # used only internally
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
         for (k in 1:d) {
-
-          # mu_beta_vb[, k] <- sapply(1:p, function(j) {
-          #   sig2_beta_vb[k] * tau_vb[k] * crossprod(Y[, k] - mat_x_m1[, k] + X[, j] * m1_beta[j, k], X[, j])
-          # })
 
           mu_beta_vb[, k] <- sig2_beta_vb[k] * tau_vb[k] * (crossprod(Y[, k] - mat_x_m1[, k], X) + (n - 1) * m1_beta[, k]) # last term: X_j^T X_j = n - 1
 
@@ -86,24 +83,26 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
         rs_gam <- rowSums(gam_vb)
 
-      } else if (batch == "both"){
+      } else if (batch == "x-y"){ # optimal scheme
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
+        coreBatch(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
+                      log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb)
 
-        mu_beta_vb <- sweep(crossprod(X, Y - mat_x_m1) + (n - 1) * m1_beta, 2, sig2_beta_vb * tau_vb, `*`)
-
-        gam_vb <- exp(-log_one_plus_exp_(sweep(sweep(sweep(-mu_beta_vb ^ 2, 2, (2 * sig2_beta_vb), `/`), 2,
-                                                     (log_tau_vb / 2 + log(sig2_beta_vb) / 2),  `-`), 1,
-                                               log_1_min_om_vb - log_om_vb, `+`) - log_sig2_inv_vb / 2))
-
-        m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
-        mat_x_m1 <- update_mat_x_m1_(X, m1_beta)
+        # mu_beta_vb <- sweep(crossprod(X, Y - mat_x_m1) + (n - 1) * m1_beta, 2, sig2_beta_vb * tau_vb, `*`)
+        #
+        # gam_vb <- exp(-log_one_plus_exp_(sweep(sweep(sweep(-mu_beta_vb ^ 2, 2, (2 * sig2_beta_vb), `/`), 2,
+        #                                              (log_tau_vb / 2 + log(sig2_beta_vb) / 2),  `-`), 1,
+        #                                        log_1_min_om_vb - log_om_vb, `+`) - log_sig2_inv_vb / 2))
+        #
+        # m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
+        # mat_x_m1 <- update_mat_x_m1_(X, m1_beta)
 
         rs_gam <- rowSums(gam_vb)
 
-      } else { # no batch
+      } else { # no batch, used only internally
 
         for (k in 1:d) {
 
@@ -145,7 +144,6 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
       lb_new <- lower_bound_(Y, X, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
                              nu, sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta,
                              m2_beta, mat_x_m1, sum_gam)
-
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))

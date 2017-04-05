@@ -65,8 +65,8 @@ partitioning.}
 
 \item{batch}{If \code{"y"}, all responses are updated by batch (recommended),
 if \code{"x"}, all candidate predictors are updated by batch, if
-\code{"both"} responses and candidate predictors are updated by batch, if
-\code{"none"}, no fast batch updating scheme is used (not recommended).}
+\code{"x-y"} responses and candidate predictors are updated by batch, if
+\code{"0"}, no fast batch updating scheme is used (not recommended).}
 
 \item{verbose}{If \code{TRUE}, messages are displayed during execution.}
 

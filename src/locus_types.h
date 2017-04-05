@@ -6,6 +6,7 @@
 // These typedefs have to be in a separate header file to be properly copied to RcppExports
 
 typedef Eigen::ArrayXd Arr1D;
+typedef Eigen::ArrayXXd Arr2D;
 typedef Eigen::Map<Eigen::ArrayXd> MapArr1D;
 typedef Eigen::Map<Eigen::ArrayXXd> MapArr2D;
 typedef Eigen::Map<Eigen::MatrixXd> MapMat;

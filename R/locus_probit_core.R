@@ -55,7 +55,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
 
       digam_sum <- digamma(a + b + d)
 
-      if (batch == "y") { # some updates are made batch-wise
+      if (batch == "y") { # optimal scheme
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -75,7 +75,49 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
 
         rs_gam <- rowSums(gam_vb)
 
-      } else {
+      } else if (batch == "x") { # used only internally
+
+        log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
+        log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
+
+        for (k in 1:d) {
+
+          mu_alpha_vb[, k] <- sig2_alpha_vb * (crossprod(W[, k]  - mat_z_mu[, k] - mat_x_m1[, k], Z) +  (n - 1) * mu_alpha_vb[, k])
+          mu_alpha_vb[1, k] <- sig2_alpha_vb[1] * mu_alpha_vb[1, k] # correction for the intercept (sums to 1)
+
+          mat_z_mu[, k] <- Z %*% mu_alpha_vb[, k]
+
+          mu_beta_vb[, k] <- sig2_beta_vb * (crossprod(W[, k] -  mat_z_mu[, k] - mat_x_m1[, k], X) + (n - 1) * m1_beta[, k])
+
+          gam_vb[, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb - log_om_vb -
+                                                  log_sig2_inv_vb / 2 -
+                                                  mu_beta_vb[, k] ^ 2 / (2 * sig2_beta_vb) -
+                                                  log(sig2_beta_vb) / 2))
+
+          m1_beta[, k] <- mu_beta_vb[, k] * gam_vb[, k]
+
+          mat_x_m1[, k] <- X %*% m1_beta[, k]
+
+        }
+
+        rs_gam <- rowSums(gam_vb)
+
+      } else if (batch == "x-y") { # used only internally
+
+        log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
+        log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
+
+        mu_alpha_vb <- sweep(crossprod(Z, W  - mat_z_mu - mat_x_m1) +  (n - 1) * mu_alpha_vb, 1, sig2_alpha_vb, `*`)
+        mu_alpha_vb[1, ] <- sig2_alpha_vb[1] * mu_alpha_vb[1, ] # correction for the intercept (sums to 1)
+
+        mat_z_mu <- Z %*% mu_alpha_vb
+
+        coreProbitBatch(X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
+                        m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb)
+
+        rs_gam <- rowSums(gam_vb)
+
+      } else { # no batch, used only internally
 
         for (k in 1:d) {
 

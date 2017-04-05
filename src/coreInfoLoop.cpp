@@ -1,9 +1,11 @@
-#include "utils.h"
+// C++ function for response block coordinate ascent, external info functions
 
 /* Using Eigen::Map to pass large matrices by reference from R.
  * Given dimensionalities involved in some applications, copying
  * such matrices would imply a prohibitive RAM overconsumption.
  */
+
+#include "utils.h"
 
 // for locus_info_core function
 // [[Rcpp::export]]

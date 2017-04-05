@@ -59,7 +59,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
       digam_sum <- digamma(a + b + d)
 
-      if (batch == "y") { # some updates are made batch-wise
+      if (batch == "y") { # optimal scheme
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -77,7 +77,63 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
         rs_gam <- rowSums(gam_vb)
 
-      } else {
+      } else if (batch == "x") { # used only internally
+
+        log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
+        log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
+
+        for (k in 1:d) {
+
+          mu_alpha_vb[, k] <- sig2_alpha_vb[, k] * (crossprod(Y[, k] - 2 * psi_vb[, k] * (mat_z_mu[, k] + mat_x_m1[, k]), Z) +
+                                                        colSums(sweep(sweep(Z, 2, mu_alpha_vb[, k], `*`), 1, 2 * psi_vb[, k], `*`) * Z))
+
+          mat_z_mu[, k] <- Z %*% mu_alpha_vb[, k]
+
+          mu_beta_vb[, k] <- sig2_beta_vb[, k] * (crossprod(Y[, k] -  2 * psi_vb[, k] * (mat_z_mu[, k] + mat_x_m1[, k]), X) +
+                                                    colSums(sweep(sweep(X, 2, m1_beta[, k], `*`), 1, 2 * psi_vb[, k], `*`) * X))
+
+
+          gam_vb[, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb - log_om_vb -
+                                                  log_sig2_inv_vb / 2 -
+                                                  mu_beta_vb[, k] ^ 2 / (2 * sig2_beta_vb[, k]) -
+                                                  log(sig2_beta_vb[, k]) / 2))
+
+          m1_beta[, k] <- mu_beta_vb[, k] * gam_vb[, k]
+
+          mat_x_m1[, k] <- X %*% m1_beta[, k]
+
+        }
+
+        rs_gam <- rowSums(gam_vb)
+
+      } else if (batch == "x-y") { # used only internally
+
+        log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
+        log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
+
+        mu_alpha_vb <- sig2_alpha_vb * (crossprod(Z, Y - 2 * psi_vb * (mat_z_mu + mat_x_m1)) +
+                                              sapply(1:d, function(k) colSums(sweep(sweep(Z, 2, mu_alpha_vb[, k], `*`), 1, 2 * psi_vb[, k], `*`) * Z)))
+
+        mat_z_mu <- Z %*% mu_alpha_vb
+
+        mu_beta_vb <- sig2_beta_vb * (crossprod(X, Y -  2 * psi_vb * (mat_z_mu + mat_x_m1)) +
+                                              sapply(1:d, function(k) colSums(sweep(sweep(X, 2, m1_beta[, k], `*`), 1, 2 * psi_vb[, k], `*`) * X)))
+
+
+        gam_vb <- exp(-log_one_plus_exp_(log_1_min_om_vb - log_om_vb -
+                                                log_sig2_inv_vb / 2 -
+                                                mu_beta_vb ^ 2 / (2 * sig2_beta_vb) -
+                                                log(sig2_beta_vb) / 2))
+
+        m1_beta<- mu_beta_vb * gam_vb
+
+        mat_x_m1 <- X %*% m1_beta
+
+
+        rs_gam <- rowSums(gam_vb)
+
+      } else { # no batch, used only internally
+
 
         for (k in 1:d) {
 
@@ -131,7 +187,6 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
                                    sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, xi,
                                    zeta2_inv_vb, mu_alpha_vb, m1_beta, m2_alpha,
                                    m2_beta, mat_x_m1, mat_z_mu, sum_gam)
-
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))

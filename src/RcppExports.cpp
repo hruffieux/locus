@@ -7,6 +7,69 @@
 
 using namespace Rcpp;
 
+// coreBatch
+void coreBatch(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr1D log_om_vb, const MapArr1D log_1_min_om_vb, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat m1_beta, MapMat mat_x_m1, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb);
+RcppExport SEXP locus_coreBatch(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const MapMat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< MapArr2D >::type gam_vb(gam_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_om_vb(log_om_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_1_min_om_vb(log_1_min_om_vbSEXP);
+    Rcpp::traits::input_parameter< const double >::type log_sig2_inv_vb(log_sig2_inv_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_tau_vb(log_tau_vbSEXP);
+    Rcpp::traits::input_parameter< MapMat >::type m1_beta(m1_betaSEXP);
+    Rcpp::traits::input_parameter< MapMat >::type mat_x_m1(mat_x_m1SEXP);
+    Rcpp::traits::input_parameter< MapArr2D >::type mu_beta_vb(mu_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type sig2_beta_vb(sig2_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type tau_vb(tau_vbSEXP);
+    coreBatch(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb);
+    return R_NilValue;
+END_RCPP
+}
+// coreZBatch
+void coreZBatch(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr1D log_om_vb, const MapArr1D log_1_min_om_vb, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat m1_beta, MapMat mat_x_m1, MapMat mat_z_mu, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb);
+RcppExport SEXP locus_coreZBatch(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const MapMat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< MapArr2D >::type gam_vb(gam_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_om_vb(log_om_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_1_min_om_vb(log_1_min_om_vbSEXP);
+    Rcpp::traits::input_parameter< const double >::type log_sig2_inv_vb(log_sig2_inv_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_tau_vb(log_tau_vbSEXP);
+    Rcpp::traits::input_parameter< MapMat >::type m1_beta(m1_betaSEXP);
+    Rcpp::traits::input_parameter< MapMat >::type mat_x_m1(mat_x_m1SEXP);
+    Rcpp::traits::input_parameter< MapMat >::type mat_z_mu(mat_z_muSEXP);
+    Rcpp::traits::input_parameter< MapArr2D >::type mu_beta_vb(mu_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type sig2_beta_vb(sig2_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type tau_vb(tau_vbSEXP);
+    coreZBatch(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb);
+    return R_NilValue;
+END_RCPP
+}
+// coreProbitBatch
+void coreProbitBatch(const MapMat X, const MapMat W, MapArr2D gam_vb, const MapArr1D log_om_vb, const MapArr1D log_1_min_om_vb, const double log_sig2_inv_vb, MapMat m1_beta, MapMat mat_x_m1, MapMat mat_z_mu, MapArr2D mu_beta_vb, const double sig2_beta_vb);
+RcppExport SEXP locus_coreProbitBatch(SEXP XSEXP, SEXP WSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const MapMat >::type W(WSEXP);
+    Rcpp::traits::input_parameter< MapArr2D >::type gam_vb(gam_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_om_vb(log_om_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_1_min_om_vb(log_1_min_om_vbSEXP);
+    Rcpp::traits::input_parameter< const double >::type log_sig2_inv_vb(log_sig2_inv_vbSEXP);
+    Rcpp::traits::input_parameter< MapMat >::type m1_beta(m1_betaSEXP);
+    Rcpp::traits::input_parameter< MapMat >::type mat_x_m1(mat_x_m1SEXP);
+    Rcpp::traits::input_parameter< MapMat >::type mat_z_mu(mat_z_muSEXP);
+    Rcpp::traits::input_parameter< MapArr2D >::type mu_beta_vb(mu_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const double >::type sig2_beta_vb(sig2_beta_vbSEXP);
+    coreProbitBatch(X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb);
+    return R_NilValue;
+END_RCPP
+}
 // coreInfoLoop
 void coreInfoLoop(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr2D log_Phi_mat_v_mu, const MapArr2D log_1_min_Phi_mat_v_mu, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat m1_beta, MapMat mat_x_m1, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb);
 RcppExport SEXP locus_coreInfoLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_Phi_mat_v_muSEXP, SEXP log_1_min_Phi_mat_v_muSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
