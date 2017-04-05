@@ -218,7 +218,7 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
                   " iterations with variational lower bound = ",
                   format(lb_new), ". \n\n", sep = ""))
       } else {
-        cat("Maximal number of iterations reached before convergence. Exit.")
+        warning("Maximal number of iterations reached before convergence. Exit.")
       }
     }
 
@@ -250,7 +250,7 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
       rownames(mu_c_vb) <- names_v
       colnames(mu_c_vb) <- names_y
 
-      create_named_list_(lb_opt, gam_vb, mu_c0_vb, mu_c_vb, mu_alpha_vb)
+      create_named_list_(gam_vb, mu_c0_vb, mu_c_vb, mu_alpha_vb, converged, it, lb_opt)
 
     }
   })

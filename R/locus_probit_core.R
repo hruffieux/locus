@@ -149,7 +149,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
                   " iterations with variational lower bound = ",
                   format(lb_new), ". \n\n", sep = ""))
       } else {
-        cat("Maximal number of iterations reached before convergence. Exit.")
+        warning("Maximal number of iterations reached before convergence. Exit.")
       }
     }
 
@@ -159,7 +159,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
       create_named_list_(a, a_vb, b, b_vb, gam_vb, lambda, nu, phi, phi_vb,
                          sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, xi,
                          zeta2_inv_vb, mu_alpha_vb, m1_beta, m2_alpha, m2_beta,
-                         mat_x_m1, mat_z_mu, sum_gam)
+                         sum_gam)
     } else {
 
       names_x <- colnames(X)
@@ -172,7 +172,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
       rownames(mu_alpha_vb) <- names_z
       colnames(mu_alpha_vb) <- names_y
 
-      create_named_list_(lb_opt, gam_vb, om_vb, mu_alpha_vb)
+      create_named_list_(gam_vb, om_vb, mu_alpha_vb, converged, it, lb_opt)
     }
   })
 

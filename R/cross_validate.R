@@ -149,7 +149,7 @@ create_grid_ <- function(p, size_p0_av_grid) {
 }
 
 
-cross_validate_ <- function(Y, X, Z, list_cv, user_seed, verbose) {
+cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose) {
 
 
   d <- ncol(Y)
@@ -187,8 +187,18 @@ cross_validate_ <- function(Y, X, Z, list_cv, user_seed, verbose) {
         p <- ncol(X_tr)
       }
 
-      Y_tr <- scale(Y_tr, center = TRUE, scale = FALSE)
-      Y_test <- scale(Y_test, center = TRUE, scale = FALSE)
+
+      if (link == "identity") {
+
+        Y_tr <- scale(Y_tr, center = TRUE, scale = FALSE)
+        Y_test <- scale(Y_test, center = TRUE, scale = FALSE)
+
+      } else if (link == "mix") {
+
+        Y_tr[, -ind_bin] <- scale(Y_tr[, -ind_bin], center = TRUE, scale = FALSE)
+        Y_test[, -ind_bin] <- scale(Y_test[, -ind_bin], center = TRUE, scale = FALSE)
+
+      }
 
       if (!is.null(Z)) {
         Z_tr <- Z[-current,, drop = FALSE]
@@ -212,48 +222,147 @@ cross_validate_ <- function(Y, X, Z, list_cv, user_seed, verbose) {
 
         if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
 
-        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, r = NULL, link = "identity",
-                                         ind_bin = NULL)
+        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, r = NULL, link = link,
+                                         ind_bin = ind_bin)
         list_init_pg <- auto_set_init_(Y_tr, p, pg, q, r = NULL, user_seed,
-                                       link = "identity", ind_bin = NULL)
+                                       link = link, ind_bin = ind_bin)
 
-        if (is.null(q)) {
-          vb_tr <- locus_core_(Y_tr, X_tr, list_hyper_pg,
-                               list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
-                               list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
-                               tol_cv, maxit_cv, batch_cv, verbose = FALSE,
-                               full_output = TRUE)
+        nq <- is.null(q)
 
-          lb_vec[ind_pg] <- with(vb_tr, {
+        if (link != "identity") { # adds an intercept for probit/mix regression
 
-            mat_x_m1 <-  X_test %*% m1_beta
+          if (nq) {
 
-            lower_bound_(Y_test, X_test, a, a_vb, b, b_vb, eta, gam_vb, kappa,
-                         lambda, nu, sig2_beta_vb, sig2_inv_vb, tau_vb,
-                         m1_beta, m2_beta, mat_x_m1, sum_gam)
+            Z_tr <- matrix(1, nrow = nrow(X_tr), ncol = 1)
+            Z_test <- matrix(1, nrow = nrow(X_test), ncol = 1)
 
-          })
-        } else {
-          vb_tr <- locus_z_core_(Y_tr, X_tr, Z_tr, list_hyper_pg,
-                                 list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
-                                 list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
+            # uninformative prior
+            list_hyper_pg$phi <- list_hyper_pg$xi <- 1e-3
+
+            list_init_pg$mu_alpha_vb <- matrix(0, nrow = 1, ncol = d)
+
+            if (link == "probit") {
+
+              list_init_pg$sig2_alpha_vb <- 1
+
+            } else {
+
+              list_init_pg$sig2_alpha_vb <- matrix(1, nrow = 1, ncol = d)
+
+            }
+
+          } else{
+
+            Z_tr <- cbind(rep(1, nrow(Z_tr)), Z_tr)
+            Z_test <- cbind(rep(1, nrow(Z_test)), Z_test)
+
+            # uninformative prior
+            list_hyper_pg$phi <- c(1e-3, list_hyper_pg$phi)
+            list_hyper_pg$xi <- c(1e-3, list_hyper_pg$xi)
+
+            list_init_pg$mu_alpha_vb <- rbind(rep(0, d), list_init_pg$mu_alpha_vb)
+
+            if (link == "probit") {
+
+              list_init_pg$sig2_alpha_vb <- c(1, list_init_pg$sig2_alpha_vb)
+
+            } else {
+
+              list_init_pg$sig2_alpha_vb <- rbind(rep(1, d), list_init_pg$sig2_alpha_vb)
+
+            }
+
+
+          }
+          colnames(Z_tr)[1] <- colnames(Z_test)[1] <- "Intercept"
+        }
+
+
+        if (link == "identity") {
+
+          if (nq) {
+            vb_tr <- locus_core_(Y_tr, X_tr, list_hyper_pg,
+                                 list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
                                  list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
                                  tol_cv, maxit_cv, batch_cv, verbose = FALSE,
                                  full_output = TRUE)
+
+            lb_vec[ind_pg] <- with(vb_tr, {
+
+              mat_x_m1 <-  X_test %*% m1_beta
+
+              lower_bound_(Y_test, X_test, a, a_vb, b, b_vb, eta, gam_vb, kappa,
+                           lambda, nu, sig2_beta_vb, sig2_inv_vb, tau_vb,
+                           m1_beta, m2_beta, mat_x_m1, sum_gam)
+
+            })
+          } else {
+            vb_tr <- locus_z_core_(Y_tr, X_tr, Z_tr, list_hyper_pg,
+                                   list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
+                                   list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
+                                   list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
+                                   tol_cv, maxit_cv, batch_cv, verbose = FALSE,
+                                   full_output = TRUE)
+
+            lb_vec[ind_pg] <- with(vb_tr, {
+
+              mat_z_mu <-  Z_test %*% mu_alpha_vb
+              mat_x_m1 <-  X_test %*% m1_beta
+
+              lower_bound_z_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, eta,
+                             gam_vb, kappa, lambda, mu_alpha_vb, nu, phi, phi_vb,
+                             sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
+                             xi, zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
+                             mat_x_m1, mat_z_mu, sum_gam)
+            })
+          }
+
+        } else if (link == "probit") {
+
+          vb_tr <- locus_probit_core_(Y_tr, X_tr, Z_tr, list_hyper_pg,
+                                      list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
+                                      list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
+                                      list_init_pg$sig2_beta_vb, tol_cv, maxit_cv,
+                                      batch_cv, verbose = FALSE, full_output = TRUE)
 
           lb_vec[ind_pg] <- with(vb_tr, {
 
             mat_z_mu <-  Z_test %*% mu_alpha_vb
             mat_x_m1 <-  X_test %*% m1_beta
 
-            lower_bound_z_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, eta,
-                           gam_vb, kappa, lambda, mu_alpha_vb, nu, phi, phi_vb,
-                           sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
-                           xi, zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
-                           mat_x_m1, mat_z_mu, sum_gam)
+            lower_bound_probit_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, gam_vb,
+                                lambda, nu, phi, phi_vb, sig2_alpha_vb,
+                                sig2_beta_vb, sig2_inv_vb, xi, zeta2_inv_vb,
+                                mu_alpha_vb, m1_beta, m2_alpha, m2_beta, mat_x_m1,
+                                mat_z_mu, sum_gam)
           })
-        }
 
+        } else if (link == "mix") {
+
+          vb_tr <- locus_mix_core_(Y_tr, X_tr, Z_tr, ind_bin, list_hyper_pg,
+                                   list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
+                                   list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
+                                   list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
+                                   tol_cv, maxit_cv, batch_cv, verbose = FALSE,
+                                   full_output = TRUE)
+
+          lb_vec[ind_pg] <- with(vb_tr, {
+
+            mat_z_mu <-  Z_test %*% mu_alpha_vb
+            mat_x_m1 <-  X_test %*% m1_beta
+
+            lower_bound_mix_(Y_test[, ind_bin, drop = FALSE],
+                             Y_test[, -ind_bin, drop = FALSE],
+                             ind_bin, X_test, Z_test, a, a_vb, b, b_vb,
+                             eta, gam_vb, kappa, lambda, mu_alpha_vb, nu,
+                             phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
+                             sig2_inv_vb, tau_vb, log_tau_vb, xi,
+                             zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
+                             mat_x_m1, mat_z_mu, sum_gam)
+
+          })
+
+        }
 
         if (verbose) { cat(paste("Lower bound on test set, fold ", k, ", p0_av ",
                                  pg, ": ", format(lb_vec[ind_pg]), ". \n", sep = ""))
