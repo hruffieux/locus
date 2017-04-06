@@ -83,7 +83,7 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 
       digam_sum <- digamma(a + b + d)
 
-      if (batch == "y") {
+      if (batch == "y") { # used only internally
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -103,7 +103,55 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 
         rs_gam <- rowSums(gam_vb)
 
-      } else {
+      } else if (batch == "x") { # used only internally
+
+        log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
+        log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
+
+        for (k in 1:d) {
+
+          mu_alpha_vb[, k] <- sig2_alpha_vb[, k] * tau_vb[k] *
+            (crossprod(W[, k]  - mat_z_mu[, k] - mat_x_m1[, k], Z) +  (n - 1) * mu_alpha_vb[, k])
+
+          mu_alpha_vb[1, k] <- mu_alpha_vb[1, k] + sig2_alpha_vb[1, k] * tau_vb[k] * mu_alpha_vb[1, k]
+
+          mat_z_mu[, k] <- Z %*% mu_alpha_vb[, k]
+
+          mu_beta_vb[, k] <- sig2_beta_vb[k] * tau_vb[k] * (crossprod(W[, k] -  mat_z_mu[, k] - mat_x_m1[, k], X) +
+                                                              (n - 1) * m1_beta[, k])
+
+
+          gam_vb[, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb - log_om_vb -
+                                                  log_tau_vb[k] / 2 - log_sig2_inv_vb / 2 -
+                                                  mu_beta_vb[, k] ^ 2 / (2 * sig2_beta_vb[k]) -
+                                                  log(sig2_beta_vb[k]) / 2))
+
+          m1_beta[, k] <- mu_beta_vb[, k] * gam_vb[, k]
+
+          mat_x_m1[, k] <- X %*% m1_beta[, k]
+
+        }
+
+        rs_gam <- rowSums(gam_vb)
+
+      } else if (batch == "x-y") { # optimal scheme
+
+        log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
+        log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
+
+        mu_alpha_vb <- sweep(sig2_alpha_vb * (crossprod(Z, W - mat_z_mu - mat_x_m1) + (n - 1) * mu_alpha_vb), 2, tau_vb, `*`)
+
+        mu_alpha_vb[1, ] <- mu_alpha_vb[1, ] + sig2_alpha_vb[1, ] * tau_vb * mu_alpha_vb[1, ]
+
+        mat_z_mu <- Z %*% mu_alpha_vb
+
+        coreZBatch(X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
+                   log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb,
+                   sig2_beta_vb, tau_vb)
+
+        rs_gam <- rowSums(gam_vb)
+
+      } else { # no batch, used only internally
 
         for (k in 1:d) {
 
@@ -164,8 +212,11 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
                                  zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
                                  mat_x_m1, mat_z_mu, sum_gam)
 
-      if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+      # if (verbose & (it == 1 | it %% 5 == 0))
+      #   cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+
+
+      cat(paste("Lower bound = ", lb_new, "\n\n", sep = ""))
 
       converged <- (abs(lb_new-lb_old) < tol)
 

@@ -55,7 +55,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
 
       digam_sum <- digamma(a + b + d)
 
-      if (batch == "y") { # optimal scheme
+      if (batch == "y") { # used only internally
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -83,7 +83,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
         for (k in 1:d) {
 
           mu_alpha_vb[, k] <- sig2_alpha_vb * (crossprod(W[, k]  - mat_z_mu[, k] - mat_x_m1[, k], Z) +  (n - 1) * mu_alpha_vb[, k])
-          mu_alpha_vb[1, k] <- sig2_alpha_vb[1] * mu_alpha_vb[1, k] # correction for the intercept (sums to 1)
+          mu_alpha_vb[1, k] <- mu_alpha_vb[1, k] + sig2_alpha_vb[1] * mu_alpha_vb[1, k] # correction for the intercept (sums to 1)
 
           mat_z_mu[, k] <- Z %*% mu_alpha_vb[, k]
 
@@ -102,13 +102,13 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
 
         rs_gam <- rowSums(gam_vb)
 
-      } else if (batch == "x-y") { # used only internally
+      } else if (batch == "x-y") { # optimal scheme
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
         mu_alpha_vb <- sweep(crossprod(Z, W  - mat_z_mu - mat_x_m1) +  (n - 1) * mu_alpha_vb, 1, sig2_alpha_vb, `*`)
-        mu_alpha_vb[1, ] <- sig2_alpha_vb[1] * mu_alpha_vb[1, ] # correction for the intercept (sums to 1)
+        mu_alpha_vb[1, ] <- mu_alpha_vb[1, ] + sig2_alpha_vb[1] * mu_alpha_vb[1, ] # correction for the intercept (sums to 1)
 
         mat_z_mu <- Z %*% mu_alpha_vb
 
