@@ -1,3 +1,7 @@
+# This file is part of the `locus` R package:
+#     https://github.com/hruffieux/locus
+#
+
 #' Fit sparse multivariate regression models using variational inference.
 #'
 #' Variational approximation procedure fitting sparse multivariate regression

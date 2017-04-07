@@ -1,11 +1,14 @@
-## These functions gather the variational updates for the core methods.
-## Besides improving code readability via modular programming, the main purpose
-## is to avoid copy-and-paste programming, as most of these updates (or slightly
-## modified versions) are used more than once in the different core algorithms.
-## For this reason, we choose to create functions for most variational updates,
-## even for those consisting in very basic operations.
-## Note that we don't modularize the body of the core for loops for performance
-## reasons.
+# This file is part of the `locus` R package:
+#     https://github.com/hruffieux/locus
+#
+# Internal functions gathering the variational updates for the core algorithms.
+# Besides improving code readability via modular programming, the main purpose
+# is to avoid copy-and-paste programming, as most of these updates (or slightly
+# modified versions) are used more than once in the different core algorithms.
+# For this reason, we choose to create functions for most variational updates,
+# even for those consisting in very basic operations.
+# Note that we don't modularize the body of the core for loops for performance
+# reasons.
 
 
 #####################

@@ -1,3 +1,7 @@
+# This file is part of the `locus` R package:
+#     https://github.com/hruffieux/locus
+#
+
 #' Gather model hyperparameters provided by the user.
 #'
 #' This function must be used to provide hyperparameter values for the model
@@ -234,7 +238,8 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 
     # prior info
     s02 <- 1 # prior variance for the intercept, bernoulli-probit
-    s2 <- 1e-2 # prior variance for external info coefficients (effects likely to be concentrated around zero)
+    s2 <- 1e-2 # prior variance for external info coefficients
+               # (effects likely to be concentrated around zero)
 
     if (!is.null(a) | !is.null(b))
       stop("Provided r != NULL, not consitent with a and b being non-null.")
@@ -302,6 +307,9 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 }
 
 
+# Internal function setting default model hyperparameters when not provided by
+# the user.
+#
 auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin) {
 
   d <- ncol(Y)
@@ -712,6 +720,8 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 }
 
 
+# Internal function setting default starting values when not provided by the user.
+#
 auto_set_init_ <- function(Y, p, p_star, q, r, user_seed, link, ind_bin) {
 
   d <- ncol(Y)

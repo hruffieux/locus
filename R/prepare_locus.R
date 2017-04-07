@@ -1,3 +1,10 @@
+# This file is part of the `locus` R package:
+#     https://github.com/hruffieux/locus
+#
+
+# Internal function implementing sanity checks and needed preprocessing before
+# the application of the different `locus_*_core` algorithms.
+#
 prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verbose) {
 
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
@@ -175,6 +182,9 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verb
 }
 
 
+# Internal function implementing sanity checks and needed preprocessing for
+# argument p0_av before the application of the different `locus_*_core` algorithms.
+#
 convert_p0_av_ <- function(p0_av, p, list_blocks, verbose, eps = .Machine$double.eps^0.5) {
 
   check_structure_(p0_av, "vector", "numeric", c(1, p))
@@ -243,6 +253,10 @@ convert_p0_av_ <- function(p0_av, p, list_blocks, verbose, eps = .Machine$double
 }
 
 
+# Internal function implementing sanity checks and needed preprocessing for the
+# model hyperparameters before the application of the different `locus_*_core`
+# algorithms.
+#
 prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
                                 bool_rmvd_x, bool_rmvd_z, bool_rmvd_v, names_x,
                                 names_y, names_z, verbose) {
@@ -373,7 +387,10 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
 }
 
 
-
+# Internal function implementing sanity checks and needed preprocessing for the
+# starting values before the application of the different `locus_*_core`
+# algorithms.
+#
 prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
                                bool_rmvd_x, bool_rmvd_z, bool_rmvd_v, user_seed,
                                verbose) {
@@ -497,6 +514,10 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
 }
 
 
+# Internal function implementing sanity checks and needed preprocessing for the
+# model hyperparameters before the application of the cross-validation procedure
+# for parameter p0_av.
+#
 prepare_cv_ <- function(list_cv, n, p, r, bool_rmvd_x, p0_av, link, list_hyper,
                         list_init, verbose) {
 
@@ -550,7 +571,9 @@ prepare_cv_ <- function(list_cv, n, p, r, bool_rmvd_x, p0_av, link, list_hyper,
 }
 
 
-
+# Internal function implementing sanity checks and needed preprocessing to the
+# settings provided by the user for block-wise parallel inference.
+#
 prepare_blocks_ <- function(list_blocks, r, bool_rmvd_x, list_cv) {
 
   if (!inherits(list_blocks, "blocks"))
@@ -683,6 +706,9 @@ set_blocks <- function(p, pos_bl, n_cpus, verbose = TRUE) {
 }
 
 
+# Internal function implementing sanity checks the index of binary responses in
+# case `locus_mix_core` or `locus_mix_info_core` is used.
+#
 prepare_ind_bin_ <- function(d, ind_bin, link) {
 
   if (link == "mix") {

@@ -1,4 +1,10 @@
-## with covariates
+# This file is part of the `locus` R package:
+#     https://github.com/hruffieux/locus
+#
+# Internal core function to call the variational algorithm for identity link,
+# fixed covariates and no external annotation variables.
+# See help of `locus` function for details.
+#
 locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
                           sig2_alpha_vb, sig2_beta_vb, tau_vb, tol, maxit,
                           verbose, batch = "x-y", full_output = FALSE, debug = FALSE) {
@@ -242,6 +248,10 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 }
 
 
+
+# Internal function which implements the marginal log-likelihood variational
+# lower bound (ELBO) corresponding to the `locus_z_core` algorithm.
+#
 lower_bound_z_ <- function(Y, X, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
                            mu_alpha_vb, nu, phi, phi_vb, sig2_alpha_vb,
                            sig2_beta_vb, sig2_inv_vb, tau_vb, xi, zeta2_inv_vb,

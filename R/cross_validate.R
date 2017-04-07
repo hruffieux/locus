@@ -1,3 +1,6 @@
+# This file is part of the `locus` R package:
+#     https://github.com/hruffieux/locus
+
 #' Gather settings for the cross-validation procedure used in \code{locus}.
 #'
 #' The cross-validation procedure uses the variational lower bound as objective
@@ -121,7 +124,8 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
 
 }
 
-
+# Internal function creating input grid values for the cross-validation procedure.
+#
 create_grid_ <- function(p, size_p0_av_grid) {
 
   if (p < 75) { # a different treatment to avoid having a single element in the grid
@@ -144,7 +148,8 @@ create_grid_ <- function(p, size_p0_av_grid) {
 
 }
 
-
+# Internal core function for the cross-validation procedure.
+#
 cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose) {
 
 

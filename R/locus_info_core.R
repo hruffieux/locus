@@ -1,3 +1,10 @@
+# This file is part of the `locus` R package:
+#     https://github.com/hruffieux/locus
+#
+# Internal core function to call the variational algorithm for identity link, no
+# fixed covariates and external annotation variables.
+# See help of `locus` function for details.
+#
 locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
                              mu_c_vb, sig2_beta_vb, tau_vb, tol, maxit, verbose,
                              batch = "y", full_output = FALSE, debug = FALSE) {
@@ -81,7 +88,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
         }
 
       } else if (batch == "0"){ # no batch, used only internally
-                                # schemes "x" of "x-y" are not batch convex
+                                # schemes "x" of "x-y" are not batch concave
                                 # hence not implemented as they may diverge
 
 
@@ -190,7 +197,9 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
 
 
-
+# Internal function which implements the marginal log-likelihood variational
+# lower bound (ELBO) corresponding to the `locus_info_core` algorithm.
+#
 lower_bound_info_ <- function(Y, X, V, eta, gam_vb, kappa, lambda, m0,
                               mu_c0_vb, mu_c_vb, nu, sig2_beta_vb, sig2_c0_vb,
                               sig2_c_vb, sig2_inv_vb, s02, s2, tau_vb, m1_beta,

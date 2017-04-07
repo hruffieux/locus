@@ -1,8 +1,15 @@
-// C++ function for response block coordinate ascent
-
-/* Using Eigen::Map to pass large matrices by reference from R.
- * Given dimensionalities involved in some applications, copying
- * such matrices would imply a prohibitive RAM overconsumption.
+/*
+ *
+ * This file is part of the `locus` R package:
+ *     https://github.com/hruffieux/locus
+ *
+ * Functions for computationally expensive updates in algorithms without
+ * external information.
+ *
+ * These functions use Eigen::Map to pass large matrices by reference from R.
+ * Given dimensionalities involved in some applications, copying such matrices
+ * would imply a prohibitive RAM overconsumption.
+ *
  */
 
 #include "utils.h"

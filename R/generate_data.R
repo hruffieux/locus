@@ -1,3 +1,7 @@
+# This file is part of the `locus` R package:
+#     https://github.com/hruffieux/locus
+#
+
 #' Generate SNP data with prespecified spatial correlation structure.
 #'
 #' This function generates SNPs under Hardy-Weinberg equilibrium with specific
@@ -578,6 +582,9 @@ replicate_real_phenos <- function(n, real_phenos, input_family = "gaussian",
 }
 
 
+# Internal function setting the pattern of associations used by the
+# `generate_dependence` function.
+#
 set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph) {
 
   if (is.null(chunks_ph)) { # no imposed correlation block structure (either indep
@@ -620,6 +627,9 @@ set_pattern_ <- function(d, p, ind_d0, ind_p0, vec_prob_sh, chunks_ph) {
 }
 
 
+# Internal function setting the effect sizes used by the `generate_dependence`
+# function.
+#
 generate_eff_sizes_ <- function(d, phenos_act, snps_act, ind_d0, ind_p0,
                                 vec_prob_sh, vec_maf, pve_per_snp, max_tot_pve,
                                 var_err, chunks_ph) {

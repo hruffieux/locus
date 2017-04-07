@@ -1,3 +1,11 @@
+# This file is part of the `locus` R package:
+#     https://github.com/hruffieux/locus
+#
+
+# Diverse utility functions implementing sanity checks, basic preprocessing,
+# and ticks to prevent overflow/underflow.
+#
+
 check_natural_ <- function(x, eps = .Machine$double.eps^0.75){
   if (any(x < eps | abs(x - round(x)) > eps)) {
     stop(paste(deparse(substitute(x)),

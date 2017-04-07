@@ -1,3 +1,10 @@
+# This file is part of the `locus` R package:
+#     https://github.com/hruffieux/locus
+#
+# Internal core function to call the variational algorithm for logit link,
+# optional fixed covariates and no external annotation variables.
+# See help of `locus` function for details.
+#
 locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
                               mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, tol,
                               maxit, verbose, batch = "y", full_output = FALSE, debug = FALSE) {
@@ -82,7 +89,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
         rs_gam <- rowSums(gam_vb)
 
       } else if (batch == "x") {  # used internally for testing purposes,
-                                  # convergence not ensured as ELBO not batch-convex
+                                  # convergence not ensured as ELBO not batch-concave
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -112,7 +119,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
         rs_gam <- rowSums(gam_vb)
 
       } else if (batch == "x-y") {  # used internally for testing purposes,
-                                    # convergence not ensured as ELBO not batch-convex
+                                    # convergence not ensured as ELBO not batch-concave
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -250,6 +257,9 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 }
 
 
+# Internal function which implements the marginal log-likelihood variational
+# lower bound (ELBO) corresponding to the `locus_logit_core` algorithm.
+#
 lower_bound_logit_ <- function(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb,
                              lambda, nu, phi, phi_vb, psi_vb, sig2_alpha_vb,
                              sig2_beta_vb, sig2_inv_vb, xi, zeta2_inv_vb,

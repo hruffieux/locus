@@ -1,3 +1,7 @@
+# This file is part of the `locus` R package:
+#     https://github.com/hruffieux/locus
+#
+
 #' Generate empirical null distribution using permuted data.
 #'
 #' This function runs \code{\link{locus}} on data with permuted response sample
