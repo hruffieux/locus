@@ -1,7 +1,8 @@
 locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
                                    mu_alpha_vb, mu_beta_vb, mu_c0_vb, mu_c_vb,
                                    sig2_alpha_vb, sig2_beta_vb, tol, maxit,
-                                   batch, verbose, full_output = FALSE) {
+                                   verbose, batch = "y", full_output = FALSE,
+                                   debug = FALSE) {
 
   # 1/2 must have been substracted from Y, and X, Z and V must have been standardized (except intercept in Z).
 
@@ -62,6 +63,9 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
 
       W <- update_W_info_(gam_vb, mat_v_mu)
 
+
+      # different possible batch-coordinate ascent schemes:
+
       if (batch == "y") { # some updates are made batch-wise
 
         for (i in 1:q) {
@@ -75,6 +79,7 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
         log_Phi_mat_v_mu <- pnorm(mat_v_mu, log.p = TRUE)
         log_1_min_Phi_mat_v_mu <- pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE)
 
+        # C++ Eigen call for expensive updates
         coreLogitInfoLoop(X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu,
                       log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb,
                       psi_vb, sig2_beta_vb)
@@ -97,7 +102,7 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
 
         }
 
-      } else {
+      } else if (batch == "0"){
 
         for (k in 1:d) {
 
@@ -148,6 +153,10 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
 
         }
 
+      } else {
+
+        stop ("Batch scheme not defined. Exit.")
+
       }
 
       m2_alpha <- update_m2_alpha_(mu_alpha_vb, sig2_alpha_vb)
@@ -163,7 +172,10 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
                                         mat_z_mu)
 
       if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+        cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
+
+      if (debug && lb_new < lb_old)
+        stop("ELBO not increasing monotonically. Exit. ")
 
       converged <- (abs(lb_new - lb_old) < tol)
 
@@ -173,9 +185,9 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
 
     if (verbose) {
       if (converged) {
-        cat(paste("Convergence obtained after ", format(it),
-                  " iterations with variational lower bound = ",
-                  format(lb_new), ". \n\n", sep = ""))
+        cat(paste("Convergence obtained after ", format(it), " iterations. \n",
+                  "Optimal marginal log-likelihood variational lower bound ",
+                  "(ELBO) = ", format(lb_new), ". \n\n", sep = ""))
       } else {
         warning("Maximal number of iterations reached before convergence. Exit.")
       }

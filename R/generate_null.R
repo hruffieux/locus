@@ -44,10 +44,6 @@
 #'   \code{list_init} is \code{NULL}). Default is \code{NULL}, no seed set.
 #' @param tol Tolerance for the stopping criterion.
 #' @param maxit Maximum number of iterations allowed.
-#' @param batch If \code{"y"}, all responses are updated by batch (recommended),
-#'   if \code{"x"}, all candidate predictors are updated by batch, if
-#'   \code{"x-y"} responses and candidate predictors are updated by batch, if
-#'   \code{"0"}, no fast batch updating scheme is used (not recommended).
 #' @param verbose If \code{TRUE}, messages are displayed during execution.
 #' @param results_dir Path where the output of each of the \code{n_perm} runs
 #'   will be saved. Default is \code{NULL}, the output is not saved to files and
@@ -89,8 +85,8 @@
 generate_null <- function(n_perm, Y, X, p0_av, Z = NULL, link = "identity",
                           ind_bin = NULL, list_hyper = NULL, list_init = NULL,
                           list_blocks = NULL, user_seed = NULL, tol = 1e-3,
-                          maxit = 1000, batch = "y", verbose = TRUE,
-                          results_dir = NULL, n_cpus = 1) {
+                          maxit = 1000, verbose = TRUE, results_dir = NULL,
+                          n_cpus = 1) {
 
   if (!is.null(user_seed)){
     RNGkind("L'Ecuyer-CMRG") # ensure reproducibility when using mclapply
@@ -129,7 +125,7 @@ generate_null <- function(n_perm, Y, X, p0_av, Z = NULL, link = "identity",
                       link = link, ind_bin = ind_bin,
                       list_hyper = list_hyper, list_init = list_init,
                       list_cv = NULL, list_blocks = list_blocks,
-                      user_seed = NULL, tol = tol, maxit = maxit, batch = batch,
+                      user_seed = NULL, tol = tol, maxit = maxit,
                       verbose = verbose)
 
     om_vb <- res_perm$om_vb

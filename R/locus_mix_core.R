@@ -1,7 +1,8 @@
 ## for continuous and binary responses using a probit link for the latter.
 locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
                             mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, tau_vb,
-                            tol, maxit, batch, verbose, full_output = FALSE) {
+                            tol, maxit, verbose, batch = "y",
+                            full_output = FALSE, debug = FALSE) {
 
   # Y must have its continuous variables centered,
   # and X and Z must have been standardized (except intercept in Z).
@@ -83,6 +84,9 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 
       digam_sum <- digamma(a + b + d)
 
+
+      # different possible batch-coordinate ascent schemes:
+
       if (batch == "y") { # used only internally
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
@@ -97,13 +101,15 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
           mat_z_mu <- mat_z_mu + tcrossprod(Z[, i], mu_alpha_vb[i, ])
         }
 
+        # C++ Eigen call for expensive updates
         coreZLoop(X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
                   log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb,
                   sig2_beta_vb, tau_vb)
 
         rs_gam <- rowSums(gam_vb)
 
-      } else if (batch == "x") { # used only internally
+      } else if (batch == "x") { # used internally for testing purposes,
+                                 # convergence not ensured as ELBO not batch-convex
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -145,13 +151,14 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 
         mat_z_mu <- Z %*% mu_alpha_vb
 
+        # C++ Eigen call for expensive updates
         coreZBatch(X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
                    log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb,
                    sig2_beta_vb, tau_vb)
 
         rs_gam <- rowSums(gam_vb)
 
-      } else { # no batch, used only internally
+      } else if (batch == "0"){ # no batch, used only internally
 
         for (k in 1:d) {
 
@@ -190,6 +197,10 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 
         }
 
+      } else {
+
+        stop ("Batch scheme not defined. Exit.")
+
       }
 
       m2_alpha <- update_m2_alpha_(mu_alpha_vb, sig2_alpha_vb)
@@ -212,11 +223,11 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
                                  zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
                                  mat_x_m1, mat_z_mu, sum_gam)
 
-      # if (verbose & (it == 1 | it %% 5 == 0))
-      #   cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+      if (verbose & (it == 1 | it %% 5 == 0))
+        cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
 
-
-      cat(paste("Lower bound = ", lb_new, "\n\n", sep = ""))
+      if (debug && lb_new < lb_old)
+        stop("ELBO not increasing monotonically. Exit. ")
 
       converged <- (abs(lb_new-lb_old) < tol)
 
@@ -227,9 +238,9 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 
     if (verbose) {
       if (converged) {
-        cat(paste("Convergence obtained after ", format(it),
-                  " iterations with variational lower bound = ",
-                  format(lb_new), ". \n\n", sep = ""))
+        cat(paste("Convergence obtained after ", format(it), " iterations. \n",
+                  "Optimal marginal log-likelihood variational lower bound ",
+                  "(ELBO) = ", format(lb_new), ". \n\n", sep = ""))
       } else {
         warning("Maximal number of iterations reached before convergence. Exit.")
       }

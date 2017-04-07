@@ -1,6 +1,6 @@
 locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
                               mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, tol,
-                              maxit, batch, verbose, full_output = FALSE) {
+                              maxit, verbose, batch = "y", full_output = FALSE, debug = FALSE) {
 
   # 1/2 must have been substracted from Y, and X and V must have been standardized (except intercept in Z)
 
@@ -59,6 +59,9 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
       digam_sum <- digamma(a + b + d)
 
+
+      # different possible batch-coordinate ascent schemes:
+
       if (batch == "y") { # optimal scheme
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
@@ -72,12 +75,14 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
           mat_z_mu <- mat_z_mu + tcrossprod(Z[, i], mu_alpha_vb[i, ])
         }
 
+        # C++ Eigen call for expensive updates
         coreLogitLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
                       m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, psi_vb, sig2_beta_vb)
 
         rs_gam <- rowSums(gam_vb)
 
-      } else if (batch == "x") { # used only internally
+      } else if (batch == "x") {  # used internally for testing purposes,
+                                  # convergence not ensured as ELBO not batch-convex
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -106,18 +111,21 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
         rs_gam <- rowSums(gam_vb)
 
-      } else if (batch == "x-y") { # used only internally
+      } else if (batch == "x-y") {  # used internally for testing purposes,
+                                    # convergence not ensured as ELBO not batch-convex
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
         mu_alpha_vb <- sig2_alpha_vb * (crossprod(Z, Y - 2 * psi_vb * (mat_z_mu + mat_x_m1)) +
-                                              sapply(1:d, function(k) colSums(sweep(sweep(Z, 2, mu_alpha_vb[, k], `*`), 1, 2 * psi_vb[, k], `*`) * Z)))
+                                              sapply(1:d, function(k)
+                                                colSums(sweep(sweep(Z, 2, mu_alpha_vb[, k], `*`), 1, 2 * psi_vb[, k], `*`) * Z)))
 
         mat_z_mu <- Z %*% mu_alpha_vb
 
         mu_beta_vb <- sig2_beta_vb * (crossprod(X, Y -  2 * psi_vb * (mat_z_mu + mat_x_m1)) +
-                                              sapply(1:d, function(k) colSums(sweep(sweep(X, 2, m1_beta[, k], `*`), 1, 2 * psi_vb[, k], `*`) * X)))
+                                              sapply(1:d, function(k)
+                                                colSums(sweep(sweep(X, 2, m1_beta[, k], `*`), 1, 2 * psi_vb[, k], `*`) * X)))
 
 
         gam_vb <- exp(-log_one_plus_exp_(log_1_min_om_vb - log_om_vb -
@@ -132,7 +140,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
         rs_gam <- rowSums(gam_vb)
 
-      } else { # no batch, used only internally
+      } else if (batch == "0"){ # no batch, used only internally
 
 
         for (k in 1:d) {
@@ -144,7 +152,8 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
             mat_z_mu[, k] <- mat_z_mu[, k] - Z[, i] * mu_alpha_vb[i, k]
 
-            mu_alpha_vb[i, k] <- sig2_alpha_vb[i, k] * crossprod(Y[, k] - 2 * psi_vb[, k] * (mat_z_mu[, k] + mat_x_m1[, k]), Z[, i])
+            mu_alpha_vb[i, k] <- sig2_alpha_vb[i, k] *
+              crossprod(Y[, k] - 2 * psi_vb[, k] * (mat_z_mu[, k] + mat_x_m1[, k]), Z[, i])
 
             mat_z_mu[, k] <- mat_z_mu[, k] + Z[, i] * mu_alpha_vb[i, k]
 
@@ -154,7 +163,8 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
             mat_x_m1[, k] <- mat_x_m1[, k] - X[, j] * m1_beta[j, k]
 
-            mu_beta_vb[j, k] <- sig2_beta_vb[j, k] * crossprod(Y[, k] - 2 * psi_vb[, k] * (mat_z_mu[, k] + mat_x_m1[, k]), X[, j])
+            mu_beta_vb[j, k] <- sig2_beta_vb[j, k] *
+              crossprod(Y[, k] - 2 * psi_vb[, k] * (mat_z_mu[, k] + mat_x_m1[, k]), X[, j])
 
             gam_vb[j, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb[j] - log_om_vb[j] -
                                                     log_sig2_inv_vb / 2 -
@@ -170,6 +180,10 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
           rs_gam <- rowSums(gam_vb)
 
         }
+
+      } else {
+
+        stop ("Batch scheme not defined. Exit.")
 
       }
 
@@ -189,7 +203,10 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
                                    m2_beta, mat_x_m1, mat_z_mu, sum_gam)
 
       if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+        cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
+
+      if (debug && lb_new < lb_old)
+        stop("ELBO not increasing monotonically. Exit. ")
 
       converged <- (abs(lb_new - lb_old) < tol)
 
@@ -199,9 +216,9 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
     if (verbose) {
       if (converged) {
-        cat(paste("Convergence obtained after ", format(it),
-                  " iterations with variational lower bound = ",
-                  format(lb_new), ". \n\n", sep = ""))
+        cat(paste("Convergence obtained after ", format(it), " iterations. \n",
+                  "Optimal marginal log-likelihood variational lower bound ",
+                  "(ELBO) = ", format(lb_new), ". \n\n", sep = ""))
       } else {
         warning("Maximal number of iterations reached before convergence. Exit.")
       }

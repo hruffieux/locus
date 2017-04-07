@@ -70,10 +70,6 @@
 #'   seed set.
 #' @param tol Tolerance for the stopping criterion.
 #' @param maxit Maximum number of iterations allowed.
-#' @param batch If \code{"y"}, all responses are updated by batch (recommended),
-#'   if \code{"x"}, all candidate predictors are updated by batch, if
-#'   \code{"x-y"} responses and candidate predictors are updated by batch, if
-#'   \code{"0"}, no fast batch updating scheme is used (not recommended).
 #' @param save_hyper If \code{TRUE}, the hyperparameters used for the model are
 #'   saved as output.
 #' @param save_init If \code{TRUE}, the initial variational parameters used for
@@ -212,12 +208,11 @@
 locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, user_seed = NULL,
-                  tol = 1e-4, maxit = 1000, batch = "y", save_hyper = FALSE,
+                  tol = 1e-4, maxit = 1000, save_hyper = FALSE,
                   save_init = FALSE, verbose = TRUE) { ##
 
   if (verbose) cat("== Preparing the data ... \n")
-  dat <- prepare_data_(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, batch,
-                       verbose)
+  dat <- prepare_data_(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verbose)
 
   bool_rmvd_x <- dat$bool_rmvd_x
   bool_rmvd_z <- dat$bool_rmvd_z
@@ -377,21 +372,21 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
         vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
                           list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                          list_init$tau_vb, tol, maxit, batch, verbose)
+                          list_init$tau_vb, tol, maxit, verbose)
 
       } else if (nq) { # r non-null
 
         vb <- locus_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
                                list_init$mu_beta_vb, list_init$mu_c0_vb,
                                list_init$mu_c_vb, list_init$sig2_beta_vb,
-                               list_init$tau_vb, tol, maxit, batch, verbose)
+                               list_init$tau_vb, tol, maxit, verbose)
 
       } else if (nr) { # q non-null
 
         vb <- locus_z_core_(Y, X, Z, list_hyper, list_init$gam_vb,
                             list_init$mu_alpha_vb, list_init$mu_beta_vb,
                             list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                            list_init$tau_vb, tol, maxit, batch, verbose)
+                            list_init$tau_vb, tol, maxit, verbose)
 
       } else { # both q and r non - null
 
@@ -399,7 +394,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                  list_init$mu_alpha_vb, list_init$mu_beta_vb,
                                  list_init$mu_c0_vb, list_init$mu_c_vb,
                                  list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                                 list_init$tau_vb, tol, maxit, batch, verbose)
+                                 list_init$tau_vb, tol, maxit, verbose)
       }
 
 
@@ -410,14 +405,14 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
         vb <- locus_logit_core_(Y, X, Z, list_hyper, list_init$chi_vb,
                                 list_init$gam_vb, list_init$mu_alpha_vb,
                                 list_init$mu_beta_vb, list_init$sig2_alpha_vb,
-                                list_init$sig2_beta_vb, tol, maxit, batch, verbose)
+                                list_init$sig2_beta_vb, tol, maxit, verbose)
       } else {
 
         vb <- locus_logit_info_core_(Y, X, Z, V, list_hyper, list_init$chi_vb,
                                      list_init$gam_vb, list_init$mu_alpha_vb,
                                      list_init$mu_beta_vb, list_init$mu_c0_vb,
                                      list_init$mu_c_vb, list_init$sig2_alpha_vb,
-                                     list_init$sig2_beta_vb, tol, maxit, batch,
+                                     list_init$sig2_beta_vb, tol, maxit,
                                      verbose)
       }
 
@@ -429,7 +424,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
         vb <- locus_probit_core_(Y, X, Z, list_hyper, list_init$gam_vb,
                                  list_init$mu_alpha_vb, list_init$mu_beta_vb,
                                  list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                                 tol, maxit, batch, verbose)
+                                 tol, maxit, verbose)
 
       } else {
 
@@ -437,7 +432,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                       list_init$mu_alpha_vb, list_init$mu_beta_vb,
                                       list_init$mu_c0_vb, list_init$mu_c_vb,
                                       list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                                      tol, maxit, batch, verbose)
+                                      tol, maxit, verbose)
       }
 
     } else {
@@ -447,15 +442,14 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
         vb <- locus_mix_core_(Y, X, Z, ind_bin, list_hyper, list_init$gam_vb,
                               list_init$mu_alpha_vb, list_init$mu_beta_vb,
                               list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                              list_init$tau_vb, tol, maxit, batch, verbose)
+                              list_init$tau_vb, tol, maxit, verbose)
       } else {
 
         vb <- locus_mix_info_core_(Y, X, Z, V, ind_bin, list_hyper, list_init$gam_vb,
                                    list_init$mu_alpha_vb, list_init$mu_beta_vb,
                                    list_init$mu_c0_vb, list_init$mu_c_vb,
                                    list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                                   list_init$tau_vb, tol, maxit, batch,
-                                   verbose)
+                                   list_init$tau_vb, tol, maxit, verbose)
       }
     }
 
@@ -522,7 +516,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
           vb_bl <- locus_core_(Y, X_bl, list_hyper_bl,
                                list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
                                list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                               tol, maxit, batch, verbose = FALSE)
+                               tol, maxit, verbose = FALSE)
 
         } else if (nq) { # r non-null
 
@@ -530,7 +524,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                     list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
                                     list_init_bl$mu_c0_vb, list_init_bl$mu_c_vb,
                                     list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                                    tol, maxit, batch, verbose = FALSE)
+                                    tol, maxit, verbose = FALSE)
 
         } else if (nr) { # q non-null
 
@@ -538,7 +532,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                  list_init_bl$mu_alpha_vb,list_init_bl$mu_beta_vb,
                                  list_init_bl$sig2_alpha_vb,
                                  list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                                 tol, maxit, batch, verbose = FALSE)
+                                 tol, maxit, verbose = FALSE)
 
         } else { # both q and r non - null
 
@@ -547,7 +541,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                       list_init_bl$mu_beta_vb, list_init_bl$mu_c0_vb,
                                       list_init_bl$mu_c_vb, list_init_bl$sig2_alpha_vb,
                                       list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                                      tol, maxit, batch, verbose = FALSE)
+                                      tol, maxit, verbose = FALSE)
         }
 
 
@@ -559,7 +553,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                      list_init_bl$chi_vb, list_init_bl$gam_vb,
                                      list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
                                      list_init_bl$sig2_alpha_vb,
-                                     list_init_bl$sig2_beta_vb, tol, maxit, batch,
+                                     list_init_bl$sig2_beta_vb, tol, maxit,
                                      verbose = FALSE)
 
         } else {
@@ -570,7 +564,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                           list_init_bl$mu_c0_vb, list_init_bl$mu_c_vb,
                                           list_init_bl$sig2_alpha_vb,
                                           list_init_bl$sig2_beta_vb, tol, maxit,
-                                          batch, verbose = FALSE)
+                                          verbose = FALSE)
         }
 
 
@@ -581,7 +575,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                       list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
                                       list_init_bl$mu_beta_vb,
                                       list_init_bl$sig2_alpha_vb,
-                                      list_init_bl$sig2_beta_vb, tol, maxit, batch,
+                                      list_init_bl$sig2_beta_vb, tol, maxit,
                                       verbose = FALSE)
 
         } else {
@@ -591,7 +585,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                            list_init_bl$mu_beta_vb, list_init_bl$mu_c0_vb,
                                            list_init_bl$mu_c_vb, list_init_bl$sig2_alpha_vb,
                                            list_init_bl$sig2_beta_vb, tol, maxit,
-                                           batch, verbose = FALSE)
+                                           verbose = FALSE)
         }
 
 
@@ -604,7 +598,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                    list_init_bl$mu_beta_vb,
                                    list_init_bl$sig2_alpha_vb,
                                    list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                                   tol, maxit, batch, verbose = FALSE)
+                                   tol, maxit, verbose = FALSE)
 
         } else {
 
@@ -613,7 +607,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                         list_init_bl$mu_beta_vb, list_init_bl$mu_c0_vb,
                                         list_init_bl$mu_c_vb, list_init_bl$sig2_alpha_vb,
                                         list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                                        tol, maxit, batch, verbose = FALSE)
+                                        tol, maxit, verbose = FALSE)
         }
       }
 

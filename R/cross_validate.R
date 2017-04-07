@@ -23,8 +23,6 @@
 #'   within the cross-validation procedure.
 #' @param maxit_cv Maximum number of iterations allowed for the variational
 #'   algorithm used within the cross-validation procedure.
-#' @param batch_cv If \code{TRUE}, a fast batch updating scheme is used within
-#'   the cross-validation procedure (recommended).
 #' @param verbose If \code{TRUE}, messages are displayed when calling
 #'   \code{set_cv}.
 #'
@@ -53,7 +51,7 @@
 #' @export
 #'
 set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
-                   maxit_cv = 1e3, batch_cv = TRUE, verbose = TRUE) {
+                   maxit_cv = 1e3, verbose = TRUE) {
 
   check_structure_(n_folds, "vector", "numeric", 1)
   check_natural_(n_folds)
@@ -90,8 +88,6 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
   check_structure_(maxit_cv, "vector", "numeric", 1)
   check_natural_(maxit_cv)
 
-  check_structure_(batch_cv, "vector", "logical", 1)
-
   check_structure_(n_cpus, "vector", "numeric", 1)
   check_natural_(n_cpus)
   if (n_cpus > n_folds){
@@ -118,7 +114,7 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
   p_cv <- p
 
   list_cv <- create_named_list_(n_cv, p_cv, n_folds, p0_av_grid, size_p0_av_grid,
-                                tol_cv, n_cpus, maxit_cv, batch_cv)
+                                tol_cv, n_cpus, maxit_cv)
   class(list_cv) <- "cv"
 
   list_cv
@@ -284,8 +280,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
             vb_tr <- locus_core_(Y_tr, X_tr, list_hyper_pg,
                                  list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
                                  list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
-                                 tol_cv, maxit_cv, batch_cv, verbose = FALSE,
-                                 full_output = TRUE)
+                                 tol_cv, maxit_cv, verbose = FALSE, full_output = TRUE)
 
             lb_vec[ind_pg] <- with(vb_tr, {
 
@@ -301,8 +296,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
                                    list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
                                    list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
                                    list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
-                                   tol_cv, maxit_cv, batch_cv, verbose = FALSE,
-                                   full_output = TRUE)
+                                   tol_cv, maxit_cv, verbose = FALSE, full_output = TRUE)
 
             lb_vec[ind_pg] <- with(vb_tr, {
 
@@ -323,7 +317,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
                                       list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
                                       list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
                                       list_init_pg$sig2_beta_vb, tol_cv, maxit_cv,
-                                      batch_cv, verbose = FALSE, full_output = TRUE)
+                                      verbose = FALSE, full_output = TRUE)
 
           lb_vec[ind_pg] <- with(vb_tr, {
 
@@ -343,8 +337,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
                                    list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
                                    list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
                                    list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
-                                   tol_cv, maxit_cv, batch_cv, verbose = FALSE,
-                                   full_output = TRUE)
+                                   tol_cv, maxit_cv, verbose = FALSE, full_output = TRUE)
 
           lb_vec[ind_pg] <- with(vb_tr, {
 

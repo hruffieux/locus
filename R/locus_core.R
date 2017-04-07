@@ -1,5 +1,6 @@
 locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
-                        tau_vb, tol, maxit, batch, verbose, full_output = FALSE) {
+                        tau_vb, tol, maxit, verbose, batch = "x-y",
+                        full_output = FALSE, debug = FALSE) {
 
   # Y must have been centered, and X, standardized.
 
@@ -8,7 +9,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
   p <- ncol(X)
 
   with(list_hyper, { # list_init not used with the with() function to avoid
-    # copy-on-write for large objects
+                     # copy-on-write for large objects
 
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
     m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
@@ -36,7 +37,6 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       # % #
       eta_vb <- update_eta_vb_(n, eta, gam_vb)
-
       kappa_vb <- update_kappa_vb_(Y, X, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb)
 
       tau_vb <- eta_vb / kappa_vb
@@ -49,11 +49,15 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       digam_sum <- digamma(a + b + d)
 
+
+      # different possible batch-coordinate ascent schemes:
+
       if (batch == "y") { # used only internally
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
+        # C++ Eigen call for expensive updates
         coreLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
                  log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb)
 
@@ -67,7 +71,8 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
         for (k in 1:d) {
 
-          mu_beta_vb[, k] <- sig2_beta_vb[k] * tau_vb[k] * (crossprod(Y[, k] - mat_x_m1[, k], X) + (n - 1) * m1_beta[, k]) # last term: X_j^T X_j = n - 1
+          mu_beta_vb[, k] <- sig2_beta_vb[k] * tau_vb[k] *
+            (crossprod(Y[, k] - mat_x_m1[, k], X) + (n - 1) * m1_beta[, k])
 
 
           gam_vb[, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb - log_om_vb -
@@ -83,26 +88,18 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
         rs_gam <- rowSums(gam_vb)
 
-      } else if (batch == "x-y"){ # optimal scheme
+      } else if (batch == "x-y") { # optimal scheme
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
+        # C++ Eigen call for expensive updates
         coreBatch(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
-                      log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb)
-
-        # mu_beta_vb <- sweep(crossprod(X, Y - mat_x_m1) + (n - 1) * m1_beta, 2, sig2_beta_vb * tau_vb, `*`)
-        #
-        # gam_vb <- exp(-log_one_plus_exp_(sweep(sweep(sweep(-mu_beta_vb ^ 2, 2, (2 * sig2_beta_vb), `/`), 2,
-        #                                              (log_tau_vb / 2 + log(sig2_beta_vb) / 2),  `-`), 1,
-        #                                        log_1_min_om_vb - log_om_vb, `+`) - log_sig2_inv_vb / 2))
-        #
-        # m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
-        # mat_x_m1 <- update_mat_x_m1_(X, m1_beta)
+                  log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb)
 
         rs_gam <- rowSums(gam_vb)
 
-      } else { # no batch, used only internally
+      } else if (batch == "0") { # no batch, used only internally
 
         for (k in 1:d) {
 
@@ -130,8 +127,11 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
         }
 
-      }
+      } else {
 
+        stop ("Batch scheme not defined. Exit.")
+
+      }
 
       m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
@@ -146,7 +146,10 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
                              m2_beta, mat_x_m1, sum_gam)
 
       if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+        cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
+
+      if (debug && lb_new < lb_old)
+        stop("ELBO not increasing monotonically. Exit. ")
 
       converged <- (abs(lb_new - lb_old) < tol)
 
@@ -158,9 +161,9 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
     if (verbose) {
       if (converged) {
-        cat(paste("Convergence obtained after ", format(it),
-                  " iterations with variational lower bound = ",
-                  format(lb_new), ". \n\n", sep = ""))
+        cat(paste("Convergence obtained after ", format(it), " iterations. \n",
+                  "Optimal marginal log-likelihood variational lower bound ",
+                  "(ELBO) = ", format(lb_new), ". \n\n", sep = ""))
       } else {
         warning("Maximal number of iterations reached before convergence. Exit.")
       }

@@ -5,7 +5,7 @@
 \title{Gather settings for the cross-validation procedure used in \code{locus}.}
 \usage{
 set_cv(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 0.001,
-  maxit_cv = 1000, batch_cv = TRUE, verbose = TRUE)
+  maxit_cv = 1000, verbose = TRUE)
 }
 \arguments{
 \item{n}{Number of observations.}
@@ -29,9 +29,6 @@ within the cross-validation procedure.}
 
 \item{maxit_cv}{Maximum number of iterations allowed for the variational
 algorithm used within the cross-validation procedure.}
-
-\item{batch_cv}{If \code{TRUE}, a fast batch updating scheme is used within
-the cross-validation procedure (recommended).}
 
 \item{verbose}{If \code{TRUE}, messages are displayed when calling
 \code{set_cv}.}

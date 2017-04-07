@@ -1,5 +1,4 @@
-prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit,
-                          batch, verbose) {
+prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verbose) {
 
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
@@ -10,11 +9,6 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit,
 
   check_structure_(maxit, "vector", "numeric", 1)
   check_natural_(maxit)
-
-  if (is.null(V))
-    stopifnot(batch %in% c("x-y", "x", "y", "0"))
-  else if (batch != "y")
-    stop ("This type of batch update is for now only implemented for V NULL.")
 
   check_structure_(verbose, "vector", "logical", 1)
 

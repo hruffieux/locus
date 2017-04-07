@@ -1,7 +1,7 @@
 ## with covariates
 locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
-                          sig2_alpha_vb, sig2_beta_vb, tau_vb, tol, maxit, batch,
-                          verbose, full_output = FALSE) {
+                          sig2_alpha_vb, sig2_beta_vb, tau_vb, tol, maxit,
+                          verbose, batch = "x-y", full_output = FALSE, debug = FALSE) {
 
   # Y must have been centered, and X and Z, standardized (except the intercept in Z).
 
@@ -12,6 +12,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
   with(list_hyper, {  # list_init not used with the with() function to avoid
                       # copy-on-write for large objects
+
     m2_alpha <- update_m2_alpha_(mu_alpha_vb, sig2_alpha_vb)
 
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
@@ -64,6 +65,9 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
       digam_sum <- digamma(a + b + d)
 
+
+      # different possible batch-coordinate ascent schemes:
+
       if (batch == "y") { # used only internally
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
@@ -78,6 +82,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
           mat_z_mu <- mat_z_mu + tcrossprod(Z[, i], mu_alpha_vb[i, ])
         }
 
+        # C++ Eigen call for expensive updates
         coreZLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
                   log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb,
                   sig2_beta_vb, tau_vb)
@@ -96,7 +101,8 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
           mat_z_mu[, k] <- Z %*% mu_alpha_vb[, k]
 
-          mu_beta_vb[, k] <- sig2_beta_vb[k] * tau_vb[k] * (crossprod(Y[, k] -  mat_z_mu[, k] - mat_x_m1[, k], X) + (n - 1) * m1_beta[, k]) # last term: X_j^T X_j = n - 1
+          mu_beta_vb[, k] <- sig2_beta_vb[k] * tau_vb[k] *
+            (crossprod(Y[, k] -  mat_z_mu[, k] - mat_x_m1[, k], X) + (n - 1) * m1_beta[, k])
 
 
           gam_vb[, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb - log_om_vb -
@@ -121,12 +127,13 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
         mat_z_mu <- Z %*% mu_alpha_vb
 
+        # C++ Eigen call for expensive updates
         coreZBatch(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
                       log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb)
 
         rs_gam <- rowSums(gam_vb)
 
-      } else { # no batch, used only internally
+      } else if (batch == "0"){ # no batch, used only internally
 
         for (k in 1:d) {
 
@@ -165,7 +172,12 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
         }
 
+      } else {
+
+        stop ("Batch scheme not defined. Exit.")
+
       }
+
 
       m2_alpha <- update_m2_alpha_(mu_alpha_vb, sig2_alpha_vb)
       m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
@@ -184,7 +196,10 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
 
       if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("Lower bound = ", format(lb_new), "\n\n", sep = ""))
+        cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
+
+      if (debug && lb_new < lb_old)
+        stop("ELBO not increasing monotonically. Exit. ")
 
       converged <- (abs(lb_new-lb_old) < tol)
 
@@ -195,9 +210,9 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
     if (verbose) {
       if (converged) {
-        cat(paste("Convergence obtained after ", format(it),
-                  " iterations with variational lower bound = ",
-                  format(lb_new), ". \n\n", sep = ""))
+        cat(paste("Convergence obtained after ", format(it), " iterations. \n",
+                  "Optimal marginal log-likelihood variational lower bound ",
+                  "(ELBO) = ", format(lb_new), ". \n\n", sep = ""))
       } else {
         warning("Maximal number of iterations reached before convergence. Exit.")
       }
