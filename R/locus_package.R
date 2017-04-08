@@ -10,14 +10,13 @@
 #' polymorphisms (SNPs), hundreds of molecular expression levels and hundreds
 #' of samples.
 #'
-#' @section locus functions: set_hyper, set_init,
-#' generate_dependence, generate_null, generate_phenos, generate_snps, locus,
-#' replicate_real_phenos, replicate_real_snps, set_blocks, set_cv.
+#' @section locus functions: set_hyper, set_init, generate_null, locus,
+#'   set_blocks, set_cv.
 #'
 #' @docType package
 #' @name locus-package
 #' @useDynLib locus
 #' @import RcppEigen
 #' @importFrom Rcpp evalCpp
-#' @importFrom stats cor dnorm median pnorm qnorm rbeta rbinom rgamma rnorm runif setNames var
+#' @importFrom stats dnorm median pnorm qnorm rbeta rbinom rgamma rnorm setNames var
 NULL
