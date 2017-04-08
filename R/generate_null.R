@@ -71,18 +71,47 @@
 #' @seealso \code{\link{locus}}
 #'
 #' @examples
-#' user_seed <- 123; set.seed(user_seed)
+#' seed <- 123; set.seed(seed)
+#'
+#' ###################
+#' ## Simulate data ##
+#' ###################
+#'
+#' ## Example using small problem sizes:
+#' ##
 #' n <- 200; p <- 250; p0 <- 20; d <- 25; d0 <- 20
-#' list_X <- generate_snps(n = n, p = p)
-#' list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
 #'
-#' dat <- generate_dependence(list_X, list_Y, ind_d0 = sample(1:d, d0),
-#'                            ind_p0 = sample(1:p, p0), vec_prob_sh = 0.05,
-#'                            max_tot_pve = 0.5)
+#' ## Candidate predictors (subject to selection)
+#' ##
+#' # Here we simulate common genetic variants (but any type of candidate
+#' # predictors can be supplied).
+#' # 0 = homozygous, major allele, 1 = heterozygous, 2 = homozygous, minor allele
+#' #
+#' X_act <- matrix(rbinom(n * p0, size = 2, p = 0.25), nrow = n)
+#' X_inact <- matrix(rbinom(n * (p - p0), size = 2, p = 0.25), nrow = n)
 #'
-#' list_perm <- generate_null(n_perm = 10, dat$phenos, dat$snps, p0_av = p0,
-#'                            link = "identity", user_seed = user_seed,
-#'                            verbose = FALSE)
+#' shuff_x_ind <- sample(p)
+#' X <- cbind(X_act, X_inact)[, shuff_x_ind]
+#'
+#' bool_x_act <- shuff_x_ind <= p0
+#'
+#' pat_act <- beta <- matrix(0, nrow = p0, ncol = d0)
+#' pat_act[sample(p0*d0, floor(p0*d0/5))] <- 1
+#' beta[as.logical(pat_act)] <-  rnorm(sum(pat_act))
+#'
+#' ## Gaussian responses
+#' ##
+#' Y_act <- matrix(rnorm(n * d0, mean = X_act %*% beta, sd = 0.5), nrow = n)
+#' Y_inact <- matrix(rnorm(n * (d - d0), sd = 0.5), nrow = n)
+#' shuff_y_ind <- sample(d)
+#' Y <- cbind(Y_act, Y_inact)[, shuff_y_ind]
+#'
+#' ########################
+#' ## Infer associations ##
+#' ########################
+#'
+#' list_perm <- generate_null(n_perm = 10, Y, X, p0_av = p0, link = "identity",
+#'                            user_seed = seed, verbose = FALSE)
 #'
 #' @export
 #'

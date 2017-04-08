@@ -49,20 +49,49 @@ This cross-validation procedure is available only for
 \code{link = "identity"}.
 }
 \examples{
-user_seed <- 123; set.seed(user_seed)
-n <- 150; p <- 200; p0 <- 50; d <- 25; d0 <- 20
-list_X <- generate_snps(n = n, p = p)
-list_Y <- generate_phenos(n = n, d = d, var_err = 0.25)
+seed <- 123; set.seed(seed)
 
-dat <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-                           ind_d0 = sample(1:d, d0),
-                           ind_p0 = sample(1:p, p0), vec_prob_sh = 0.1,
-                           max_tot_pve = 0.9)
+###################
+## Simulate data ##
+###################
+
+## Example using small problem sizes:
+##
+n <- 150; p <- 200; p0 <- 50; d <- 25; d0 <- 20
+
+## Candidate predictors (subject to selection)
+##
+# Here we simulate common genetic variants (but any type of candidate
+# predictors can be supplied).
+# 0 = homozygous, major allele, 1 = heterozygous, 2 = homozygous, minor allele
+#
+X_act <- matrix(rbinom(n * p0, size = 2, p = 0.25), nrow = n)
+X_inact <- matrix(rbinom(n * (p - p0), size = 2, p = 0.25), nrow = n)
+
+shuff_x_ind <- sample(p)
+X <- cbind(X_act, X_inact)[, shuff_x_ind]
+
+bool_x_act <- shuff_x_ind <= p0
+
+pat_act <- beta <- matrix(0, nrow = p0, ncol = d0)
+pat_act[sample(p0*d0, floor(p0*d0/5))] <- 1
+beta[as.logical(pat_act)] <-  rnorm(sum(pat_act))
+
+## Gaussian responses
+##
+Y_act <- matrix(rnorm(n * d0, mean = X_act \%*\% beta, sd = 0.5), nrow = n)
+Y_inact <- matrix(rnorm(n * (d - d0), sd = 0.5), nrow = n)
+shuff_y_ind <- sample(d)
+Y <- cbind(Y_act, Y_inact)[, shuff_y_ind]
+
+########################
+## Infer associations ##
+########################
 
 list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 2)
 
-vb <- locus(Y = dat$phenos, X = dat$snps, p0_av = NULL, link = "identity",
-            list_cv = list_cv, user_seed = user_seed)
+vb <- locus(Y = Y, X = X, p0_av = NULL, link = "identity", list_cv = list_cv,
+            user_seed = seed)
 
 }
 \seealso{

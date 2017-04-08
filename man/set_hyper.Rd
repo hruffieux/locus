@@ -93,126 +93,126 @@ choices (without using \code{\link{set_hyper}}) by setting its argument
 \code{list_hyper} to \code{NULL}.
 }
 \examples{
-user_seed <- 123
-n <- 200; p <- 250; p0 <- 50; d <- 25; d0 <- 15
-list_X <- generate_snps(n = n, p = p, user_seed = user_seed)
-list_Y <- generate_phenos(n = n, d = d, var_err = 1, user_seed = user_seed)
+seed <- 123; set.seed(seed)
 
-# Continuous outcomes
+###################
+## Simulate data ##
+###################
+
+## Examples using small problem sizes:
+##
+n <- 200; p <- 200; p0 <- 20; d <- 20; d0 <- 15; q <- 2; r <- 3
+
+## Candidate predictors (subject to selection)
+##
+# Here we simulate common genetic variants (but any type of candidate
+# predictors can be supplied).
+# 0 = homozygous, major allele, 1 = heterozygous, 2 = homozygous, minor allele
+
+X_act <- matrix(rbinom(n * p0, size = 2, p = 0.25), nrow = n)
+X_inact <- matrix(rbinom(n * (p - p0), size = 2, p = 0.25), nrow = n)
+
+shuff_x_ind <- sample(p)
+X <- cbind(X_act, X_inact)[, shuff_x_ind]
+
+bool_x_act <- shuff_x_ind <= p0
+
+pat_act <- beta <- matrix(0, nrow = p0, ncol = d0)
+pat_act[sample(p0*d0, floor(p0*d0/5))] <- 1
+beta[as.logical(pat_act)] <-  rnorm(sum(pat_act))
+
+## Covariates (not subject to selection)
+##
+Z <- matrix(rnorm(n * q), nrow = n)
+
+alpha <-  matrix(rnorm(q * d), nrow = q)
+
+## Gaussian responses
+##
+Y_act <- matrix(rnorm(n * d0, mean = X_act \%*\% beta, sd = 0.5), nrow = n)
+Y_inact <- matrix(rnorm(n * (d - d0), sd = 0.5), nrow = n)
+shuff_y_ind <- sample(d)
+Y <- cbind(Y_act, Y_inact)[, shuff_y_ind] + Z \%*\% alpha
+
+## Binary responses
+##
+Y_bin <- ifelse(Y > 0, 1, 0)
+## Informative annotation variables
+##
+V <- matrix(rnorm(p * r), nrow = p)
+V[bool_x_act, ] <- rnorm(p0 * r, mean = 2)
+
+########################
+## Infer associations ##
+########################
+
+## Continuous responses
+##
+
+# No covariate
 #
-dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-                             ind_d0 = sample(1:d, d0),
-                             ind_p0 = sample(1:p, p0), vec_prob_sh = 0.1,
-                             family = "gaussian", max_tot_pve = 0.9,
-                             user_seed = user_seed)
-
 # a and b chosen so that the prior mean number of responses associated with
 # each candidate predictor is 1/4.
 list_hyper_g <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
-                          eta = 1, kappa = apply(dat_g$phenos, 2, var),
+                          eta = 1, kappa = apply(Y, 2, var),
                           link = "identity")
 
-# we take p0_av = p0 (known here); this choice may result in variable
-# selections that are (too) conservative in some cases. In practice, often
-# p0_av as a slightly overestimated guess of p0.
-vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
-              link = "identity", list_hyper = list_hyper_g,
-              user_seed = user_seed)
+# We take p0_av = p0 (known here); this choice may result in variable
+# selections that are (too) conservative in some cases. In practice, it is
+# advised to set p0_av as a slightly overestimated guess of p0, or perform
+# cross-validation using function `set_cv'.
 
-# Continuous outcomes with covariates
+vb_g <- locus(Y = Y, X = X, p0_av = p0, link = "identity",
+              list_hyper = list_hyper_g, user_seed = seed)
+
+# With covariates
 #
-q <- 4
-Z <- matrix(rnorm(n * q), nrow = n)
-
 list_hyper_g_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
-                            eta = 1, kappa = apply(dat_g$phenos, 2, var),
+                            eta = 1, kappa = apply(Y, 2, var),
                             link = "identity", q = q, phi = 1, xi = 1)
 
-vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0, Z = Z,
-                link = "identity", list_hyper = list_hyper_g_z,
-                user_seed = user_seed)
+vb_g_z <- locus(Y = Y, X = X, p0_av = p0, Z = Z, link = "identity",
+                list_hyper = list_hyper_g_z, user_seed = seed)
 
-# Continuous outcomes with external annotation
+
+# With external annotation variables
 #
-r <- 4
-V <- matrix(rnorm(p * r), nrow = p)
-bool_p0 <- rowSums(dat_g$pat) > 0
-V[bool_p0, ] <- rnorm(sum(bool_p0) * r, mean = 2) # informative annotations
-
 list_hyper_g_v <- set_hyper(d, p, lambda = 1, nu = 1, a = NULL, b = NULL,
-                            eta = 1, kappa = apply(dat_g$phenos, 2, var),
+                            eta = 1, kappa = apply(Y, 2, var),
                             link = "identity", r = r, m0 = 0)
 
-vb_g_v <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  V = V,
-                link = "identity", list_hyper = list_hyper_g_v,
-                user_seed = user_seed)
+vb_g_v <- locus(Y = Y, X = X, p0_av = p0,  V = V, link = "identity",
+                list_hyper = list_hyper_g_v, user_seed = seed)
 
-# Binary outcomes
-#
-dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-                             ind_d0 = sample(1:d, d0),
-                             ind_p0 = sample(1:p, p0), vec_prob_sh = 0.1,
-                             family = "binomial", max_tot_pve = 0.9,
-                             user_seed = user_seed)
-
+## Binary responses
+##
 list_hyper_logit <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
-                              eta = NULL, kappa = NULL,
-                              link = "logit")
+                              eta = NULL, kappa = NULL, link = "logit",
+                              q = q, phi = 1, xi = 1)
 
-vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-                  link = "logit", list_hyper = list_hyper_logit,
-                  user_seed = user_seed)
+vb_logit <- locus(Y = Y_bin, X = X, p0_av = p0, Z = Z, link = "logit",
+                  list_hyper = list_hyper_logit, user_seed = seed)
 
 list_hyper_probit <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
-                               eta = NULL, kappa = NULL,
-                               link = "probit")
+                               eta = NULL, kappa = NULL, link = "probit",
+                               q = q, phi = 1, xi = 1)
 
-vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-                   link = "probit", list_hyper = list_hyper_probit,
-                   user_seed = user_seed)
+vb_probit <- locus(Y = Y_bin, X = X, p0_av = p0, Z = Z, link = "probit",
+                   list_hyper = list_hyper_probit, user_seed = seed)
 
-# Binary outcomes with covariates
-#
-list_hyper_logit_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
-                                eta = NULL, kappa = NULL,
-                                link = "logit", q = q, phi = 1,
-                                xi = 1)
 
-vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
-                    link = "logit",
-                    list_hyper = list_hyper_logit_z, user_seed = user_seed)
-
-list_hyper_probit_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
-                                 eta = NULL, kappa = NULL,
-                                 link = "probit", q = q, phi = 1,
-                                 xi = 1)
-
-vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0, Z = Z,
-                     link = "probit",
-                     list_hyper = list_hyper_probit_z, user_seed = user_seed)
-
-# Mix of continuous and binary outcomes
-#
-Y_mix <- cbind(dat_g$phenos, dat_b$phenos)
+## Mix of continuous and binary responses
+##
+Y_mix <- cbind(Y, Y_bin)
 ind_bin <- (d+1):(2*d)
-p0_mix <- sum(rowSums(cbind(dat_g$pat, dat_b$pat)) > 0)
 
 list_hyper_mix <- set_hyper(2*d, p, lambda = 1, nu = 1, a = 1, b = 8*d-1,
-                            eta = 1, kappa = apply(dat_g$phenos, 2, var),
-                            link = "mix", ind_bin = ind_bin)
+                            eta = 1, kappa = apply(Y, 2, var), link = "mix",
+                            ind_bin = ind_bin, q = q, phi = 1, xi = 1)
 
-vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, link = "mix",
+vb_mix <- locus(Y = Y_mix, X = X, p0_av = p0, Z = Z, link = "mix",
                 ind_bin = ind_bin, list_hyper = list_hyper_mix,
-                user_seed = user_seed)
-
-list_hyper_mix_z <- set_hyper(2*d, p, lambda = 1, nu = 1, a = 1, b = 8*d-1,
-                              eta = 1, kappa = apply(dat_g$phenos, 2, var),
-                              link = "mix", ind_bin = ind_bin, q = q,
-                              phi = 1, xi = 1)
-
-vb_mix_z <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0_mix, Z = Z,
-                  link = "mix", ind_bin = ind_bin,
-                  list_hyper = list_hyper_mix_z, user_seed = user_seed)
+                user_seed = seed)
 
 }
 \seealso{

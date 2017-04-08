@@ -124,76 +124,97 @@
 #'                               variational parameters, used for inference are
 #'                               saved as output.}
 #' @examples
-#' user_seed <- 123; set.seed(user_seed)
-#' n <- 200; p <- 300; p0 <- 50; d <- 40; d0 <- 30
-#' list_X <- generate_snps(n = n, p = p)
-#' list_Y <- generate_phenos(n = n, d = d, var_err = 1)
+#' seed <- 123; set.seed(seed)
 #'
-#' # Continuous outcomes
+#' ###################
+#' ## Simulate data ##
+#' ###################
+#'
+#' ## Examples using small problem sizes:
+#' ##
+#' n <- 200; p <- 250; p0 <- 25; d <- 30; d0 <- 25; q <- 3; r <- 3
+#'
+#' ## Candidate predictors (subject to selection)
+#' ##
+#' # Here we simulate common genetic variants (but any type of candidate
+#' # predictors can be supplied).
+#' # 0 = homozygous, major allele, 1 = heterozygous, 2 = homozygous, minor allele
 #' #
-#' dat_g <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-#'                              ind_d0 = sample(1:d, d0),
-#'                              ind_p0 = sample(1:p, p0),
-#'                              vec_prob_sh = 0.1, family = "gaussian",
-#'                              max_tot_pve = 0.9)
+#' X_act <- matrix(rbinom(n * p0, size = 2, p = 0.25), nrow = n)
+#' X_inact <- matrix(rbinom(n * (p - p0), size = 2, p = 0.25), nrow = n)
 #'
-#' # we take p0_av = p0 (known here); this choice may result in variable
-#' # selections that are (too) conservative in some cases. In practice, often
-#' # p0_av as a slightly overestimated guess of p0.
-#' vb_g <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,
-#'               link = "identity", user_seed = user_seed)
+#' shuff_x_ind <- sample(p)
+#' X <- cbind(X_act, X_inact)[, shuff_x_ind]
 #'
-#' # Continuous outcomes with covariates
-#' #
-#' q <- 4
+#' bool_x_act <- shuff_x_ind <= p0
+#'
+#' pat_act <- beta <- matrix(0, nrow = p0, ncol = d0)
+#' pat_act[sample(p0*d0, floor(p0*d0/5))] <- 1
+#' beta[as.logical(pat_act)] <-  rnorm(sum(pat_act))
+#'
+#' ## Covariates (not subject to selection)
+#' ##
 #' Z <- matrix(rnorm(n * q), nrow = n)
-#' vb_g_z <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  Z = Z,
-#'                 link = "identity", user_seed = user_seed)
 #'
-#' # Continuous outcomes with external annotation
-#' #
-#' r <- 4
+#' alpha <-  matrix(rnorm(q * d), nrow = q)
+#'
+#' ## Gaussian responses
+#' ##
+#' Y_act <- matrix(rnorm(n * d0, mean = X_act %*% beta, sd = 0.5), nrow = n)
+#' Y_inact <- matrix(rnorm(n * (d - d0), sd = 0.5), nrow = n)
+#' shuff_y_ind <- sample(d)
+#' Y <- cbind(Y_act, Y_inact)[, shuff_y_ind] + Z %*% alpha
+#'
+#' ## Binary responses
+#' ##
+#' Y_bin <- ifelse(Y > 0, 1, 0)
+#'
+#' ## Informative annotation variables
+#' ##
 #' V <- matrix(rnorm(p * r), nrow = p)
-#' bool_p0 <- rowSums(dat_g$pat) > 0
-#' V[bool_p0, ] <- rnorm(sum(bool_p0) * r, mean = 2) # informative annotations
-#' vb_g_v <- locus(Y = dat_g$phenos, X = dat_g$snps, p0_av = p0,  V = V,
-#'                 link = "identity", user_seed = user_seed)
+#' V[bool_x_act, ] <- rnorm(p0 * r, mean = 2)
 #'
-#' # Binary outcomes
+#'
+#' ########################
+#' ## Infer associations ##
+#' ########################
+#'
+#' ## Continuous responses
+#' ##
+#' # We take p0_av = p0 (known here); this choice may, in some cases, result in
+#' # (too) conservative variable selections. In practice, it is advised to set
+#' # p0_av as a slightly overestimated guess of p0, or perform cross-validation
+#' # using function `set_cv'.
+#'
+#' # No covariate
 #' #
-#' dat_b <- generate_dependence(list_snps = list_X, list_phenos = list_Y,
-#'                              ind_d0 = sample(1:d, d0),
-#'                              ind_p0 = sample(1:p, p0),
-#'                              vec_prob_sh = 0.1, family = "binomial",
-#'                              max_tot_pve = 0.9)
+#' vb_g <- locus(Y = Y, X = X, p0_av = p0, link = "identity", user_seed = seed)
 #'
-#' vb_logit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-#'                   link = "logit", user_seed = user_seed)
-#'
-#' vb_probit <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,
-#'                    link = "probit", user_seed = user_seed)
-#'
-#' # Binary outcomes with covariates
+#' # With covariates
 #' #
-#' vb_logit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
-#'                     link = "logit", user_seed = user_seed)
+#' vb_g_z <- locus(Y = Y, X = X, p0_av = p0,  Z = Z, link = "identity",
+#'                 user_seed = seed)
 #'
-#' vb_probit_z <- locus(Y = dat_b$phenos, X = dat_b$snps, p0_av = p0,  Z = Z,
-#'                      link = "probit", user_seed = user_seed)
-#'
-#' # Mix of continuous and binary outcomes
+#' # With external annotation variables
 #' #
-#' Y_mix <- cbind(dat_g$phenos, dat_b$phenos)
+#' vb_g_v <- locus(Y = Y, X = X, p0_av = p0, Z = Z, V = V, link = "identity",
+#'                 user_seed = seed)
+#'
+#' ## Binary responses
+#' ##
+#' vb_logit <- locus(Y = Y_bin, X = X, p0_av = p0, Z = Z, link = "logit",
+#'                   user_seed = seed)
+#'
+#' vb_probit <- locus(Y = Y_bin, X = X, p0_av = p0, Z = Z, link = "probit",
+#'                    user_seed = seed)
+#'
+#' ## Mix of continuous and binary responses
+#' ##
+#' Y_mix <- cbind(Y, Y_bin)
 #' ind_bin <- (d+1):(2*d)
-#' p0_mix <- sum(rowSums(cbind(dat_g$pat, dat_b$pat)) > 0)
 #'
-#' vb_mix <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0, link = "mix",
-#'                 ind_bin = ind_bin, user_seed = user_seed)
-#'
-#' # Mix of continuous and binary outcomes with covariates
-#' #
-#' vb_mix_z <- locus(Y = Y_mix, X = dat_b$snps, p0_av = p0,  Z = Z,
-#'                   link = "mix", ind_bin = ind_bin, user_seed = user_seed)
+#' vb_mix <- locus(Y = Y_mix, X = X, p0_av = p0, Z = Z, link = "mix",
+#'                 ind_bin = ind_bin, user_seed = seed)
 #'
 #' @references
 #' H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva. Efficient inference for
@@ -212,7 +233,7 @@
 locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, user_seed = NULL,
-                  tol = 1e-4, maxit = 1000, save_hyper = FALSE,
+                  tol = 1e-3, maxit = 1000, save_hyper = FALSE,
                   save_init = FALSE, verbose = TRUE) { ##
 
   if (verbose) cat("== Preparing the data ... \n")

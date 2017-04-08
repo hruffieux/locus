@@ -7,7 +7,8 @@
 #
 locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
                                mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, tol,
-                               maxit, verbose, batch = "y", full_output = FALSE, debug = FALSE) {
+                               maxit, verbose, batch = "y", full_output = FALSE,
+                               debug = FALSE) {
 
   # an intercept must be present in Z (column of ones), and X and Z must be standardized (except intercept in Z)
 
