@@ -6,7 +6,7 @@
 # See help of `locus` function for details.
 #
 locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
-                        tau_vb, tol, maxit, verbose, batch = "x-y",
+                        tau_vb, tol, maxit, verbose, batch = "y",
                         full_output = FALSE, debug = FALSE) {
 
   # Y must have been centered, and X, standardized.
@@ -62,7 +62,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       # different possible batch-coordinate ascent schemes:
 
-      if (batch == "y") { # used only internally
+      if (batch == "y") { # optimal scheme
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -74,7 +74,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
         rs_gam <- rowSums(gam_vb)
 
-      } else if (batch == "x") { # used only internally
+      } else if (batch == "x") { # used only internally, convergence not ensured
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -98,7 +98,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
         rs_gam <- rowSums(gam_vb)
 
-      } else if (batch == "x-y") { # optimal scheme
+      } else if (batch == "x-y") { # used only internally, convergence not ensured
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
