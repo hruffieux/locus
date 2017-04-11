@@ -39,10 +39,13 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
     phi_vb <- update_phi_z_vb_(phi, d)
 
     converged <- FALSE
-    lb_old <- -Inf
-    it <- 1
+    lb_new <- -Inf
+    it <- 0
 
     while ((!converged) & (it <= maxit)) {
+
+      lb_old <- lb_new
+      it <- it + 1
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("Iteration ", format(it), "... \n", sep = ""))
@@ -185,11 +188,7 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
       converged <- (abs(lb_new - lb_old) < tol)
 
-      lb_old <- lb_new
-      it <- it + 1
     }
-
-
 
     if (verbose) {
       if (converged) {
@@ -230,7 +229,10 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
       rownames(mu_c_vb) <- names_v
       colnames(mu_c_vb) <- names_y
 
-      create_named_list_(gam_vb, mu_c0_vb, mu_c_vb, mu_alpha_vb, converged, it, lb_opt)
+      diff_lb <- abs(lb_opt - lb_old)
+
+      create_named_list_(gam_vb, mu_c0_vb, mu_c_vb, mu_alpha_vb, converged, it,
+                         lb_opt, diff_lb)
 
     }
   })

@@ -107,7 +107,10 @@
 #'                   before reaching \code{maxit} iterations.}
 #'  \item{it}{Final number of iterations.}
 #'  \item{lb_opt}{Optimized variational lower bound for the marginal
-#'                log-likelihood.}
+#'                log-likelihood (ELBO).}
+#'  \item{diff_lb}{Difference in ELBO between the last and penultimate
+#'                 iterations. This may be a useful diagnostic information when
+#'                 convergence has not been reached before \code{maxit}.}
 #'  \item{p_star}{Vector of length 1 or p defining the applied sparsity control.}
 #'  \item{rmvd_cst_x, rmvd_cst_z}{Vectors containing the indices of constant
 #'                                variables in \code{X} (resp. \code{Z}) removed

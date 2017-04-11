@@ -46,10 +46,13 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
     log_tau_vb <- rep(0, d)
 
     converged <- FALSE
-    lb_old <- -Inf
-    it <- 1
+    lb_new <- -Inf
+    it <- 0
 
     while ((!converged) & (it <= maxit)) {
+
+      lb_old <- lb_new
+      it <- it + 1
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("Iteration ", format(it), "... \n", sep = ""))
@@ -237,9 +240,6 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 
       converged <- (abs(lb_new-lb_old) < tol)
 
-      lb_old <- lb_new
-      it <- it + 1
-
     }
 
     if (verbose) {
@@ -270,7 +270,9 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
       rownames(mu_alpha_vb) <- names_z
       colnames(mu_alpha_vb) <- names_y
 
-      create_named_list_(gam_vb, om_vb, mu_alpha_vb, converged, it, lb_opt)
+      diff_lb <- abs(lb_opt - lb_old)
+
+      create_named_list_(gam_vb, om_vb, mu_alpha_vb, converged, it, lb_opt, diff_lb)
     }
   })
 }

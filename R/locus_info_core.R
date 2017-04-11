@@ -29,10 +29,13 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
     sig2_c_vb <-  update_sig2_c_vb_(p, s2)
 
     converged <- FALSE
-    lb_old <- -Inf
-    it <- 1
+    lb_new <- -Inf
+    it <- 0
 
     while ((!converged) & (it <= maxit)) {
+
+      lb_old <- lb_new
+      it <- it + 1
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("Iteration ", format(it), "... \n", sep = ""))
@@ -151,8 +154,6 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
       converged <- (abs(lb_new - lb_old) < tol)
 
-      lb_old <- lb_new
-      it <- it + 1
     }
 
 
@@ -188,7 +189,9 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
       rownames(mu_c_vb) <- names_v
       colnames(mu_c_vb) <- names_y
 
-      create_named_list_(gam_vb, mu_c0_vb, mu_c_vb, converged, it, lb_opt)
+      diff_lb <- abs(lb_opt - lb_old)
+
+      create_named_list_(gam_vb, mu_c0_vb, mu_c_vb, converged, it, lb_opt, diff_lb)
 
     }
   })
