@@ -639,6 +639,20 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
         }
       }
 
+      if (verbose) {
+        if (vb_bl$converged) {
+          cat(paste("The algorithm reached convergence on one block after ",
+                    format(vb_bl$it), " iterations. \n", "Optimal marginal ",
+                    "log-likelihood variational lower bound (ELBO) = ",
+                    format(vb_bl$lb_opt), ". \n\n", sep = ""))
+        } else {
+          cat(paste("The algorithm reached the maximal number of iterations ",
+                    "on one block before converging.\n", "Difference in ELBO ",
+                    "between last and penultimate iterations: ",
+                    format(vb_bl$diff_lb), ".\n\n", sep = ""))
+        }
+      }
+
       vb_bl
 
     }
