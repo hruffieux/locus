@@ -237,7 +237,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
     if (length(m0) == 1) m0 <- rep(m0, p)
 
     # prior info
-    s02 <- 1 # prior variance for the intercept, bernoulli-probit
+    s02 <- 0.1 # prior variance for the intercept, bernoulli-probit
     s2 <- 1e-2 # prior variance for external info coefficients
                # (effects likely to be concentrated around zero)
 
@@ -349,13 +349,16 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin) {
 
   } else {
 
-    m0 <- -sqrt(d+1) * qnorm(((p-p_star)/p)^(1/d)) # sparsity control under the assumption that s02 = 1
-    m0[!is.finite(m0)] <- -sqrt(d+1) * 8 # cases for which the argument of qnorm is very close to 1.
-    if (length(m0) == 1) m0 <- rep(m0, p)
-
-    # prior info
-    s02 <- 1 # prior variance for the intercept, bernoulli-probit
+    # hyperparameters external info model
+    s02 <- 0.1 # prior variance for the intercept, bernoulli-probit
     s2 <- 1e-2 # prior variance for external info coefficients (effects likely to be concentrated around zero)
+
+    up <- 1e6 # we solve the equation below numerically as no closed form exists.
+    m0 <- - sapply(p_star, function(ps) uniroot(function(x)    # sparsity control, m0 = - m0_star
+      pnorm(x / sqrt(1 + d*s02)) * (pnorm(x))^(d-1) - (p - ps)/p,
+      interval = c(-up, up))$root)
+
+    if (length(m0) == 1) m0 <- rep(m0, p)
 
     a <- b <- NULL
 
