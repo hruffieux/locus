@@ -335,13 +335,6 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin) {
 
   }
 
-  # if p_star is of length 1, p_star is the prior average number of active
-  # predictors else (p_star is of length p), p_star / p is the vector containg
-  # the prior probabilities that each predictor is active and the sum of its
-  # entries is the corresponding prior average number of active predictors
-  if (length(p_star) == 1) p0 <- p_star
-  else p0 <- sum(p_star / p)
-
   if (is.null(r)) {
 
     a <- rep(1, p)
@@ -355,6 +348,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin) {
     m0 <- s02 <- s2 <- NULL
 
   } else {
+
     m0 <- -sqrt(d+1) * qnorm(((p-p_star)/p)^(1/d)) # sparsity control under the assumption that s02 = 1
     m0[!is.finite(m0)] <- -sqrt(d+1) * 8 # cases for which the argument of qnorm is very close to 1.
     if (length(m0) == 1) m0 <- rep(m0, p)
@@ -734,13 +728,8 @@ auto_set_init_ <- function(Y, p, p_star, q, r, user_seed, link, ind_bin) {
 
   if (!is.null(user_seed)) set.seed(user_seed)
 
-  if (length(p_star) == 1) {
-    shape1_gam <- 1
-    p0 <- p_star
-  } else {
-    shape1_gam <- rep(1, p)
-    p0 <- sum(p_star / p)
-  }
+  shape1_gam <- 1
+  if (length(p_star) > 1) shape1_gam <- rep(shape1_gam, p)
 
   shape2_gam <- d * (p - p_star) / p_star
 
