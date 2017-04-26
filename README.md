@@ -30,7 +30,7 @@ implement inference for regression models with
 * probit link; 
 * identity-probit link.
 
-Moreover, predictor-level external knowledge can be incorportated to inform the
+Moreover, predictor-level external knowledge can be incorporated to inform the
 selection.
 
 ## License and authors
