@@ -137,15 +137,9 @@ update_chi_vb_ <- function(X, Z, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sig2_alph
          mat_z_mu^2 + 2 * mat_x_m1 * mat_z_mu)
 }
 
-log_sigmoid <- function(chi) {
-
-  - log(1 + exp(- chi)) # chi is always positive so no overflow possible (underflow neither, thanks to the "+1")
-
-}
-
 update_psi_logit_vb_ <- function(chi_vb) {
 
-  exp(log(exp(log_sigmoid(chi_vb)) - 1 / 2) - log(2 * chi_vb))
+  exp(log(exp(log_sigmoid_(chi_vb)) - 1 / 2) - log(2 * chi_vb))
 
 }
 

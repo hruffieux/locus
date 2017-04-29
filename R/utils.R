@@ -112,6 +112,13 @@ log_one_plus_exp_ <- function(x) { # computes log(1 + exp(x)) avoiding
 }
 
 
+log_sigmoid_ <- function(chi) {
+
+  - log(1 + exp(- chi)) # chi is always positive so no overflow possible (underflow neither, thanks to the "+1")
+
+}
+
+
 inv_mills_ratio_ <- function(Y, U) {
 
   m <- matrix(NA, nrow = nrow(U), ncol = ncol(U))

@@ -255,7 +255,7 @@ elbo_logit_info_ <- function(Y, X, Z, V, chi_vb, gam_vb, m0,  mu_c0_vb,
   log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
   log_zeta2_inv_vb <- update_log_zeta2_inv_vb_(phi_vb, xi_vb)
 
-  A <- sum(log_sigmoid(chi_vb)  + Y * (mat_x_m1 + mat_z_mu)  -  chi_vb / 2 -
+  A <- sum(log_sigmoid_(chi_vb)  + Y * (mat_x_m1 + mat_z_mu)  -  chi_vb / 2 -
              psi_vb * (X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 +
                          Z^2 %*% m2_alpha + mat_z_mu^2 - Z^2 %*% mu_alpha_vb^2 +
                          2 * mat_x_m1 * mat_z_mu - chi_vb^2))

@@ -279,33 +279,22 @@ elbo_logit_ <- function(Y, X, Z, a, a_vb, b, b_vb, chi_vb, gam_vb, lambda, nu,
   log_om_vb <- digamma(a_vb) - digamma(a_vb + b_vb)
   log_1_min_om_vb <- digamma(b_vb) - digamma(a_vb + b_vb)
 
-  A <- sum(log_sigmoid(chi_vb) + Y * (mat_x_m1 + mat_z_mu)  -  chi_vb / 2 -
-             psi_vb * (X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 +
-                         Z^2 %*% m2_alpha + mat_z_mu^2 - Z^2 %*% mu_alpha_vb^2 +
-                         2 * mat_x_m1 * mat_z_mu - chi_vb^2))
+  elbo_A <- e_y_logit_(X, Y, Z, chi_vb, m1_beta, m2_alpha, m2_beta, mat_x_m1,
+                       mat_z_mu, mu_alpha_vb, psi_vb)
 
-  eps <- .Machine$double.eps # to control the argument of the log when gamma is very small
-  B <- sum(gam_vb * log_sig2_inv_vb / 2 - m2_beta * sig2_inv_vb / 2 +
-             sweep(gam_vb, 1, log_om_vb, `*`) +
-             sweep(1 - gam_vb, 1, log_1_min_om_vb, `*`) +
-             gam_vb * (log(sig2_beta_vb) + 1) / 2 -
-             gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
+  elbo_B <- e_beta_gamma_bin_(gam_vb, log_om_vb, log_1_min_om_vb,
+                              log_sig2_inv_vb, m2_beta, sig2_beta_vb, sig2_inv_vb)
 
-  H <- sum((lambda - lambda_vb) * log_sig2_inv_vb - (nu - nu_vb) * sig2_inv_vb +
-             lambda * log(nu) - lambda_vb * log(nu_vb) - lgamma(lambda) +
-             lgamma(lambda_vb))
+  elbo_C <- e_sig2_inv_(lambda, lambda_vb, log_sig2_inv_vb, nu, nu_vb, sig2_inv_vb)
 
-  J <- sum((a - a_vb) * log_om_vb + (b - b_vb) * log_1_min_om_vb - lbeta(a, b) +
-             lbeta(a_vb, b_vb))
+  elbo_D <- e_omega_(a, a_vb, b, b_vb, log_om_vb, log_1_min_om_vb)
 
-  K <- 1 / 2 * sum( sweep(-sweep(m2_alpha, 1, zeta2_inv_vb, `*`), 1,
-                          log_zeta2_inv_vb, `+`) + log(sig2_alpha_vb) + 1)
+  elbo_E <- e_alpha_logit_(m2_alpha, log_zeta2_inv_vb, sig2_alpha_vb, zeta2_inv_vb)
 
-  L <- sum((phi - phi_vb) * log_zeta2_inv_vb - (xi - xi_vb) * zeta2_inv_vb +
-             phi * log(xi) - phi_vb * log(xi_vb) - lgamma(phi) +
-             lgamma(phi_vb))
+  elbo_F <- e_zeta2_inv_(log_zeta2_inv_vb, phi, phi_vb, xi, xi_vb, zeta2_inv_vb)
 
-  A + B + H + J + K + L
+
+  elbo_A + elbo_B + elbo_C + elbo_D + elbo_E + elbo_F
 
 }
 
