@@ -189,6 +189,7 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
 
+
       if (debug && lb_new < lb_old)
         stop("ELBO not increasing monotonically. Exit. ")
 
@@ -276,42 +277,27 @@ elbo_z_info_ <- function(Y, X, Z, V, eta, gam_vb, kappa, lambda, m0,
   log_zeta2_inv_vb <- update_log_zeta2_inv_vb_(phi_vb, xi_vb)
   log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
 
-  A <- sum(-n / 2 * log(2 * pi) + n / 2 * log_tau_vb -
-             tau_vb * (kappa_vb - colSums(m2_beta) * sig2_inv_vb / 2 -
-                         crossprod(m2_alpha, zeta2_inv_vb) / 2  - kappa))
+  elbo_A <- e_y_(n, kappa, kappa_vb, log_tau_vb, m2_beta, sig2_inv_vb, tau_vb,
+                 m2_alpha, zeta2_inv_vb)
 
-  eps <- .Machine$double.eps^0.75 # to control the argument of the log when gamma is very small
+  elbo_B <- e_beta_gamma_info_(V, gam_vb, log_sig2_inv_vb, log_tau_vb, mat_v_mu,
+                               m2_beta, sig2_beta_vb, sig2_c0_vb, sig2_c_vb,
+                               sig2_inv_vb, tau_vb)
 
-  B <- sum(log_sig2_inv_vb * gam_vb / 2 +
-             sweep(gam_vb, 2, log_tau_vb, `*`) / 2 -
-             sweep(m2_beta, 2, tau_vb, `*`) * sig2_inv_vb / 2 +
-             gam_vb * pnorm(mat_v_mu, log.p = TRUE) +
-             sweep((1 - gam_vb) * pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE), 1, sig2_c_vb * rowSums(V^2) / 2, `-`) -
-             sig2_c0_vb / 2 + 1 / 2 * sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) -
-             gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
+  elbo_C <- e_c0_(m0, mu_c0_vb, s02, sig2_c0_vb)
 
-  G <- sum(log(sig2_c0_vb) + 1 - log(s02) - (mu_c0_vb^2 + sig2_c0_vb - 2*mu_c0_vb * m0 + m0^2) / s02) / 2
+  elbo_D <- e_c_(mu_c_vb, s2, sig2_c_vb)
 
-  H <- sum(log(sig2_c_vb) + 1 - log(s2) - (mu_c_vb^2 + sig2_c_vb) / s2) / 2
+  elbo_E <- e_tau_(eta, eta_vb, kappa, kappa_vb, log_tau_vb, tau_vb)
 
-  J <- sum((eta - eta_vb) * log_tau_vb -
-             (kappa - kappa_vb) * tau_vb + eta * log(kappa) -
-             eta_vb * log(kappa_vb) - lgamma(eta) + lgamma(eta_vb))
+  elbo_F <- e_sig2_inv_(lambda, lambda_vb, log_sig2_inv_vb, nu, nu_vb, sig2_inv_vb)
 
-  K <- (lambda - lambda_vb) * log_sig2_inv_vb - (nu - nu_vb) * sig2_inv_vb +
-    lambda * log(nu) - lambda_vb * log(nu_vb) - lgamma(lambda) +
-    lgamma(lambda_vb)
+  elbo_G <- e_alpha_(m2_alpha, log_tau_vb, log_zeta2_inv_vb, sig2_alpha_vb, tau_vb,
+                zeta2_inv_vb)
 
-  L <- sum(sweep( sweep( sweep( sweep(m2_alpha, MARGIN = 2, tau_vb, `*`),
-                                MARGIN = 1, - zeta2_inv_vb / 2, `*`),
-                         MARGIN = 2, log_tau_vb / 2, `+`),
-                  MARGIN = 1, log_zeta2_inv_vb / 2, `+`) +
-             log(sig2_alpha_vb) / 2 + 1 / 2)
+  elbo_H <- e_zeta2_inv_(log_zeta2_inv_vb, phi, phi_vb, xi, xi_vb, zeta2_inv_vb)
 
-  M <- sum((phi - phi_vb) * log_zeta2_inv_vb - (xi - xi_vb) * zeta2_inv_vb +
-             phi * log(xi) - phi_vb * log(xi_vb) - lgamma(phi) + lgamma(phi_vb))
-
-  A + B + G + H + J + K + L + M
+  elbo_A + elbo_B + elbo_C + elbo_D + elbo_E + elbo_F + elbo_G + elbo_H
 
 }
 

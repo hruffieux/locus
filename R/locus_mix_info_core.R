@@ -314,51 +314,36 @@ elbo_mix_info_ <- function(Y_bin, Y_cont, ind_bin, X, V, Z, eta, gam_vb, kappa,
   log_zeta2_inv_vb <- update_log_zeta2_inv_vb_(phi_vb, xi_vb)
   log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
 
-  A_cont <- sum(-n / 2 * log(2 * pi) + n / 2 * log_tau_vb[-ind_bin] -
-                  tau_vb[-ind_bin] * (kappa_vb -
-                                        colSums(m2_beta[, -ind_bin, drop = FALSE]) * sig2_inv_vb / 2 -
-                                        crossprod(m2_alpha[, -ind_bin, drop = FALSE], zeta2_inv_vb) / 2 - kappa))
+  elbo_A_cont <- e_y_(n, kappa, kappa_vb, log_tau_vb[-ind_bin],
+                      m2_beta[, -ind_bin, drop = FALSE], sig2_inv_vb,
+                      tau_vb[-ind_bin], m2_alpha[, -ind_bin, drop = FALSE],
+                      zeta2_inv_vb)
 
-  U <- mat_x_m1[, ind_bin, drop = FALSE] + mat_z_mu[, ind_bin, drop = FALSE]
-
-  A_bin <- sum(Y_bin * pnorm(U, log.p = TRUE) +
-                 (1 - Y_bin) * pnorm(U, lower.tail = FALSE, log.p = TRUE) -
-                 Z^2 %*% sig2_alpha_vb[, ind_bin, drop = FALSE]  / 2 -
-                 X^2 %*% (m2_beta[, ind_bin, drop = FALSE] - m1_beta[, ind_bin, drop = FALSE]^2) / 2)
-
-  eps <- .Machine$double.eps^0.75 # to control the argument of the log when gamma is very small
-
-  B <- sum(log_sig2_inv_vb * gam_vb / 2 +
-             sweep(gam_vb, MARGIN = 2, log_tau_vb, `*`) / 2 -
-             sweep(m2_beta, MARGIN = 2, tau_vb, `*`) * sig2_inv_vb / 2 +
-             gam_vb * pnorm(mat_v_mu, log.p = TRUE) +
-             sweep((1 - gam_vb) * pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE), 1, sig2_c_vb * rowSums(V^2) / 2, `-`) -
-             sig2_c0_vb / 2 + sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) / 2 -
-             gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
-
-  G <- sum((eta - eta_vb) * log_tau_vb[-ind_bin] - (kappa - kappa_vb) * tau_vb[-ind_bin] +
-             eta * log(kappa) - eta_vb * log(kappa_vb) - lgamma(eta) +
-             lgamma(eta_vb))
-
-  H <- sum(log(sig2_c0_vb) + 1 - log(s02) - (mu_c0_vb^2 + sig2_c0_vb - 2*mu_c0_vb * m0 + m0^2) / s02) / 2
-
-  J <- sum(log(sig2_c_vb) + 1 - log(s2) - (mu_c_vb^2 + sig2_c_vb) / s2) / 2
-
-  K <- (lambda - lambda_vb) * log_sig2_inv_vb - (nu - nu_vb) * sig2_inv_vb +
-    lambda * log(nu) - lambda_vb * log(nu_vb) - lgamma(lambda) +
-    lgamma(lambda_vb)
-
-  L <- sum(sweep( sweep( sweep( sweep(m2_alpha, MARGIN = 2, tau_vb, `*`),
-                                MARGIN = 1, - zeta2_inv_vb / 2, `*`),
-                         MARGIN = 2, log_tau_vb / 2, `+`),
-                  MARGIN = 1, log_zeta2_inv_vb / 2, `+`) +
-             log(sig2_alpha_vb) / 2 + 1 / 2)
-
-  M <- sum((phi - phi_vb) * log_zeta2_inv_vb - (xi - xi_vb) * zeta2_inv_vb +
-             phi * log(xi) - phi_vb * log(xi_vb) - lgamma(phi) + lgamma(phi_vb))
+  elbo_A_bin <- e_y_probit_(X, Y_bin, Z, m1_beta[, ind_bin, drop = FALSE],
+                            m2_beta[, ind_bin, drop = FALSE],
+                            mat_x_m1[, ind_bin, drop = FALSE],
+                            mat_z_mu[, ind_bin, drop = FALSE],
+                            sig2_alpha_vb[, ind_bin, drop = FALSE], sweep = FALSE)
 
 
-  A_cont + A_bin + B + G + H + J + K + L + M
+  elbo_B <- e_beta_gamma_info_(V, gam_vb, log_sig2_inv_vb, log_tau_vb, mat_v_mu,
+                                     m2_beta, sig2_beta_vb, sig2_c0_vb, sig2_c_vb,
+                                     sig2_inv_vb, tau_vb)
+
+  elbo_C <- e_tau_(eta, eta_vb, kappa, kappa_vb, log_tau_vb[-ind_bin], tau_vb[-ind_bin])
+
+  elbo_D <- e_sig2_inv_(lambda, lambda_vb, log_sig2_inv_vb, nu, nu_vb, sig2_inv_vb)
+
+  elbo_E <- e_c0_(m0, mu_c0_vb, s02, sig2_c0_vb)
+
+  elbo_F <- e_c_(mu_c_vb, s2, sig2_c_vb)
+
+  elbo_G <- e_alpha_(m2_alpha, log_tau_vb, log_zeta2_inv_vb, sig2_alpha_vb,
+                     tau_vb, zeta2_inv_vb)
+
+  elbo_H <- e_zeta2_inv_(log_zeta2_inv_vb, phi, phi_vb, xi, xi_vb, zeta2_inv_vb)
+
+  elbo_A_cont + elbo_A_bin + elbo_B + elbo_C + elbo_D + elbo_E + elbo_F + elbo_G + elbo_H
 
 }
 

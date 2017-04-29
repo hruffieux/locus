@@ -231,9 +231,8 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
                           log_tau_vb, xi, zeta2_inv_vb, m2_alpha, m1_beta,
                           m2_beta, mat_x_m1, mat_z_mu, sum_gam)
 
-      # if (verbose & (it == 1 | it %% 5 == 0))
-      #   cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
-      cat(paste("ELBO = ", lb_new, "\n\n", sep = ""))
+      if (verbose & (it == 1 | it %% 5 == 0))
+        cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
 
       if (debug && lb_new < lb_old)
         stop("ELBO not increasing monotonically. Exit. ")

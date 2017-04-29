@@ -18,7 +18,6 @@ e_alpha_ <- function(m2_alpha, log_tau_vb, log_zeta2_inv_vb, sig2_alpha_vb,
 
 }
 
-
 e_alpha_logit_ <- function(m2_alpha, log_zeta2_inv_vb, sig2_alpha_vb, zeta2_inv_vb) {
 
   1 / 2 * sum( sweep(-sweep(m2_alpha, 1, zeta2_inv_vb, `*`), 1,
@@ -54,6 +53,8 @@ e_beta_gamma_ <- function(gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
 }
 
 
+
+
 e_beta_gamma_bin_ <- function(gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
                                 m2_beta, sig2_beta_vb, sig2_inv_vb) {
 
@@ -66,6 +67,61 @@ e_beta_gamma_bin_ <- function(gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_v
 
 }
 
+
+e_beta_gamma_info_ <- function(V, gam_vb, log_sig2_inv_vb, log_tau_vb, mat_v_mu,
+                               m2_beta, sig2_beta_vb, sig2_c0_vb, sig2_c_vb,
+                               sig2_inv_vb, tau_vb) {
+
+  eps <- .Machine$double.eps^0.75 # to control the argument of the log when gamma is very small
+
+  sum(log_sig2_inv_vb * gam_vb / 2 +
+        sweep(gam_vb, 2, log_tau_vb, `*`) / 2 -
+        sweep(m2_beta, 2, tau_vb, `*`) * sig2_inv_vb / 2 +
+        gam_vb * pnorm(mat_v_mu, log.p = TRUE) +
+        sweep((1 - gam_vb) * pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE), 1, sig2_c_vb * rowSums(V^2) / 2, `-`) -
+        sig2_c0_vb / 2 + 1 / 2 * sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) -
+        gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
+
+}
+
+
+e_beta_gamma_info_bin_ <- function(V, gam_vb, log_sig2_inv_vb, mat_v_mu, m2_beta,
+                                   sig2_beta_vb, sig2_c0_vb, sig2_c_vb, sig2_inv_vb) {
+
+  eps <- .Machine$double.eps^0.75 # to control the argument of the log when gamma is very small
+
+  sum(gam_vb * log_sig2_inv_vb / 2 - m2_beta * sig2_inv_vb / 2 +
+        gam_vb * pnorm(mat_v_mu, log.p = TRUE) +
+        sweep((1 - gam_vb) * pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE), 1, sig2_c_vb * rowSums(V^2) / 2, `-`) -
+        sig2_c0_vb / 2 + gam_vb * (log(sig2_beta_vb) + 1) / 2 -
+        gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
+
+}
+
+
+
+######################################
+## E log p(c0 | rest) - E log q(c0) ##
+######################################
+
+e_c0_ <- function(m0, mu_c0_vb, s02, sig2_c0_vb) {
+
+  sum(log(sig2_c0_vb) + 1 - log(s02) -
+        (mu_c0_vb^2 + sig2_c0_vb - 2*mu_c0_vb * m0 + m0^2) / s02) / 2
+
+}
+
+
+
+######################################
+## E log p(c | rest) - E log q(c) ##
+######################################
+
+e_c_ <- function(mu_c_vb, s2, sig2_c_vb) {
+
+  sum(log(sig2_c_vb) + 1 - log(s2) - (mu_c_vb^2 + sig2_c_vb) / s2) / 2
+
+}
 
 
 ############################################
