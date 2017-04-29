@@ -24,7 +24,7 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
   rm(Y)
 
   with(list_hyper, {  # list_init not used with the with() function to avoid
-                      # copy-on-write for large objects
+    # copy-on-write for large objects
     m2_alpha <- update_m2_alpha_(mu_alpha_vb, sig2_alpha_vb)
 
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
@@ -118,7 +118,7 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
         rs_gam <- rowSums(gam_vb)
 
       } else if (batch == "x") { # used internally for testing purposes,
-                                 # convergence not ensured as ELBO not batch-concave
+        # convergence not ensured as ELBO not batch-concave
 
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
@@ -192,9 +192,9 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
               crossprod(W[, k] - mat_x_m1[, k] - mat_z_mu[, k], X[, j])
 
             gam_vb[j, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb[j] - log_om_vb[j] -
-                                                    log_tau_vb[k] / 2 - log_sig2_inv_vb / 2 -
-                                                    mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[k]) -
-                                                    log(sig2_beta_vb[k]) / 2))
+                                                     log_tau_vb[k] / 2 - log_sig2_inv_vb / 2 -
+                                                     mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[k]) -
+                                                     log(sig2_beta_vb[k]) / 2))
 
             m1_beta[j, k] <- mu_beta_vb[j, k] * gam_vb[j, k]
 
@@ -225,12 +225,11 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 
       sum_gam <- sum(rs_gam)
 
-      lb_new <- lower_bound_mix_(Y_bin, Y_cont, ind_bin, X, Z, a, a_vb, b, b_vb,
-                                 eta, gam_vb, kappa, lambda, mu_alpha_vb, nu,
-                                 phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
-                                 sig2_inv_vb, tau_vb, log_tau_vb, xi,
-                                 zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
-                                 mat_x_m1, mat_z_mu, sum_gam)
+      lb_new <- elbo_mix_(Y_bin, Y_cont, ind_bin, X, Z, a, a_vb, b, b_vb, eta,
+                          gam_vb, kappa, lambda, mu_alpha_vb, nu, phi, phi_vb,
+                          sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
+                          log_tau_vb, xi, zeta2_inv_vb, m2_alpha, m1_beta,
+                          m2_beta, mat_x_m1, mat_z_mu, sum_gam)
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
@@ -281,11 +280,11 @@ locus_mix_core_ <- function(Y, X, Z, ind_bin, list_hyper, gam_vb, mu_alpha_vb,
 # Internal function which implements the marginal log-likelihood variational
 # lower bound (ELBO) corresponding to the `locus_mix_core` algorithm.
 #
-lower_bound_mix_ <- function(Y_bin, Y_cont, ind_bin, X, Z, a, a_vb, b, b_vb, eta,
-                             gam_vb, kappa, lambda, mu_alpha_vb, nu, phi,
-                             phi_vb, sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb,
-                             tau_vb, log_tau_vb, xi, zeta2_inv_vb, m2_alpha,
-                             m1_beta, m2_beta, mat_x_m1, mat_z_mu, sum_gam) {
+elbo_mix_ <- function(Y_bin, Y_cont, ind_bin, X, Z, a, a_vb, b, b_vb, eta,
+                      gam_vb, kappa, lambda, mu_alpha_vb, nu, phi, phi_vb,
+                      sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
+                      log_tau_vb, xi, zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
+                      mat_x_m1, mat_z_mu, sum_gam) {
 
   n <- nrow(Z)
   q <- ncol(Z)
@@ -314,9 +313,9 @@ lower_bound_mix_ <- function(Y_bin, Y_cont, ind_bin, X, Z, a, a_vb, b, b_vb, eta
   log_1_min_om_vb <- digamma(b_vb) - digamma(a_vb + b_vb)
 
   A_cont <- sum(-n / 2 * log(2 * pi) + n / 2 * log_tau_vb[-ind_bin] -
-             tau_vb[-ind_bin] * (kappa_vb -
-                                   colSums(m2_beta[, -ind_bin, drop = FALSE]) * sig2_inv_vb / 2 -
-                                   crossprod(m2_alpha[, -ind_bin, drop = FALSE], zeta2_inv_vb) / 2 - kappa))
+                  tau_vb[-ind_bin] * (kappa_vb -
+                                        colSums(m2_beta[, -ind_bin, drop = FALSE]) * sig2_inv_vb / 2 -
+                                        crossprod(m2_alpha[, -ind_bin, drop = FALSE], zeta2_inv_vb) / 2 - kappa))
 
   U <- mat_x_m1[, ind_bin, drop = FALSE] + mat_z_mu[, ind_bin, drop = FALSE]
 

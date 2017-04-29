@@ -13,7 +13,7 @@
 #'
 #'
 #' The optimization is made using efficient block coordinate ascent schemes, for
-#' which convergence is ensured as the objective (lower_bound) in multiconcave
+#' which convergence is ensured as the objective (elbo) is multiconcave
 #' for the selected blocks, i.e., it is concave in each block of parameters
 #' whose updates are made simultaneously, see Wu et al. (reference Section
 #' below).

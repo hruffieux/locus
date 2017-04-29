@@ -17,7 +17,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
   q <- ncol(Z)
 
   with(list_hyper, {  # list_init not used with the with() function to avoid
-                      # copy-on-write for large objects
+    # copy-on-write for large objects
 
     m2_alpha <- update_m2_alpha_(mu_alpha_vb, sig2_alpha_vb)
 
@@ -138,7 +138,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
         # C++ Eigen call for expensive updates
         coreZBatch(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
-                      log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb)
+                   log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb)
 
         rs_gam <- rowSums(gam_vb)
 
@@ -197,11 +197,10 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
       sum_gam <- sum(rs_gam)
 
-      lb_new <- lower_bound_z_(Y, X, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa,
-                               lambda, mu_alpha_vb, nu, phi, phi_vb,
-                               sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
-                               xi, zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
-                               mat_x_m1, mat_z_mu, sum_gam)
+      lb_new <- elbo_z_(Y, X, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
+                        mu_alpha_vb, nu, phi, phi_vb, sig2_alpha_vb,
+                        sig2_beta_vb, sig2_inv_vb, tau_vb, xi, zeta2_inv_vb,
+                        m2_alpha, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sum_gam)
 
 
       if (verbose & (it == 1 | it %% 5 == 0))
@@ -254,10 +253,10 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 # Internal function which implements the marginal log-likelihood variational
 # lower bound (ELBO) corresponding to the `locus_z_core` algorithm.
 #
-lower_bound_z_ <- function(Y, X, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
-                           mu_alpha_vb, nu, phi, phi_vb, sig2_alpha_vb,
-                           sig2_beta_vb, sig2_inv_vb, tau_vb, xi, zeta2_inv_vb,
-                           m2_alpha, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sum_gam) {
+elbo_z_ <- function(Y, X, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
+                    mu_alpha_vb, nu, phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
+                    sig2_inv_vb, tau_vb, xi, zeta2_inv_vb, m2_alpha, m1_beta,
+                    m2_beta, mat_x_m1, mat_z_mu, sum_gam) {
 
 
   n <- nrow(Y)

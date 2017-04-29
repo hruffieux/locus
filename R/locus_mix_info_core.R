@@ -8,8 +8,8 @@
 locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
                                  mu_alpha_vb, mu_beta_vb, mu_c0_vb, mu_c_vb,
                                  sig2_alpha_vb, sig2_beta_vb, tau_vb, tol,
-                                 maxit, verbose, batch = "y", full_output = FALSE,
-                                 debug = FALSE) {
+                                 maxit, verbose, batch = "y",
+                                 full_output = FALSE, debug = FALSE) {
 
   # Y must have its continuous variables centered,
   # and X, Z and V must have been standardized (except intercept in Z).
@@ -110,7 +110,7 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
           mat_z_mu <- mat_z_mu - tcrossprod(Z[, i], mu_alpha_vb[i, ])
 
           mu_alpha_vb[i, ] <- sig2_alpha_vb[i, ] * (tau_vb *
-                                                    crossprod(Wy  - mat_z_mu - mat_x_m1, Z[, i]))
+                                                      crossprod(Wy  - mat_z_mu - mat_x_m1, Z[, i]))
 
           mat_z_mu <- mat_z_mu + tcrossprod(Z[, i], mu_alpha_vb[i, ])
 
@@ -166,10 +166,10 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
               crossprod(Wy[, k] - mat_x_m1[, k] - mat_z_mu[, k], X[, j])
 
             gam_vb[j, k] <- exp(-log_one_plus_exp_(pnorm(mat_v_mu[j, k], lower.tail = FALSE, log.p = TRUE) -
-                                                    pnorm(mat_v_mu[j, k], log.p = TRUE) -
-                                                    log_tau_vb[k] / 2 - log_sig2_inv_vb / 2 -
-                                                    mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[k]) -
-                                                    log(sig2_beta_vb[k]) / 2))
+                                                     pnorm(mat_v_mu[j, k], log.p = TRUE) -
+                                                     log_tau_vb[k] / 2 - log_sig2_inv_vb / 2 -
+                                                     mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[k]) -
+                                                     log(sig2_beta_vb[k]) / 2))
 
             m1_beta[j, k] <- gam_vb[j, k] * mu_beta_vb[j, k]
 
@@ -212,13 +212,13 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
 
       sum_gam <- sum(rs_gam)
 
-      lb_new <- lower_bound_mix_info_(Y_bin, Y_cont, ind_bin, X, V, Z, eta, gam_vb,
-                                      kappa, lambda, m0, mu_alpha_vb, mu_c0_vb,
-                                      mu_c_vb, nu, phi, phi_vb, sig2_alpha_vb,
-                                      sig2_beta_vb, sig2_c0_vb, sig2_c_vb,
-                                      sig2_inv_vb, s02, s2, tau_vb, log_tau_vb, xi,
-                                      zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
-                                      mat_x_m1, mat_v_mu, mat_z_mu, sum_gam)
+      lb_new <- elbo_mix_info_(Y_bin, Y_cont, ind_bin, X, V, Z, eta, gam_vb,
+                               kappa, lambda, m0, mu_alpha_vb, mu_c0_vb,
+                               mu_c_vb, nu, phi, phi_vb, sig2_alpha_vb,
+                               sig2_beta_vb, sig2_c0_vb, sig2_c_vb, sig2_inv_vb,
+                               s02, s2, tau_vb, log_tau_vb, xi, zeta2_inv_vb,
+                               m2_alpha, m1_beta, m2_beta, mat_x_m1, mat_v_mu,
+                               mat_z_mu, sum_gam)
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
@@ -282,13 +282,12 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
 # Function which implements the marginal log-likelihood variational lower bound
 # (ELBO) corresponding to the `locus_mix_info_core` algorithm.
 #
-lower_bound_mix_info_ <- function(Y_bin, Y_cont, ind_bin, X, V, Z, eta, gam_vb,
-                                  kappa, lambda, m0, mu_alpha_vb, mu_c0_vb,
-                                  mu_c_vb, nu, phi, phi_vb, sig2_alpha_vb,
-                                  sig2_beta_vb, sig2_c0_vb, sig2_c_vb,
-                                  sig2_inv_vb, s02, s2, tau_vb, log_tau_vb, xi,
-                                  zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
-                                  mat_x_m1, mat_v_mu, mat_z_mu, sum_gam) {
+elbo_mix_info_ <- function(Y_bin, Y_cont, ind_bin, X, V, Z, eta, gam_vb, kappa,
+                           lambda, m0, mu_alpha_vb, mu_c0_vb, mu_c_vb, nu, phi,
+                           phi_vb, sig2_alpha_vb, sig2_beta_vb, sig2_c0_vb,
+                           sig2_c_vb, sig2_inv_vb, s02, s2, tau_vb, log_tau_vb,
+                           xi, zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
+                           mat_x_m1, mat_v_mu, mat_z_mu, sum_gam) {
 
   n <- nrow(Z)
   q <- ncol(Z)
@@ -316,9 +315,9 @@ lower_bound_mix_info_ <- function(Y_bin, Y_cont, ind_bin, X, V, Z, eta, gam_vb,
   log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
 
   A_cont <- sum(-n / 2 * log(2 * pi) + n / 2 * log_tau_vb[-ind_bin] -
-                tau_vb[-ind_bin] * (kappa_vb -
-                                      colSums(m2_beta[, -ind_bin, drop = FALSE]) * sig2_inv_vb / 2 -
-                                      crossprod(m2_alpha[, -ind_bin, drop = FALSE], zeta2_inv_vb) / 2 - kappa))
+                  tau_vb[-ind_bin] * (kappa_vb -
+                                        colSums(m2_beta[, -ind_bin, drop = FALSE]) * sig2_inv_vb / 2 -
+                                        crossprod(m2_alpha[, -ind_bin, drop = FALSE], zeta2_inv_vb) / 2 - kappa))
 
   U <- mat_x_m1[, ind_bin, drop = FALSE] + mat_z_mu[, ind_bin, drop = FALSE]
 

@@ -104,7 +104,7 @@ create_named_list_ <- function(...) {
 
 
 log_one_plus_exp_ <- function(x) { # computes log(1 + exp(x)) avoiding
-                                     # numerical overflow
+  # numerical overflow
   m <- x
   m[x < 0] <- 0
 

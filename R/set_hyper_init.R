@@ -239,7 +239,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
     # prior info
     s02 <- 0.1 # prior variance for the intercept, bernoulli-probit
     s2 <- 1e-2 # prior variance for external info coefficients
-               # (effects likely to be concentrated around zero)
+    # (effects likely to be concentrated around zero)
 
     if (!is.null(a) | !is.null(b))
       stop("Provided r != NULL, not consitent with a and b being non-null.")

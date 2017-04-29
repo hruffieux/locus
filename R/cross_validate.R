@@ -320,9 +320,9 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
               mat_x_m1 <-  X_test %*% m1_beta
 
-              lower_bound_(Y_test, X_test, a, a_vb, b, b_vb, eta, gam_vb, kappa,
-                           lambda, nu, sig2_beta_vb, sig2_inv_vb, tau_vb,
-                           m1_beta, m2_beta, mat_x_m1, sum_gam)
+              elbo_(Y_test, X_test, a, a_vb, b, b_vb, eta, gam_vb, kappa,
+                    lambda, nu, sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta,
+                    m2_beta, mat_x_m1, sum_gam)
 
             })
           } else {
@@ -337,11 +337,11 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
               mat_z_mu <-  Z_test %*% mu_alpha_vb
               mat_x_m1 <-  X_test %*% m1_beta
 
-              lower_bound_z_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, eta,
-                             gam_vb, kappa, lambda, mu_alpha_vb, nu, phi, phi_vb,
-                             sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb,
-                             xi, zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
-                             mat_x_m1, mat_z_mu, sum_gam)
+              elbo_z_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, eta, gam_vb,
+                      kappa, lambda, mu_alpha_vb, nu, phi, phi_vb,
+                      sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb, xi,
+                      zeta2_inv_vb, m2_alpha, m1_beta, m2_beta, mat_x_m1,
+                      mat_z_mu, sum_gam)
             })
           }
 
@@ -358,11 +358,10 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
             mat_z_mu <-  Z_test %*% mu_alpha_vb
             mat_x_m1 <-  X_test %*% m1_beta
 
-            lower_bound_probit_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, gam_vb,
-                                lambda, nu, phi, phi_vb, sig2_alpha_vb,
-                                sig2_beta_vb, sig2_inv_vb, xi, zeta2_inv_vb,
-                                mu_alpha_vb, m1_beta, m2_alpha, m2_beta, mat_x_m1,
-                                mat_z_mu, sum_gam)
+            elbo_probit_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, gam_vb,
+                         lambda, nu, phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
+                         sig2_inv_vb, xi, zeta2_inv_vb, mu_alpha_vb, m1_beta,
+                         m2_alpha, m2_beta, mat_x_m1, mat_z_mu, sum_gam)
           })
 
         } else if (link == "mix") {
@@ -378,14 +377,12 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
             mat_z_mu <-  Z_test %*% mu_alpha_vb
             mat_x_m1 <-  X_test %*% m1_beta
 
-            lower_bound_mix_(Y_test[, ind_bin, drop = FALSE],
-                             Y_test[, -ind_bin, drop = FALSE],
-                             ind_bin, X_test, Z_test, a, a_vb, b, b_vb,
-                             eta, gam_vb, kappa, lambda, mu_alpha_vb, nu,
-                             phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
-                             sig2_inv_vb, tau_vb, log_tau_vb, xi,
-                             zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
-                             mat_x_m1, mat_z_mu, sum_gam)
+            elbo_mix_(Y_test[, ind_bin, drop = FALSE],
+                      Y_test[, -ind_bin, drop = FALSE], ind_bin, X_test, Z_test,
+                      a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, mu_alpha_vb,
+                      nu, phi, phi_vb, sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb,
+                      tau_vb, log_tau_vb, xi, zeta2_inv_vb, m2_alpha, m1_beta,
+                      m2_beta, mat_x_m1, mat_z_mu, sum_gam)
 
           })
 

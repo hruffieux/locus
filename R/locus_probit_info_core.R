@@ -132,10 +132,10 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
             mu_beta_vb[j, k] <- sig2_beta_vb * crossprod(Wy[, k] - mat_x_m1[, k] - mat_z_mu[, k], X[, j])
 
             gam_vb[j, k] <- exp(-log_one_plus_exp_(pnorm(mat_v_mu[j, k], lower.tail = FALSE, log.p = TRUE) -
-                                                    pnorm(mat_v_mu[j, k], log.p = TRUE) -
-                                                    log_sig2_inv_vb / 2 -
-                                                    mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb) -
-                                                    log(sig2_beta_vb) / 2))
+                                                     pnorm(mat_v_mu[j, k], log.p = TRUE) -
+                                                     log_sig2_inv_vb / 2 -
+                                                     mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb) -
+                                                     log(sig2_beta_vb) / 2))
 
             m1_beta[j, k] <- gam_vb[j, k] * mu_beta_vb[j, k]
 
@@ -172,13 +172,12 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
       Wy <- update_W_probit_(Y, mat_z_mu, mat_x_m1)
 
-      lb_new <- lower_bound_probit_info_(Y, X, V, Z, gam_vb, lambda, m0,
-                                         mu_alpha_vb, mu_c0_vb, mu_c_vb, nu,
-                                         phi, phi_vb, sig2_alpha_vb,
-                                         sig2_beta_vb, sig2_c0_vb, sig2_c_vb,
-                                         sig2_inv_vb, s02, s2, xi, zeta2_inv_vb,
-                                         m2_alpha, m1_beta, m2_beta, mat_x_m1,
-                                         mat_v_mu, mat_z_mu)
+      lb_new <- elbo_probit_info_(Y, X, V, Z, gam_vb, lambda, m0, mu_alpha_vb,
+                                  mu_c0_vb, mu_c_vb, nu, phi, phi_vb,
+                                  sig2_alpha_vb, sig2_beta_vb, sig2_c0_vb,
+                                  sig2_c_vb, sig2_inv_vb, s02, s2, xi,
+                                  zeta2_inv_vb, m2_alpha, m1_beta, m2_beta,
+                                  mat_x_m1, mat_v_mu, mat_z_mu)
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
@@ -204,12 +203,10 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
     if (full_output) { # for internal use only
 
-      create_named_list_(gam_vb, lambda,
-                          m0, mu_alpha_vb, mu_c0_vb, mu_c_vb, nu, phi,
-                          phi_vb, sig2_alpha_vb, sig2_beta_vb,
-                          sig2_c0_vb, sig2_c_vb, sig2_inv_vb, s02, s2,
-                          xi, zeta2_inv_vb, m2_alpha, m1_beta,
-                          m2_beta, mat_x_m1, mat_v_mu, mat_z_mu)
+      create_named_list_(gam_vb, lambda, m0, mu_alpha_vb, mu_c0_vb, mu_c_vb, nu,
+                         phi, phi_vb, sig2_alpha_vb, sig2_beta_vb, sig2_c0_vb,
+                         sig2_c_vb, sig2_inv_vb, s02, s2, xi, zeta2_inv_vb,
+                         m2_alpha, m1_beta, m2_beta, mat_x_m1, mat_v_mu, mat_z_mu)
 
     } else {
 
@@ -243,12 +240,11 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 # Internal function which implements the marginal log-likelihood variational
 # lower bound (ELBO) corresponding to the `locus_probit_info_core` algorithm.
 #
-lower_bound_probit_info_ <- function(Y, X, V, Z, gam_vb, lambda, m0,
-                                     mu_alpha_vb, mu_c0_vb, mu_c_vb, nu,
-                                     phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
-                                     sig2_c0_vb, sig2_c_vb, sig2_inv_vb, s02,
-                                     s2, xi, zeta2_inv_vb, m2_alpha, m1_beta,
-                                     m2_beta, mat_x_m1, mat_v_mu, mat_z_mu) {
+elbo_probit_info_ <- function(Y, X, V, Z, gam_vb, lambda, m0, mu_alpha_vb,
+                              mu_c0_vb, mu_c_vb, nu, phi, phi_vb, sig2_alpha_vb,
+                              sig2_beta_vb, sig2_c0_vb, sig2_c_vb, sig2_inv_vb,
+                              s02, s2, xi, zeta2_inv_vb, m2_alpha, m1_beta,
+                              m2_beta, mat_x_m1, mat_v_mu, mat_z_mu) {
 
   xi_vb <- update_xi_bin_vb_(xi, m2_alpha)
 
@@ -267,11 +263,11 @@ lower_bound_probit_info_ <- function(Y, X, V, Z, gam_vb, lambda, m0,
   eps <- .Machine$double.eps^0.75 # to control the argument of the log when gamma is very small
 
   B <- sum(log_sig2_inv_vb * gam_vb / 2 -
-           m2_beta * sig2_inv_vb / 2 +
-           gam_vb * pnorm(mat_v_mu, log.p = TRUE) +
-           sweep((1 - gam_vb) * pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE), 1, sig2_c_vb * rowSums(V^2) / 2, `-`) -
-           sig2_c0_vb / 2 + gam_vb * (log(sig2_beta_vb) + 1) / 2 -
-           gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
+             m2_beta * sig2_inv_vb / 2 +
+             gam_vb * pnorm(mat_v_mu, log.p = TRUE) +
+             sweep((1 - gam_vb) * pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE), 1, sig2_c_vb * rowSums(V^2) / 2, `-`) -
+             sig2_c0_vb / 2 + gam_vb * (log(sig2_beta_vb) + 1) / 2 -
+             gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
 
   G <- sum(log(sig2_c0_vb) + 1 - log(s02) - (mu_c0_vb^2 + sig2_c0_vb - 2*mu_c0_vb * m0 + m0^2) / s02) / 2
 

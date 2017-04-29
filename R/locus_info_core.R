@@ -17,7 +17,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
   r <- ncol(V)
 
   with(list_hyper, { # list_init not used with the with() function to avoid
-                     # copy-on-write for large objects
+    # copy-on-write for large objects
 
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
     m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
@@ -91,8 +91,8 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
         }
 
       } else if (batch == "0"){ # no batch, used only internally
-                                # schemes "x" of "x-y" are not batch concave
-                                # hence not implemented as they may diverge
+        # schemes "x" of "x-y" are not batch concave
+        # hence not implemented as they may diverge
 
 
         for (k in 1:d) {
@@ -104,10 +104,10 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
             mu_beta_vb[j, k] <- sig2_beta_vb[k] * tau_vb[k] * crossprod(Y[, k] - mat_x_m1[, k], X[, j])
 
             gam_vb[j, k] <- exp(-log_one_plus_exp_(pnorm(mat_v_mu[j, k], lower.tail = FALSE, log.p = TRUE) -
-                                                    pnorm(mat_v_mu[j, k], log.p = TRUE) -
-                                                    log_tau_vb[k] / 2 - log_sig2_inv_vb / 2 -
-                                                    mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[k]) -
-                                                    log(sig2_beta_vb[k]) / 2))
+                                                     pnorm(mat_v_mu[j, k], log.p = TRUE) -
+                                                     log_tau_vb[k] / 2 - log_sig2_inv_vb / 2 -
+                                                     mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[k]) -
+                                                     log(sig2_beta_vb[k]) / 2))
 
             m1_beta[j, k] <- gam_vb[j, k] * mu_beta_vb[j, k]
 
@@ -141,10 +141,10 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
       m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
-      lb_new <- lower_bound_info_(Y, X, V, eta, gam_vb, kappa, lambda, m0,
-                                  mu_c0_vb, mu_c_vb, nu, sig2_beta_vb,
-                                  sig2_c0_vb, sig2_c_vb, sig2_inv_vb, s02, s2,
-                                  tau_vb, m1_beta, m2_beta, mat_x_m1, mat_v_mu)
+      lb_new <- elbo_info_(Y, X, V, eta, gam_vb, kappa, lambda, m0, mu_c0_vb,
+                           mu_c_vb, nu, sig2_beta_vb, sig2_c0_vb, sig2_c_vb,
+                           sig2_inv_vb, s02, s2, tau_vb, m1_beta, m2_beta,
+                           mat_x_m1, mat_v_mu)
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
@@ -203,10 +203,10 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 # Internal function which implements the marginal log-likelihood variational
 # lower bound (ELBO) corresponding to the `locus_info_core` algorithm.
 #
-lower_bound_info_ <- function(Y, X, V, eta, gam_vb, kappa, lambda, m0,
-                              mu_c0_vb, mu_c_vb, nu, sig2_beta_vb, sig2_c0_vb,
-                              sig2_c_vb, sig2_inv_vb, s02, s2, tau_vb, m1_beta,
-                              m2_beta, mat_x_m1, mat_v_mu) {
+elbo_info_ <- function(Y, X, V, eta, gam_vb, kappa, lambda, m0, mu_c0_vb,
+                       mu_c_vb, nu, sig2_beta_vb, sig2_c0_vb, sig2_c_vb,
+                       sig2_inv_vb, s02, s2, tau_vb, m1_beta, m2_beta, mat_x_m1,
+                       mat_v_mu) {
 
   n <- nrow(Y)
 

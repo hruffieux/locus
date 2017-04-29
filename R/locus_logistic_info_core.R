@@ -20,7 +20,7 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
   r <- ncol(V)
 
   with(list_hyper, { # list_init not used with the with() function to avoid
-                     # copy-on-write for large objects
+    # copy-on-write for large objects
 
     m2_alpha <- update_m2_alpha_(mu_alpha_vb, sig2_alpha_vb)
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
@@ -91,8 +91,8 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
 
         # C++ Eigen call for expensive updates
         coreLogitInfoLoop(X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu,
-                      log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb,
-                      psi_vb, sig2_beta_vb)
+                          log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb,
+                          psi_vb, sig2_beta_vb)
 
 
         mat_v_mu <- sweep(mat_v_mu, 1, mu_c0_vb, `-`)
@@ -134,10 +134,10 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
               crossprod(X[, j], Y[, k] - 2 * psi_vb[, k] * (mat_z_mu[, k] + mat_x_m1[, k]))
 
             gam_vb[j, k] <- exp(-log_one_plus_exp_(pnorm(mat_v_mu[j, k], lower.tail = FALSE, log.p = TRUE) -
-                                                    pnorm(mat_v_mu[j, k], log.p = TRUE) -
-                                                    log_sig2_inv_vb / 2 -
-                                                    mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[j, k]) -
-                                                    log(sig2_beta_vb[j, k]) / 2))
+                                                     pnorm(mat_v_mu[j, k], log.p = TRUE) -
+                                                     log_sig2_inv_vb / 2 -
+                                                     mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[j, k]) -
+                                                     log(sig2_beta_vb[j, k]) / 2))
 
             m1_beta[j, k] <- mu_beta_vb[j, k] * gam_vb[j, k]
 
@@ -173,13 +173,12 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
       m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb)
 
 
-      lb_new <- lower_bound_logit_info_(Y, X, Z, V, chi_vb, gam_vb, m0,  mu_c0_vb,
-                                        mu_c_vb, lambda, nu, phi, phi_vb, psi_vb,
-                                        sig2_alpha_vb, sig2_beta_vb, sig2_c0_vb,
-                                        sig2_c_vb, sig2_inv_vb, s02, s2, xi,
-                                        zeta2_inv_vb, mu_alpha_vb, m2_alpha,
-                                        m1_beta, m2_beta, mat_x_m1, mat_v_mu,
-                                        mat_z_mu)
+      lb_new <- elbo_logit_info_(Y, X, Z, V, chi_vb, gam_vb, m0,  mu_c0_vb,
+                                 mu_c_vb, lambda, nu, phi, phi_vb, psi_vb,
+                                 sig2_alpha_vb, sig2_beta_vb, sig2_c0_vb,
+                                 sig2_c_vb, sig2_inv_vb, s02, s2, xi,
+                                 zeta2_inv_vb, mu_alpha_vb, m2_alpha, m1_beta,
+                                 m2_beta, mat_x_m1, mat_v_mu, mat_z_mu)
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
@@ -241,12 +240,12 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
 # Internal function which implements the marginal log-likelihood variational
 # lower bound (ELBO) corresponding to the `locus_logit_info_core` algorithm.
 #
-lower_bound_logit_info_ <- function(Y, X, Z, V, chi_vb, gam_vb, m0,  mu_c0_vb,
-                                    mu_c_vb, lambda, nu, phi, phi_vb, psi_vb,
-                                    sig2_alpha_vb, sig2_beta_vb, sig2_c0_vb,
-                                    sig2_c_vb, sig2_inv_vb, s02, s2, xi,
-                                    zeta2_inv_vb, mu_alpha_vb, m2_alpha,
-                                    m1_beta, m2_beta, mat_x_m1, mat_v_mu, mat_z_mu) {
+elbo_logit_info_ <- function(Y, X, Z, V, chi_vb, gam_vb, m0,  mu_c0_vb,
+                             mu_c_vb, lambda, nu, phi, phi_vb, psi_vb,
+                             sig2_alpha_vb, sig2_beta_vb, sig2_c0_vb,
+                             sig2_c_vb, sig2_inv_vb, s02, s2, xi,
+                             zeta2_inv_vb, mu_alpha_vb, m2_alpha,
+                             m1_beta, m2_beta, mat_x_m1, mat_v_mu, mat_z_mu) {
 
   lambda_vb <- update_lambda_vb_(lambda, sum(gam_vb))
   nu_vb <- update_nu_bin_vb_(nu, m2_beta)
