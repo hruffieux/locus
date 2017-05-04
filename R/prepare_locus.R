@@ -154,6 +154,8 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verb
   }
 
   p <- ncol(X)
+  if (p < 1) stop(paste("There must be at least 1 non-constant candidate predictor ",
+                        " stored in X.", sep=""))
 
   if (link == "identity") {
 
@@ -169,8 +171,7 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verb
 
   }
 
-  if (p < 1) stop(paste("There must be at least 1 non-constant candidate predictor ",
-                        " stored in X.", sep=""))
+
   if (is.null(q) || q < 1) Z <- NULL
   if (is.null(r) || r < 1) V <- NULL # in principle useless given the above assert.
 
@@ -258,16 +259,21 @@ convert_p0_av_ <- function(p0_av, p, list_blocks, verbose, eps = .Machine$double
 # algorithms.
 #
 prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
-                                bool_rmvd_x, bool_rmvd_z, bool_rmvd_v, names_x,
-                                names_y, names_z, verbose) {
+                                vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
+                                bool_rmvd_v, names_x, names_y, names_z, verbose) {
 
   d <- ncol(Y)
+  if (!is.null(vec_fac_gr)) {
+    G <- length(unique(vec_fac_gr))
+  } else {
+    G <- G_hyper_match <- NULL
+  }
 
   if (is.null(list_hyper)) {
 
     if (verbose) cat("list_hyper set automatically. \n")
 
-    list_hyper <- auto_set_hyper_(Y, p, p_star, q, r, link, ind_bin)
+    list_hyper <- auto_set_hyper_(Y, G, p, p_star, q, r, link, ind_bin)
 
   } else {
 
@@ -281,14 +287,24 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
 
     if (inherits(list_hyper, "hyper")) {
       p_hyper_match <- length(bool_rmvd_x)
+      if (!is.null(G))
+        G_hyper_match <- length(levels(vec_fac_gr)) # counts the levels of the factors
+                                                    # to know how many groups before removal
+                                                    # of constant or collinear predictors
     } else {
       p_hyper_match <- p
+      if (!is.null(G))
+        G_hyper_match <- G
     }
 
 
     if (list_hyper$d_hyper != d)
       stop(paste("The dimensions (d) of the provided hyperparameters ",
                  "(list_hyper) are not consistent with that of Y.\n", sep=""))
+
+    if (list_hyper$G_hyper != G_hyper_match)
+      stop(paste("The number of groups (G) provided when setting the hyperparameters ",
+                 "(list_hyper) is not consistent with that provided in the locus function.\n", sep=""))
 
     if (list_hyper$p_hyper != p_hyper_match)
       stop(paste("The dimensions (p) of the provided hyperparameters ",
@@ -313,15 +329,26 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
       if (inherits(list_hyper, "hyper")) {
         # remove the entries corresponding to the removed constant predictors in X
         # (if any)
-        list_hyper$a <- list_hyper$a[!bool_rmvd_x]
-        list_hyper$b <- list_hyper$b[!bool_rmvd_x]
+        if (is.null(G)) {
+
+          list_hyper$a <- list_hyper$a[!bool_rmvd_x]
+          list_hyper$b <- list_hyper$b[!bool_rmvd_x]
+
+          if (!is.null(names(list_hyper$a)) && names(list_hyper$a) != names_x)
+            stop("Provided names for the entries of a do not match the colnames of X.")
+
+          if (!is.null(names(list_hyper$b)) && names(list_hyper$b) != names_x)
+            stop("Provided names for the entries of b do not match the colnames of X.")
+
+        } else {
+
+          list_hyper$a <- list_hyper$a[unique(vec_fac_gr)]
+          list_hyper$b <- list_hyper$b[unique(vec_fac_gr)]
+
+        }
       }
 
-      if (!is.null(names(list_hyper$a)) && names(list_hyper$a) != names_x)
-        stop("Provided names for the entries of a do not match the colnames of X.")
 
-      if (!is.null(names(list_hyper$b)) && names(list_hyper$b) != names_x)
-        stop("Provided names for the entries of b do not match the colnames of X.")
 
     } else {
 
@@ -392,11 +419,17 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
 # algorithms.
 #
 prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
-                               bool_rmvd_x, bool_rmvd_z, bool_rmvd_v, user_seed,
-                               verbose) {
+                               vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
+                               bool_rmvd_v, user_seed, verbose) {
 
   d <- ncol(Y)
   n <- nrow(Y)
+
+  if (!is.null(vec_fac_gr)) {
+    G <- length(unique(vec_fac_gr))
+  } else {
+    G <- G_init_match <- NULL
+  }
 
   if (is.null(list_init)) {
 
@@ -405,7 +438,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
 
     if (verbose) cat(paste("list_init set automatically. \n", sep=""))
 
-    list_init <- auto_set_init_(Y, p, p_star, q, r, user_seed, link, ind_bin)
+    list_init <- auto_set_init_(Y, p, p_star, q, r, user_seed, link, ind_bin, vec_fac_gr)
 
   } else {
 
@@ -427,6 +460,18 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
       p_init_match <- p
     }
 
+    if (inherits(list_init, "init")) {
+      p_init_match <- length(bool_rmvd_x)
+      if (!is.null(G))
+        G_init_match <- length(levels(vec_fac_gr)) # counts the levels of the factors
+      # to know how many groups before removal
+      # of constant or collinear predictors
+    } else {
+      p_init_match <- p
+      if (!is.null(G))
+        G_init_match <- G
+    }
+
     if (list_init$d_init != d)
       stop(paste("The dimensions (d) of the provided initial parameters ",
                  "(list_init) are not consistent with that of Y.\n", sep=""))
@@ -434,6 +479,10 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
     if (list_init$p_init != p_init_match)
       stop(paste("The dimensions (p) of the provided initial parameters ",
                  "(list_init) are not consistent with that of X.\n", sep=""))
+
+    if (list_init$G_init != G_init_match)
+      stop(paste("The number of groups (G) provided when setting the initial parameters ",
+                 "(list_init) is not consistent with that provided in the locus function.\n", sep=""))
 
     if (list_init$link_init != link)
       stop(paste("The argument link is not consistent with the variable
@@ -446,10 +495,21 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
     }
 
     if (inherits(list_init, "init")) {
-      # remove the entries corresponding to the removed constant predictors in X
-      # (if any)
-      list_init$gam_vb <- list_init$gam_vb[!bool_rmvd_x,, drop = FALSE]
+
+      if (is.null(G)) {
+        # drops the rows corresponding to the removed constant and collinear
+        # predictors in X (if any)
+        list_init$gam_vb <- list_init$gam_vb[!bool_rmvd_x,, drop = FALSE]
+      } else {
+        # drops the rows corresponding to the empty groups (if any)
+        list_init$gam_vb <- list_init$gam_vb[unique(vec_fac_gr),, drop = FALSE]
+      }
+
       list_init$mu_beta_vb <- list_init$mu_beta_vb[!bool_rmvd_x,, drop = FALSE]
+      if (!is.null(G)) { # converts mu_beta_vb to a list of matrices by groups
+        list_init$mu_beta_vb <- lapply(unique(vec_fac_gr),
+                                       function(g) list_init$mu_beta_vb[vec_fac_gr == g,, drop = FALSE])
+      }
 
       if (link == "logit")
         list_init$sig2_beta_vb <- list_init$sig2_beta_vb[!bool_rmvd_x,, drop = FALSE]
@@ -574,7 +634,7 @@ prepare_cv_ <- function(list_cv, n, p, r, bool_rmvd_x, p0_av, link, list_hyper,
 # Internal function implementing sanity checks and needed preprocessing to the
 # settings provided by the user for block-wise parallel inference.
 #
-prepare_blocks_ <- function(list_blocks, r, bool_rmvd_x, list_cv) {
+prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv) {
 
   if (!inherits(list_blocks, "blocks"))
     stop(paste("The provided list_blocks must be an object of class ``blocks''. \n",
@@ -586,8 +646,7 @@ prepare_blocks_ <- function(list_blocks, r, bool_rmvd_x, list_cv) {
 
   if (!is.null(list_cv))
     stop(paste("list_cv must be NULL if non NULL ",
-               "list_blocks is provided (parallel applications of locus on blocks of candidate predictors).\n",
-               "Cross-validation for block-wise applications will be enabled soon.",sep = ""))
+               "list_blocks is provided (cross-validation not yet implemented).",sep = ""))
 
   if (list_blocks$p_blocks != length(bool_rmvd_x))
     stop(paste("The number of candidate predictors p provided to the function set_blocks ",
@@ -762,3 +821,72 @@ prepare_ind_bin_ <- function(d, ind_bin, link) {
 
   ind_bin
 }
+
+
+
+
+
+# Internal function implementing sanity checks and needed preprocessing to the
+# settings provided by the user for block-wise parallel inference.
+#
+prepare_groups_ <- function(list_groups, X, q, r, bool_rmvd_x, link, list_cv) {
+
+  if (!inherits(list_groups, "groups"))
+    stop(paste("The provided list_groups must be an object of class ``groups''. \n",
+               "*** you must use the function set_groups to give the settings ",
+               "for group selection. ***",
+               sep=""))
+
+  if (!is.null(list_cv))
+    stop(paste("list_cv must be NULL if non NULL ",
+               "list_groups is provided (cross-validation not yet implemented). \n",sep = ""))
+
+  if (list_groups$p_groups != length(bool_rmvd_x))
+    stop(paste("The number of candidate predictors p provided to the function set_groups ",
+               "is not consistent with X.\n", sep=""))
+
+  check_structure_(list_groups$vec_fac_gr, "vector", p, null_ok = TRUE)
+  if(!is.null(list_groups$vec_fac_gr) && (link != "identity" | !is.null(q) | !is.null(r)))
+    stop("Group selection implemented only for identity link, Z = NULL and V = NULL. Exit.")
+
+
+  vec_fac_gr <- list_groups$vec_fac_gr[!bool_rmvd_x] # some groups may disappear here, but this is not a problem
+  X <- lapply(1:unique(vec_fac_gr), function(g) X[, vec_fac_gr == g, drop = FALSE])
+
+  create_named_list_(X, vec_fac_gr) # X is now a list in which the matrix is split across groups
+
+}
+
+
+#' @export
+set_groups <- function(p, pos_bl, verbose = TRUE) {
+
+  check_structure_(verbose, "vector", "logical", 1)
+
+  check_structure_(pos_gr, "vector", "numeric")
+  check_natural_(pos_gr)
+
+  if (p / length(pos_gr) > 500)
+    warning(paste("The provided number of groups may be too small for tractable ",
+                  "inference. If possible, use more groups.", sep = ""))
+
+  if (any(pos_gr < 1) | any(pos_gr > p))
+    stop("The positions provided in pos_gr must range between 1 and total number of variables in X, p.")
+
+  if (any(duplicated(pos_gr)))
+    stop("The positions provided in pos_gr must be unique.")
+
+  if (any(pos_gr != cummax(pos_gr)))
+    stop("The positions provided in pos_gr must be monotonically increasing.")
+
+  vec_fac_gr <- as.factor(cumsum(seq_along(1:p) %in% pos_gr))
+
+  p_groups <- p
+
+  list_groups <- create_named_list_(p_groups, vec_fac_gr)
+
+  class(list_groups) <- "groups"
+
+  list_groups
+}
+

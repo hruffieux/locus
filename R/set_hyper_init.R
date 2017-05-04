@@ -218,7 +218,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
   if(!is.null(G) && (link != "identity" | !is.null(q) | !is.null(r)))
-    stop("Group locus implemented only for identity link, Z = NULL and V = NULL. Exit.")
+    stop("Group selection(G non-NULL) implemented only for identity link, Z = NULL and V = NULL. Exit.")
 
   ind_bin <- prepare_ind_bin_(d, ind_bin, link)
 
@@ -402,6 +402,7 @@ auto_set_hyper_ <- function(Y, G, p, p_star, q, r, link, ind_bin) {
   }
 
   d_hyper <- d
+  G_hyper <- G
   p_hyper <- p
   q_hyper <- q
   r_hyper <- r
@@ -410,9 +411,9 @@ auto_set_hyper_ <- function(Y, G, p, p_star, q, r, link, ind_bin) {
 
   link_hyper <- link
 
-  list_hyper <- create_named_list_(d_hyper, p_hyper, q_hyper, r_hyper, link_hyper,
-                                   ind_bin_hyper, eta, kappa, lambda, nu, a, b,
-                                   phi, xi, m0, s02, s2)
+  list_hyper <- create_named_list_(d_hyper, G_hyper, p_hyper, q_hyper, r_hyper,
+                                   link_hyper, ind_bin_hyper, eta, kappa,
+                                   lambda, nu, a, b, phi, xi, m0, s02, s2)
 
   class(list_hyper) <- "out_hyper"
 
@@ -638,7 +639,8 @@ auto_set_hyper_ <- function(Y, G, p, p_star, q, r, link, ind_bin) {
 set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
                      link = "identity", ind_bin = NULL, q = NULL,
                      mu_alpha_vb = NULL, sig2_alpha_vb = NULL, r = NULL,
-                     mu_c0_vb = NULL, mu_c_vb = NULL, sig2_inv_vb = NULL) {
+                     mu_c0_vb = NULL, mu_c_vb = NULL, sig2_inv_vb = NULL,
+                     G = NULL) {
 
   check_structure_(d, "vector", "numeric", 1)
   check_natural_(d)
@@ -652,13 +654,13 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   check_structure_(r, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(r)) check_natural_(r)
 
-  check_structure_(G, "vector", "numeric", 1, null_ok = TRUE)
+  check_structure_(G, "vector", "numeric", p, null_ok = TRUE)
   if (!is.null(G)) check_natural_(G)
 
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
   if(!is.null(G) && (link != "identity" | !is.null(q) | !is.null(r)))
-    stop("Group locus implemented only for identity link, Z = NULL and V = NULL. Exit.")
+    stop("Group selection (G non-NULL) implemented only for identity link, Z = NULL and V = NULL. Exit.")
 
   ind_bin <- prepare_ind_bin_(d, ind_bin, link)
 
@@ -667,26 +669,27 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
     check_structure_(gam_vb, "matrix", "double", c(p, d))
 
-    check_structure_(mu_beta_vb, "matrix", "double", c(p, d))
-
   } else {
 
     check_structure_(gam_vb, "matrix", "double", c(G, d))
 
-    if(!is.list(mu_beta_vb) | length(mu_beta_vb) != G)
-      stop("mu_beta_vb must be a list of length G when G is non-NULL.")
-
-    g_sizes <- unlist(lapply(mu_beta_vb, function(m) {
-      check_structure_(m, "list", "double")
-      if(ncol(m)!=d) stop("All matrices in the list mu_beta_vb must have d columns.")
-      nrow(m)
-    }))
-
-    if (sum(g_sizes) != p)
-      stop("The number of rows of matrices in list mu_beta_vb must sum up to p.")
+    # if(!is.list(mu_beta_vb) | length(mu_beta_vb) != G)
+    #   stop("mu_beta_vb must be a list of length G when G is non-NULL.")
+    #
+    # g_sizes <- unlist(lapply(1:length(mu_beta_vb), function(g) {
+    #   check_structure_(mu_beta_vb[[g]], "matrix", "double")
+    #   if(ncol(m)!=d) stop("All matrices in the list mu_beta_vb must have d columns.")
+    #   if(nrow(m)!=table(as.numeric(vec_fac_gr))[g])
+    #     stop("All matrices in the list mu_beta_vb must number of rows corresponding to the group sizes.")
+    #   nrow(m)
+    # }))
+#
+#     if (sum(g_sizes) != p)
+#       stop("The number of rows of matrices in list mu_beta_vb must sum up to p.")
   }
   check_zero_one_(gam_vb)
 
+  check_structure_(mu_beta_vb, "matrix", "double", c(p, d))
 
   if (link %in% c("identity", "mix")) {
 
@@ -700,7 +703,7 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
       check_structure_(sig2_inv_vb, "vector", "double", d)
       if (!is.null(sig2_beta_vb))
-        stop("sig2_beta_vb is not used when G is NULL.")
+        stop("sig2_beta_vb is not used when G is non-NULL.")
 
     }
 
@@ -777,16 +780,16 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
 
   d_init <- d
+  G_init <- G
   p_init <- p
   q_init <- q
   r_init <- r
-  g_sizes_init <- g_sizes
   ind_bin_init <- ind_bin
 
   link_init <- link
 
-  list_init <- create_named_list_(d_init, p_init, q_init, r_init, g_sizes_init,
-                                  link_init, ind_bin_init, gam_vb, mu_beta_vb,
+  list_init <- create_named_list_(d_init, G_init, p_init, q_init, r_init, link_init,
+                                  ind_bin_init, gam_vb, mu_beta_vb,
                                   sig2_beta_vb, sig2_inv_vb, tau_vb, mu_alpha_vb,
                                   sig2_alpha_vb, mu_c0_vb, mu_c_vb)
 
@@ -798,10 +801,9 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
 # Internal function setting default starting values when not provided by the user.
 #
-auto_set_init_ <- function(Y, g_sizes, p, p_star, q, r, user_seed, link, ind_bin) {
+auto_set_init_ <- function(Y, G, p, p_star, q, r, user_seed, link, ind_bin) {
 
   d <- ncol(Y)
-  G <- length(g_sizes)
 
   if (!is.null(user_seed)) set.seed(user_seed)
 
@@ -809,23 +811,30 @@ auto_set_init_ <- function(Y, g_sizes, p, p_star, q, r, user_seed, link, ind_bin
   shape2_gam <- d * (p - p_star) / p_star
 
 
-  if (length(p_star) > 1) {
+  if (is.null(G)) {
 
-    if (is.null(G)) {
+    if (length(p_star) > 1)
       shape1_gam <- rep(shape1_gam, p)
 
-      gam_vb <- matrix(rbeta(p * d, shape1 = shape1_gam, shape2 = shape2_gam),
-                       nrow = p)
-      mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
+    gam_vb <- matrix(rbeta(p * d, shape1 = shape1_gam, shape2 = shape2_gam),
+                     nrow = p)
 
-    } else {
+  } else {
+
+    if (length(p_star) > 1)
       shape1_gam <- rep(shape1_gam, G)
 
-      gam_vb <- matrix(rbeta(G * d, shape1 = shape1_gam, shape2 = shape2_gam),
-                       nrow = G)
-      mu_beta_vb <- lapply(g_sizes, function(g_s) matrix(rnorm(g_s * d), nrow = g_s))
-    }
+    gam_vb <- matrix(rbeta(G * d, shape1 = shape1_gam, shape2 = shape2_gam),
+                     nrow = G)
+
   }
+
+  mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
+
+  # mu_beta_vb <- lapply(unique(vec_fac_gr), function(g) {
+  #   g_s <- sum(vec_fac_gr == g)
+  #   matrix(rnorm(g_s * d), nrow = g_s)
+  # })
 
 
   sig2_inv_vb <- 1e-2
@@ -918,7 +927,7 @@ auto_set_init_ <- function(Y, g_sizes, p, p_star, q, r, user_seed, link, ind_bin
 
 
   d_init <- d
-  g_sizes_init <- g_sizes
+  G_init <- G
   p_init <- p
   q_init <- q
   r_init <- r
@@ -926,7 +935,7 @@ auto_set_init_ <- function(Y, g_sizes, p, p_star, q, r, user_seed, link, ind_bin
 
   link_init <- link
 
-  list_init <- create_named_list_(d_init, p_init, q_init, r_init, g_sizes_init,
+  list_init <- create_named_list_(d_init, G_init, p_init, q_init, r_init,
                                   link_init, ind_bin_init, gam_vb, mu_beta_vb,
                                   sig2_inv_vb, sig2_beta_vb, tau_vb, mu_alpha_vb,
                                   sig2_alpha_vb, mu_c0_vb, mu_c_vb)

@@ -235,9 +235,9 @@
 #'
 locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
-                  list_cv = NULL, list_blocks = NULL, user_seed = NULL,
-                  tol = 1e-3, maxit = 1000, save_hyper = FALSE,
-                  save_init = FALSE, verbose = TRUE) { ##
+                  list_cv = NULL, list_blocks = NULL, list_groups = NULL,
+                  user_seed = NULL, tol = 1e-3, maxit = 1000,
+                  save_hyper = FALSE, save_init = FALSE, verbose = TRUE) { ##
 
   if (verbose) cat("== Preparing the data ... \n")
   dat <- prepare_data_(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verbose)
@@ -279,7 +279,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
 
 
-  if (!is.null(list_cv) & is.null(list_blocks)) { ## TODO: allow cross-validation when list_blocks is used.
+  if (!is.null(list_cv) & is.null(list_blocks) & is.null(list_groups)) { ## TODO: allow cross-validation when list_blocks is used.
 
     if (verbose) {
       cat("=============================== \n")
@@ -295,7 +295,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     if (!is.null(list_blocks)) {
 
-      list_blocks <- prepare_blocks_(list_blocks, r, bool_rmvd_x, list_cv)
+      list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, list_cv)
 
       n_bl <- list_blocks$n_bl
       n_cpus <- list_blocks$n_cpus
@@ -303,12 +303,32 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     }
 
+
+    if (!is.null(list_groups)) {
+
+      list_groups <- prepare_groups_(list_groups, X, q, r, bool_rmvd_x, link, list_cv)
+
+      X <- list_groups$X
+      vec_fac_gr <- list_groups$vec_fac_gr
+
+    } else {
+
+      vec_fac_gr <- NULL
+
+    }
+
+
     if (is.null(list_hyper) | is.null(list_init)) {
 
       p_star <- convert_p0_av_(p0_av, p, list_blocks, verbose)
 
       # remove the entries corresponding to the removed constant covariates in X (if any)
-      if (length(p_star) > 1) p_star <- p_star[!bool_rmvd_x]
+      if (length(p_star) > 1) {
+        p_star <- p_star[!bool_rmvd_x]
+        if (!is.null(vec_fac_gr)) # reduce p_star to a vector of size G
+          p_star <- sapply(unique(vec_fac_gr), function(g) mean(p_star[vec_fac_gr == g]))
+      }
+
 
     } else {
 
@@ -324,14 +344,14 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
   if (verbose) cat("== Preparing the hyperparameters ... \n\n")
   list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, r, link, ind_bin,
-                                    bool_rmvd_x, bool_rmvd_z, bool_rmvd_v,
-                                    names_x, names_y, names_z, verbose)
+                                    vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
+                                    bool_rmvd_v, names_x, names_y, names_z, verbose)
   if (verbose) cat("... done. == \n\n")
 
   if (verbose) cat("== Preparing the parameter initialization ... \n\n")
   list_init <- prepare_list_init_(list_init, Y, p, p_star, q, r, link, ind_bin,
-                                  bool_rmvd_x, bool_rmvd_z, bool_rmvd_v,
-                                  user_seed, verbose)
+                                  vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
+                                  bool_rmvd_v, user_seed, verbose)
   if (verbose) cat("... done. == \n\n")
 
   nq <- is.null(q)
