@@ -266,7 +266,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
   if (!is.null(vec_fac_gr)) {
     G <- length(unique(vec_fac_gr))
   } else {
-    G <- G_hyper_match <- NULL
+    G <- NULL
   }
 
   if (is.null(list_hyper)) {
@@ -276,6 +276,9 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
     list_hyper <- auto_set_hyper_(Y, G, p, p_star, q, r, link, ind_bin)
 
   } else {
+
+    if (xor(is.null(G), is.null(list_hyper$G_hyper)))
+      stop("If group selection was enabled when setting list_hyper, it must be used in locus and vice-versa.")
 
     if (!inherits(list_hyper, c("hyper", "out_hyper")))
       stop(paste("The provided list_hyper must be an object of class ``hyper'' ",
@@ -302,7 +305,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
       stop(paste("The dimensions (d) of the provided hyperparameters ",
                  "(list_hyper) are not consistent with that of Y.\n", sep=""))
 
-    if (list_hyper$G_hyper != G_hyper_match)
+    if (!is.null(G) && list_hyper$G_hyper != G_hyper_match)
       stop(paste("The number of groups (G) provided when setting the hyperparameters ",
                  "(list_hyper) is not consistent with that provided in the locus function.\n", sep=""))
 
@@ -428,7 +431,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
   if (!is.null(vec_fac_gr)) {
     G <- length(unique(vec_fac_gr))
   } else {
-    G <- G_init_match <- NULL
+    G <- NULL
   }
 
   if (is.null(list_init)) {
@@ -438,9 +441,13 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
 
     if (verbose) cat(paste("list_init set automatically. \n", sep=""))
 
-    list_init <- auto_set_init_(Y, p, p_star, q, r, user_seed, link, ind_bin, vec_fac_gr)
+    list_init <- auto_set_init_(Y, G, p, p_star, q, r, user_seed, link, ind_bin)
 
   } else {
+
+    if (xor(is.null(G), is.null(list_init$G_init)))
+      stop("If group selection was enabled when setting list_init, it must be used in locus and vice-versa.")
+
 
     if (!is.null(user_seed))
       warning("user_seed not used since a non-NULL list_init was provided. \n")
@@ -480,7 +487,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
       stop(paste("The dimensions (p) of the provided initial parameters ",
                  "(list_init) are not consistent with that of X.\n", sep=""))
 
-    if (list_init$G_init != G_init_match)
+    if (!is.null(G) && list_init$G_init != G_init_match)
       stop(paste("The number of groups (G) provided when setting the initial parameters ",
                  "(list_init) is not consistent with that provided in the locus function.\n", sep=""))
 
@@ -506,15 +513,12 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
       }
 
       list_init$mu_beta_vb <- list_init$mu_beta_vb[!bool_rmvd_x,, drop = FALSE]
-      if (!is.null(G)) { # converts mu_beta_vb to a list of matrices by groups
-        list_init$mu_beta_vb <- lapply(unique(vec_fac_gr),
-                                       function(g) list_init$mu_beta_vb[vec_fac_gr == g,, drop = FALSE])
-      }
 
       if (link == "logit")
         list_init$sig2_beta_vb <- list_init$sig2_beta_vb[!bool_rmvd_x,, drop = FALSE]
 
     }
+
 
     if (!is.null(q)) {
 
@@ -566,6 +570,12 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
                    "(list_init) is not consistent is V being NULL.\n", sep=""))
     }
 
+  }
+
+
+  if (!is.null(G)) { # converts mu_beta_vb to a list of matrices by groups
+    list_init$mu_beta_vb <- lapply(unique(vec_fac_gr),
+                                   function(g) list_init$mu_beta_vb[vec_fac_gr == g,, drop = FALSE])
   }
 
   class(list_init) <- "out_init"
@@ -845,13 +855,17 @@ prepare_groups_ <- function(list_groups, X, q, r, bool_rmvd_x, link, list_cv) {
     stop(paste("The number of candidate predictors p provided to the function set_groups ",
                "is not consistent with X.\n", sep=""))
 
-  check_structure_(list_groups$vec_fac_gr, "vector", p, null_ok = TRUE)
-  if(!is.null(list_groups$vec_fac_gr) && (link != "identity" | !is.null(q) | !is.null(r)))
+  p <- length(bool_rmvd_x)
+
+  if(!(is.factor(list_groups$vec_fac_gr) && length(list_groups$vec_fac_gr) == p))
+    stop(paste("list_groups$vec_fac_gr must be a non-empty a factor of length ", p, ".", sep = ""))
+
+  if(link != "identity" | !is.null(q) | !is.null(r))
     stop("Group selection implemented only for identity link, Z = NULL and V = NULL. Exit.")
 
 
   vec_fac_gr <- list_groups$vec_fac_gr[!bool_rmvd_x] # some groups may disappear here, but this is not a problem
-  X <- lapply(1:unique(vec_fac_gr), function(g) X[, vec_fac_gr == g, drop = FALSE])
+  X <- lapply(unique(vec_fac_gr), function(g) X[, vec_fac_gr == g, drop = FALSE])
 
   create_named_list_(X, vec_fac_gr) # X is now a list in which the matrix is split across groups
 
@@ -859,7 +873,7 @@ prepare_groups_ <- function(list_groups, X, q, r, bool_rmvd_x, link, list_cv) {
 
 
 #' @export
-set_groups <- function(p, pos_bl, verbose = TRUE) {
+set_groups <- function(p, pos_gr, verbose = TRUE) {
 
   check_structure_(verbose, "vector", "logical", 1)
 

@@ -6,8 +6,8 @@
 \usage{
 generate_null(n_perm, Y, X, p0_av, Z = NULL, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
-  list_blocks = NULL, user_seed = NULL, tol = 0.001, maxit = 1000,
-  verbose = TRUE, results_dir = NULL, n_cpus = 1)
+  list_blocks = NULL, list_groups = NULL, user_seed = NULL, tol = 0.001,
+  maxit = 1000, verbose = TRUE, results_dir = NULL, n_cpus = 1)
 }
 \arguments{
 \item{n_perm}{Number of permuted datasets on which \code{\link{locus}} is

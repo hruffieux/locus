@@ -673,19 +673,6 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
     check_structure_(gam_vb, "matrix", "double", c(G, d))
 
-    # if(!is.list(mu_beta_vb) | length(mu_beta_vb) != G)
-    #   stop("mu_beta_vb must be a list of length G when G is non-NULL.")
-    #
-    # g_sizes <- unlist(lapply(1:length(mu_beta_vb), function(g) {
-    #   check_structure_(mu_beta_vb[[g]], "matrix", "double")
-    #   if(ncol(m)!=d) stop("All matrices in the list mu_beta_vb must have d columns.")
-    #   if(nrow(m)!=table(as.numeric(vec_fac_gr))[g])
-    #     stop("All matrices in the list mu_beta_vb must number of rows corresponding to the group sizes.")
-    #   nrow(m)
-    # }))
-#
-#     if (sum(g_sizes) != p)
-#       stop("The number of rows of matrices in list mu_beta_vb must sum up to p.")
   }
   check_zero_one_(gam_vb)
 
@@ -830,12 +817,6 @@ auto_set_init_ <- function(Y, G, p, p_star, q, r, user_seed, link, ind_bin) {
   }
 
   mu_beta_vb <- matrix(rnorm(p * d), nrow = p)
-
-  # mu_beta_vb <- lapply(unique(vec_fac_gr), function(g) {
-  #   g_s <- sum(vec_fac_gr == g)
-  #   matrix(rnorm(g_s * d), nrow = g_s)
-  # })
-
 
   sig2_inv_vb <- 1e-2
 

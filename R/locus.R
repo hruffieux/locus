@@ -291,6 +291,8 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     p_star <- cross_validate_(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
+    vec_fac_gr <- NULL
+
   } else {
 
     if (!is.null(list_blocks)) {
@@ -416,35 +418,46 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     if (link == "identity") {
 
-      if (nq & nr) {
+      if (is.null(list_groups)){
 
-        vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
-                          list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                          list_init$tau_vb, tol, maxit, verbose)
+        if (nq & nr) {
 
-      } else if (nq) { # r non-null
-
-        vb <- locus_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
-                               list_init$mu_beta_vb, list_init$mu_c0_vb,
-                               list_init$mu_c_vb, list_init$sig2_beta_vb,
-                               list_init$tau_vb, tol, maxit, verbose)
-
-      } else if (nr) { # q non-null
-
-        vb <- locus_z_core_(Y, X, Z, list_hyper, list_init$gam_vb,
-                            list_init$mu_alpha_vb, list_init$mu_beta_vb,
-                            list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
+          vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
+                            list_init$mu_beta_vb, list_init$sig2_beta_vb,
                             list_init$tau_vb, tol, maxit, verbose)
 
-      } else { # both q and r non - null
+        } else if (nq) { # r non-null
 
-        vb <- locus_z_info_core_(Y, X, Z, V, list_hyper, list_init$gam_vb,
-                                 list_init$mu_alpha_vb, list_init$mu_beta_vb,
-                                 list_init$mu_c0_vb, list_init$mu_c_vb,
-                                 list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
+          vb <- locus_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
+                                 list_init$mu_beta_vb, list_init$mu_c0_vb,
+                                 list_init$mu_c_vb, list_init$sig2_beta_vb,
                                  list_init$tau_vb, tol, maxit, verbose)
-      }
 
+        } else if (nr) { # q non-null
+
+          vb <- locus_z_core_(Y, X, Z, list_hyper, list_init$gam_vb,
+                              list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                              list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
+                              list_init$tau_vb, tol, maxit, verbose)
+
+        } else { # both q and r non - null
+
+          vb <- locus_z_info_core_(Y, X, Z, V, list_hyper, list_init$gam_vb,
+                                   list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                                   list_init$mu_c0_vb, list_init$mu_c_vb,
+                                   list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
+                                   list_init$tau_vb, tol, maxit, verbose)
+        }
+
+      } else {
+
+        # X is a list (transformed in prepare_data)
+        # mu_beta_vb is a list (transformed in prepare_init)
+        vb <- locus_group_core_(Y, X, list_hyper, list_init$gam_vb,
+                          list_init$mu_beta_vb, list_init$sig2_inv_vb,
+                          list_init$tau_vb, tol, maxit, verbose)
+
+      }
 
     } else if (link == "logit"){
 
@@ -714,6 +727,9 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   if (!is.null(V)) {
     vb$rmvd_cst_v <- dat$rmvd_cst_v
     vb$rmvd_coll_v <- dat$rmvd_coll_v
+  }
+  if (!is.null(list_groups)) {
+    vb$group_labels <- vec_fac_gr # after removal of constant or collinear covariates
   }
 
   if (save_hyper) vb$list_hyper <- list_hyper

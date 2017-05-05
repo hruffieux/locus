@@ -6,8 +6,8 @@
 \usage{
 locus(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL, list_cv = NULL,
-  list_blocks = NULL, user_seed = NULL, tol = 0.001, maxit = 1000,
-  save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
+  list_blocks = NULL, list_groups = NULL, user_seed = NULL, tol = 0.001,
+  maxit = 1000, save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of

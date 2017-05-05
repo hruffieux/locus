@@ -117,9 +117,9 @@
 #'
 generate_null <- function(n_perm, Y, X, p0_av, Z = NULL, link = "identity",
                           ind_bin = NULL, list_hyper = NULL, list_init = NULL,
-                          list_blocks = NULL, user_seed = NULL, tol = 1e-3,
-                          maxit = 1000, verbose = TRUE, results_dir = NULL,
-                          n_cpus = 1) {
+                          list_blocks = NULL, list_groups = NULL,
+                          user_seed = NULL, tol = 1e-3, maxit = 1000,
+                          verbose = TRUE, results_dir = NULL, n_cpus = 1) {
 
   if (!is.null(user_seed)){
     RNGkind("L'Ecuyer-CMRG") # ensure reproducibility when using mclapply
@@ -158,8 +158,8 @@ generate_null <- function(n_perm, Y, X, p0_av, Z = NULL, link = "identity",
                       link = link, ind_bin = ind_bin,
                       list_hyper = list_hyper, list_init = list_init,
                       list_cv = NULL, list_blocks = list_blocks,
-                      user_seed = NULL, tol = tol, maxit = maxit,
-                      verbose = verbose)
+                      list_groups = list_groups, user_seed = NULL, tol = tol,
+                      maxit = maxit, verbose = verbose)
 
     om_vb <- res_perm$om_vb
     gam_vb <- res_perm$gam_vb

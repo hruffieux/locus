@@ -6,7 +6,7 @@
 \usage{
 set_hyper(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
   ind_bin = NULL, q = NULL, phi = NULL, xi = NULL, r = NULL,
-  m0 = NULL)
+  m0 = NULL, G = NULL)
 }
 \arguments{
 \item{d}{Number of responses.}

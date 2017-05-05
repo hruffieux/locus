@@ -54,17 +54,18 @@ e_beta_gamma_ <- function(gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
 
 
 e_g_beta_gamma_ <- function(gam_vb, g_sizes, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
-                            log_tau_vb, list_m2_beta, sig2_beta_vb, sig2_inv_vb, tau_vb) {
+                            log_tau_vb, list_m2_beta, list_sig2_beta_star,
+                            sig2_inv_vb, tau_vb) {
 
   eps <- .Machine$double.eps # to control the argument of the log when gamma is very small
 
   G <- length(list_m2_beta)
 
   sum(unlist(lapply(1:G, function(g) {
-        sum(g_size[g] * gam_vb[g, ] * (log_sig2_inv_vb + log_tau_vb) / 2 -
+        sum(g_sizes[g] * gam_vb[g, ] * (log_sig2_inv_vb + log_tau_vb) / 2 -
             sweep(list_m2_beta[[g]], 2, tau_vb, `*`) * sig2_inv_vb / 2 +
             gam_vb[g, ] * log_om_vb[g] + (1 - gam_vb[g, ]) * log_1_min_om_vb[g] +
-            1 / 2 * gam_vb[g, ] * (log(det(list_sig2_beta_star)) + g_size[g]) -
+            1 / 2 * gam_vb[g, ] * (log(det(list_sig2_beta_star[[g]])) + g_sizes[g]) -
             gam_vb[g, ] * log(gam_vb[g, ] + eps) - (1 - gam_vb[g, ]) * log(1 - gam_vb[g, ] + eps))
         })))
 

@@ -88,16 +88,6 @@ update_m2_beta_ <- function(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = FALSE) {
 }
 
 
-update_g_m2_beta_ <- function(gam_vb, list_mu_beta_vb, list_sig2_beta_star, tau_vb) { ## not list_sig2_beta_star_inv!
-
-
-  G <- length(list_mu_beta_vb)
-
-  lapply(1:G, function(g) gam_vb[g, ] * (colSums(list_mu_beta_vb[[g]]^2) + # colSums(A^2) = diag(crossprod(A))
-                                           sum(diag(list_sig2_beta_star[[g]])) / tau_vb))
-
-}
-
 update_sig2_beta_vb_ <- function(n, sig2_inv_vb, tau_vb = NULL) {
 
   if(is.null(tau_vb)) {
@@ -128,16 +118,31 @@ update_g_mat_x_m1_ <- function(list_X, list_m1_beta) {
 }
 
 
-update_g_m2_X_beta_ <- function(list_X, gam_vb, list_mu_beta_vb,
-                                list_sig2_beta_star, tau_vb) { ## not list_sig2_beta_star_inv!
-
+update_g_m1_btb_ <- function(gam_vb, list_mu_beta_vb, list_sig2_beta_star, tau_vb) { ## not list_sig2_beta_star_inv!
 
   G <- length(list_mu_beta_vb)
 
-  lapply(1:G, function(g) gam_vb[g, ] * (colSums((list_X[[g]] %*% list_mu_beta_vb[[g]])^2) +
-           sum(crossprod(list_X[[g]]) * list_sig2_beta_star[[g]]) / tau_vb))
+  lapply(1:G, function(g) {
+    gam_vb[g, ]^2 * colSums(list_mu_beta_vb[[g]]^2) + # colSums(A^2) = diag(crossprod(A))
+      gam_vb[g, ] * (sum(diag(list_sig2_beta_star[[g]])) / tau_vb +
+                       sapply(1:d, function(k) (1-gam_vb[g, k]) * sum(list_mu_beta_vb[[g]][, k]^2))) # tr(mu_gt mu_gt^T) = sum(mu_gt^2)
+  })
 
 }
+
+
+update_g_m1_btXtXb_ <- function(list_X, gam_vb, list_mu_beta_vb,
+                                list_sig2_beta_star, tau_vb) { ## not list_sig2_beta_star_inv!
+
+  G <- length(list_mu_beta_vb)
+
+  lapply(1:G, function(g) {
+    gam_vb[g, ]^2 * colSums((list_X[[g]] %*% list_mu_beta_vb[[g]])^2) +
+      gam_vb[g, ] * (sum(crossprod(list_X[[g]]) * list_sig2_beta_star[[g]]) / tau_vb +
+      sapply(1:d, function(k) (1-gam_vb[g, k]) * sum(crossprod(list_X[[g]]) * tcrossprod(list_mu_beta_vb[[g]][, k, drop = FALSE])))) # tr(AB^T) = sum_ij A_ij B_ij
+  })
+}
+
 
 
 
@@ -191,11 +196,11 @@ update_psi_logit_vb_ <- function(chi_vb) {
 
 update_lambda_vb_ <- function(lambda, sum_gam) lambda + sum_gam / 2
 
-update_g_lambda_vb_ <- function(lambda, g_size, rs_gam) lambda + crossprod(g_size, rs_gam) / 2
+update_g_lambda_vb_ <- function(lambda, g_sizes, rs_gam) lambda + sum(g_sizes * rs_gam) / 2
 
 update_nu_vb_ <- function(nu, m2_beta, tau_vb) as.numeric(nu + crossprod(tau_vb, colSums(m2_beta)) / 2)
 
-update_g_nu_vb_ <- function(nu, list_m2_beta, tau_vb) as.numeric(nu + crossprod(tau_vb, colSums(do.call(rbind, list_m2_beta))) / 2)
+update_g_nu_vb_ <- function(nu, list_m1_btb, tau_vb) nu + sum(tau_vb * colSums(do.call(rbind, list_m1_btb))) / 2
 
 update_nu_bin_vb_ <- function(nu, m2_beta) nu + sum(m2_beta) / 2
 
@@ -208,7 +213,7 @@ update_log_sig2_inv_vb_ <- function(lambda_vb, nu_vb) digamma(lambda_vb) - log(n
 
 update_eta_vb_ <- function(n, eta, gam_vb) eta + n / 2 + colSums(gam_vb) / 2
 
-update_g_eta_vb_ <- function(n, eta, g_size, gam_vb) eta + n / 2 + crossprod(gam_vb, g_size) / 2
+update_g_eta_vb_ <- function(n, eta, g_sizes, gam_vb) eta + n / 2 + as.numeric(crossprod(gam_vb, g_sizes)) / 2
 
 update_eta_z_vb_ <- function(n, q, eta, gam_vb) eta + n / 2 + colSums(gam_vb) / 2 + q / 2
 
@@ -222,14 +227,16 @@ update_kappa_vb_ <- function(Y, X, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_v
 
 }
 
-update_g_kappa_vb_ <- function(Y, kappa, list_m1_beta, list_m2_beta,  list_m2_X_beta, sig2_inv_vb) {
+
+update_g_kappa_vb_ <- function(Y, kappa, list_m1_beta, list_m1_btb,
+                               list_m1_btXtXb, mat_x_m1, sig2_inv_vb) {
 
   n <- nrow(Y)
 
   kappa + (colSums(Y^2) - 2 * colSums(Y * mat_x_m1)  +
-             colSums(do.call(rbind, list_m2_X_beta)) +
-             sig2_inv_vb * colSums(do.call(rbind, list_m2_beta)) +
-             colSums(mat_x_m1^2) - (n - 1) * colSums(do.call(rbind, list_m1_beta)^2))/ 2 ##  CHECK
+             colSums(do.call(rbind, list_m1_btXtXb)) +
+             sig2_inv_vb * colSums(do.call(rbind, list_m1_btb)) +
+             colSums(mat_x_m1^2) - (n - 1) * colSums(do.call(rbind, list_m1_beta)^2))/ 2
 
 }
 
