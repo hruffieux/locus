@@ -453,9 +453,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
         # X is a list (transformed in prepare_data)
         # mu_beta_vb is a list (transformed in prepare_init)
-        # vb <- locus_group_core2_(Y, X, list_hyper, list_init$gam_vb,
-        #                         list_init$mu_beta_vb, list_init$sig2_beta_vb,
-        #                         list_init$tau_vb, tol, maxit, verbose)
         vb <- locus_group_core_(Y, X, list_hyper, list_init$gam_vb,
                           list_init$mu_beta_vb, list_init$sig2_inv_vb,
                           list_init$tau_vb, tol, maxit, verbose)

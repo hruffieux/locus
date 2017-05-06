@@ -120,6 +120,7 @@ update_g_mat_x_m1_ <- function(list_X, list_m1_beta) {
 
 update_g_m1_btb_ <- function(gam_vb, list_mu_beta_vb, list_sig2_beta_star, tau_vb) { ## not list_sig2_beta_star_inv!
 
+  d <- length(tau_vb)
   G <- length(list_mu_beta_vb)
 
   lapply(1:G, function(g) {
@@ -133,12 +134,13 @@ update_g_m1_btb_ <- function(gam_vb, list_mu_beta_vb, list_sig2_beta_star, tau_v
 
 update_g_m1_btXtXb_ <- function(list_X, gam_vb, list_mu_beta_vb, list_sig2_beta_star, tau_vb) {
 
+  d <- length(tau_vb)
   G <- length(list_mu_beta_vb)
 
   lapply(1:G, function(g) {
     gam_vb[g, ]^2 * colSums((list_X[[g]] %*% list_mu_beta_vb[[g]])^2) +
       gam_vb[g, ] * (sum(crossprod(list_X[[g]]) * list_sig2_beta_star[[g]]) / tau_vb +
-      sapply(1:d, function(k) (1-gam_vb[g, k]) * sum(crossprod(list_X[[g]]) * tcrossprod(list_mu_beta_vb[[g]][, k, drop = FALSE])))) # tr(AB^T) = sum_ij A_ij B_ij
+      sapply(1:d, function(k) (1-gam_vb[g, k]) * sum(crossprod(list_X[[g]]) * tcrossprod(list_mu_beta_vb[[g]][, k])))) # tr(AB^T) = sum_ij A_ij B_ij
   })
 }
 

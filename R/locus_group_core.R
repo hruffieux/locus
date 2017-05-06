@@ -25,6 +25,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
     list_m1_beta <- update_g_m1_beta_(list_mu_beta_vb, gam_vb)
     list_m1_btb <- update_g_m1_btb_(gam_vb, list_mu_beta_vb, list_sig2_beta_star, tau_vb)
+
     list_m1_btXtXb <- update_g_m1_btXtXb_(list_X, gam_vb, list_mu_beta_vb,
                                           list_sig2_beta_star, tau_vb)
 
@@ -95,84 +96,43 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
           mat_x_m1 <- mat_x_m1 + list_X[[g]] %*% list_m1_beta[[g]]
         }
 
-
-        # C++ Eigen call for expensive updates
-#        coreLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
-#                 log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb)
-
-
         rs_gam <- rowSums(gam_vb)
 
       } else if (batch == "x") { # used only internally, convergence not ensured
 
-
         stop("Not implemented")
-
-        # log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
-        # log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
-        #
-        # for (k in 1:d) {
-        #
-        #   mu_beta_vb[, k] <- sig2_beta_vb[k] * tau_vb[k] *
-        #     (crossprod(Y[, k] - mat_x_m1[, k], X) + (n - 1) * m1_beta[, k])
-        #
-        #
-        #   gam_vb[, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb - log_om_vb -
-        #                                           log_tau_vb[k] / 2 - log_sig2_inv_vb / 2 -
-        #                                           mu_beta_vb[, k] ^ 2 / (2 * sig2_beta_vb[k]) -
-        #                                           log(sig2_beta_vb[k]) / 2))
-        #
-        #   m1_beta[, k] <- mu_beta_vb[, k] * gam_vb[, k]
-        #
-        #   mat_x_m1[, k] <- X %*% m1_beta[, k]
-        #
-        # }
-        #
-        # rs_gam <- rowSums(gam_vb)
 
       } else if (batch == "x-y") { # used only internally, convergence not ensured
 
         stop("Not implemented")
 
-        # log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
-        # log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
-        #
-        # # C++ Eigen call for expensive updates
-        # coreBatch(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
-        #           log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb)
-        #
-        # rs_gam <- rowSums(gam_vb)
-
       } else if (batch == "0") { # no batch, used only internally
 
+        for (k in 1:d) {
 
-        stop("Not implemented")
+          log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
+          log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
-        # for (k in 1:d) {
-        #
-        #   log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
-        #   log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
-        #
-        #   for (j in 1:p) {
-        #
-        #     mat_x_m1[, k] <- mat_x_m1[, k] - X[, j] * m1_beta[j, k]
-        #
-        #     mu_beta_vb[j, k] <- sig2_beta_vb[k] * tau_vb[k] * crossprod(Y[, k] - mat_x_m1[, k], X[, j])
-        #
-        #     gam_vb[j, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb[j] - log_om_vb[j] -
-        #                                              log_tau_vb[k] / 2 - log_sig2_inv_vb / 2 -
-        #                                              mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[k]) -
-        #                                              log(sig2_beta_vb[k]) / 2))
-        #
-        #     m1_beta[j, k] <- mu_beta_vb[j, k] * gam_vb[j, k]
-        #
-        #     mat_x_m1[, k] <- mat_x_m1[, k] + X[, j] * m1_beta[j, k]
-        #
-        #   }
-        #
-        #   rs_gam <- rowSums(gam_vb)
-        #
-        # }
+          for (g in 1:G) {
+
+            mat_x_m1[, k] <- mat_x_m1[, k] - list_X[[g]] %*% list_m1_beta[[g]][, k]
+
+            list_mu_beta_vb[[g]][, k] <- list_sig2_beta_star[[g]] %*% crossprod(list_X[[g]], Y[, k] - mat_x_m1[, k])
+
+            gam_vb[g, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb[g] - log_om_vb[g] -
+                                                     g_sizes[g] * (log_sig2_inv_vb + log_tau_vb[k] - log(tau_vb[k])) / 2 -
+                                                     sum(list_mu_beta_vb[[g]][, k] * (list_sig2_beta_star_inv[[g]] %*% list_mu_beta_vb[[g]][, k])) * tau_vb[k] / 2 -
+                                                     log(det(list_sig2_beta_star[[g]])) / 2))
+
+            list_m1_beta[[g]][, k] <- list_mu_beta_vb[[g]][, k] * gam_vb[g, k]
+
+            mat_x_m1[, k] <- mat_x_m1[, k] + list_X[[g]] %*% list_m1_beta[[g]][, k]
+
+          }
+
+          rs_gam <- rowSums(gam_vb)
+
+        }
 
       } else {
 
@@ -181,8 +141,8 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       }
 
 
-      list_m1_btb <- update_g_m1_btb_(gam_vb, list_mu_beta_vb,
-                                        list_sig2_beta_star, tau_vb)
+      list_m1_btb <- update_g_m1_btb_(gam_vb, list_mu_beta_vb, list_sig2_beta_star,
+                                      tau_vb)
       list_m1_btXtXb <- update_g_m1_btXtXb_(list_X, gam_vb, list_mu_beta_vb,
                                             list_sig2_beta_star, tau_vb)
 
@@ -191,11 +151,10 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       b_vb <- update_b_vb(b, d, rs_gam)
       om_vb <- a_vb / (a_vb + b_vb)
 
-      lb_new <- lb_old + 1
-      # lb_new <- elbo_group_(Y, a, a_vb, b, b_vb, eta, g_sizes, gam_vb, kappa,
-      #                       lambda, nu, rs_gam, list_sig2_beta_star, sig2_inv_vb,
-      #                       tau_vb, list_m1_beta, list_m1_btb, list_m1_btXtXb,
-      #                       mat_x_m1)
+      lb_new <- elbo_group_(Y, a, a_vb, b, b_vb, eta, g_sizes, gam_vb, kappa,
+                            lambda, nu, rs_gam, list_sig2_beta_star, sig2_inv_vb,
+                            tau_vb, list_m1_beta, list_m1_btb, list_m1_btXtXb,
+                            mat_x_m1)
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
@@ -203,8 +162,8 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       if (debug && lb_new < lb_old)
         stop("ELBO not increasing monotonically. Exit. ")
 
-      #converged <- (abs(lb_new - lb_old) < tol)
-      converged <- FALSE
+      converged <- (abs(lb_new - lb_old) < tol)
+
     }
 
 
