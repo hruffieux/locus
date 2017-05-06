@@ -78,6 +78,10 @@ candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.}
 responses associated with each candidate predictor. If of length 1, the
 provided value is repeated p times. Default is \code{NULL}, for \code{V}
 \code{NULL}.}
+
+\item{G}{Number of candidate predictor groups when using the group selection
+model from the \code{\link{locus}} function. Default is \code{NULL},
+for no group selection.}
 }
 \value{
 An object of class "\code{hyper}" preparing user hyperparameter in a

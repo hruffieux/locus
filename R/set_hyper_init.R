@@ -66,6 +66,9 @@
 #'   responses associated with each candidate predictor. If of length 1, the
 #'   provided value is repeated p times. Default is \code{NULL}, for \code{V}
 #'   \code{NULL}.
+#' @param G Number of candidate predictor groups when using the group selection
+#'   model from the \code{\link{locus}} function. Default is \code{NULL},
+#'   for no group selection.
 #'
 #' @return An object of class "\code{hyper}" preparing user hyperparameter in a
 #'   form that can be passed to the \code{\link{locus}} function.
@@ -477,7 +480,12 @@ auto_set_hyper_ <- function(Y, G, p, p_star, q, r, link, ind_bin) {
 #'   parameter yielding regression coefficient estimates for the influence of
 #'   external information on the candidate predictors on their selection.
 #'   Default is \code{NULL}, for \code{V} \code{NULL}.
-#'
+#' @param G Number of candidate predictor groups when using the group selection
+#'   model from the \code{\link{locus}} function. Default is \code{NULL},
+#'   for no group selection.
+#' @param sig2_inv_vb Initial parameters necessary when \code{G} is
+#'   non-\code{NULL}. Its inverse square root corresponds to the typical size of
+#'   non-zero effects. Must be \code{NULL} if \code{G} is \code{NULL}.
 #'
 #' @return An object of class "\code{init}" preparing user initial values for
 #'   the variational parameters in a form that can be passed to the
@@ -878,7 +886,8 @@ auto_set_init_ <- function(Y, G, p, p_star, q, r, user_seed, link, ind_bin) {
     } else if (link == "logit"){
 
       zeta2_inv_vb <- matrix(rgamma(q * d, shape = 1, rate = 1), nrow = q)
-      sig2_alpha_vb <- 1 / apply(zeta2_inv_vb, 2, function(zeta2_inv_vb_t) rgamma(q, shape = 2, rate = 1 / zeta2_inv_vb_t))
+      sig2_alpha_vb <- 1 / apply(zeta2_inv_vb, 2,
+                                 function(zeta2_inv_vb_t) rgamma(q, shape = 2, rate = 1 / zeta2_inv_vb_t))
 
     } else {
 

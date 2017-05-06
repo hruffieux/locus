@@ -55,6 +55,11 @@ parallel inference on a partitioned predictor space. Must be filled using
 the \code{\link{set_blocks}} function or must be \code{NULL} for no
 partitioning.}
 
+\item{list_groups}{An object of class "\code{groups}" containing settings for
+group selection of candidate predictors. Must be filled using the
+\code{\link{set_groups}} function or must be \code{NULL} for group
+selection.}
+
 \item{user_seed}{Seed set for reproducible default choices of hyperparameters
 (if \code{list_hyper} is \code{NULL}) and inital variational parameters (if
 \code{list_init} is \code{NULL}). Default is \code{NULL}, no seed set.}

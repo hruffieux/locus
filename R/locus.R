@@ -67,6 +67,10 @@
 #'   parallel inference on a partitioned predictor space. Must be filled using
 #'   the \code{\link{set_blocks}} function or must be \code{NULL} for no
 #'   partitioning.
+#' @param list_groups An object of class "\code{groups}" containing settings for
+#'   group selection of candidate predictors. Must be filled using the
+#'   \code{\link{set_groups}} function or must be \code{NULL} for group
+#'   selection.
 #' @param user_seed Seed set for reproducible default choices of hyperparameters
 #'   (if \code{list_hyper} is \code{NULL}) and initial variational parameters
 #'   (if \code{list_init} is \code{NULL}). Also used at the cross-validation
@@ -126,6 +130,11 @@
 #'                               \code{TRUE}, hyperparameters, resp. initial
 #'                               variational parameters, used for inference are
 #'                               saved as output.}
+#'  \item{group_labels}{If \code{list_groups} is non-\code{NULL}, labels of the
+#'                      groups to which the candidate predictor belong (these
+#'                      labels are gathered after removal of constant and
+#'                      collinear predictors, whose indices are stored in
+#'                      \code{rmvd_cst_x} and \code{rmvd_coll_x}).}
 #' @examples
 #' seed <- 123; set.seed(seed)
 #'

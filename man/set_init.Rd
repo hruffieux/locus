@@ -70,6 +70,14 @@ candidate predictor. Default is \code{NULL}, for \code{V} \code{NULL}.}
 parameter yielding regression coefficient estimates for the influence of
 external information on the candidate predictors on their selection.
 Default is \code{NULL}, for \code{V} \code{NULL}.}
+
+\item{sig2_inv_vb}{Initial parameters necessary when \code{G} is
+non-\code{NULL}. Its inverse square root corresponds to the typical size of
+non-zero effects. Must be \code{NULL} if \code{G} is \code{NULL}.}
+
+\item{G}{Number of candidate predictor groups when using the group selection
+model from the \code{\link{locus}} function. Default is \code{NULL},
+for no group selection.}
 }
 \value{
 An object of class "\code{init}" preparing user initial values for
