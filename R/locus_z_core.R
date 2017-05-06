@@ -59,7 +59,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
       # % #
       eta_vb <- update_eta_z_vb_(n, q, eta, gam_vb)
-      kappa_vb <- update_kappa_z_vb_(Y, X, Z, kappa, mu_alpha_vb, m1_beta,
+      kappa_vb <- update_kappa_z_vb_(Y, Z, kappa, mu_alpha_vb, m1_beta,
                                      m2_alpha, m2_beta, mat_x_m1, mat_z_mu,
                                      sig2_inv_vb, zeta2_inv_vb)
 
@@ -266,7 +266,7 @@ elbo_z_ <- function(Y, X, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
 
   eta_vb <- update_eta_z_vb_(n, q, eta, gam_vb)
 
-  kappa_vb <- update_kappa_z_vb_(Y, X, Z, kappa, mu_alpha_vb, m1_beta, m2_alpha,
+  kappa_vb <- update_kappa_z_vb_(Y, Z, kappa, mu_alpha_vb, m1_beta, m2_alpha,
                                  m2_beta, mat_x_m1, mat_z_mu, sig2_inv_vb,
                                  zeta2_inv_vb)
 
