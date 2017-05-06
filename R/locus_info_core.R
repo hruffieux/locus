@@ -141,7 +141,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
       m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
-      lb_new <- elbo_info_(Y, X, V, eta, gam_vb, kappa, lambda, m0, mu_c0_vb,
+      lb_new <- elbo_info_(Y, V, eta, gam_vb, kappa, lambda, m0, mu_c0_vb,
                            mu_c_vb, nu, sig2_beta_vb, sig2_c0_vb, sig2_c_vb,
                            sig2_inv_vb, s02, s2, tau_vb, m1_beta, m2_beta,
                            mat_x_m1, mat_v_mu)
@@ -204,10 +204,9 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 # Internal function which implements the marginal log-likelihood variational
 # lower bound (ELBO) corresponding to the `locus_info_core` algorithm.
 #
-elbo_info_ <- function(Y, X, V, eta, gam_vb, kappa, lambda, m0, mu_c0_vb,
-                       mu_c_vb, nu, sig2_beta_vb, sig2_c0_vb, sig2_c_vb,
-                       sig2_inv_vb, s02, s2, tau_vb, m1_beta, m2_beta, mat_x_m1,
-                       mat_v_mu) {
+elbo_info_ <- function(Y, V, eta, gam_vb, kappa, lambda, m0, mu_c0_vb, mu_c_vb,
+                       nu, sig2_beta_vb, sig2_c0_vb, sig2_c_vb, sig2_inv_vb,
+                       s02, s2, tau_vb, m1_beta, m2_beta, mat_x_m1, mat_v_mu) {
 
   n <- nrow(Y)
 
