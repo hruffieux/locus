@@ -178,7 +178,7 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
       m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
 
-      lb_new <- elbo_z_info_(Y, X, Z, V, eta, gam_vb, kappa, lambda, m0,
+      lb_new <- elbo_z_info_(Y, Z, V, eta, gam_vb, kappa, lambda, m0,
                              mu_alpha_vb, mu_c0_vb, mu_c_vb, nu, phi, phi_vb,
                              sig2_alpha_vb, sig2_beta_vb, sig2_c0_vb, sig2_c_vb,
                              sig2_inv_vb, s02, s2, tau_vb,  xi, zeta2_inv_vb,
@@ -252,7 +252,7 @@ locus_z_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 # Internal function which implements the marginal log-likelihood variational
 # lower bound (ELBO) corresponding to the `locus_z_info_core` algorithm.
 #
-elbo_z_info_ <- function(Y, X, Z, V, eta, gam_vb, kappa, lambda, m0,
+elbo_z_info_ <- function(Y, Z, V, eta, gam_vb, kappa, lambda, m0,
                          mu_alpha_vb, mu_c0_vb, mu_c_vb, nu, phi, phi_vb,
                          sig2_alpha_vb, sig2_beta_vb, sig2_c0_vb, sig2_c_vb,
                          sig2_inv_vb, s02, s2, tau_vb,  xi, zeta2_inv_vb,

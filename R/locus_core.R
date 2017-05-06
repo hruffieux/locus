@@ -151,7 +151,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       sum_gam <- sum(rs_gam)
 
-      lb_new <- elbo_(Y, X, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, nu,
+      lb_new <- elbo_(Y, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, nu,
                       sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta, m2_beta,
                       mat_x_m1, sum_gam)
 
@@ -203,7 +203,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 # Internal function which implements the marginal log-likelihood variational
 # lower bound (ELBO) corresponding to the `locus_core` algorithm.
 #
-elbo_ <- function(Y, X, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, nu,
+elbo_ <- function(Y, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, nu,
                   sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta, m2_beta, mat_x_m1,
                   sum_gam) {
 
