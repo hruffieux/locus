@@ -39,7 +39,7 @@ locus_logit_info_core_ <- function(Y, X, Z, V, list_hyper, chi_vb, gam_vb,
     lb_new <- -Inf
     it <- 0
 
-    while ((!converged) & (it <= maxit)) {
+    while ((!converged) & (it < maxit)) {
 
       lb_old <- lb_new
       it <- it + 1

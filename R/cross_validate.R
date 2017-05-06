@@ -321,7 +321,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
               mat_x_m1 <-  X_test %*% m1_beta
 
-              elbo_(Y_test, X_test, a, a_vb, b, b_vb, eta, gam_vb, kappa,
+              elbo_(Y_test, a, a_vb, b, b_vb, eta, gam_vb, kappa,
                     lambda, nu, sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta,
                     m2_beta, mat_x_m1, sum_gam)
 
@@ -338,7 +338,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
               mat_z_mu <-  Z_test %*% mu_alpha_vb
               mat_x_m1 <-  X_test %*% m1_beta
 
-              elbo_z_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, eta, gam_vb,
+              elbo_z_(Y_test, Z_test, a, a_vb, b, b_vb, eta, gam_vb,
                       kappa, lambda, mu_alpha_vb, nu, phi, phi_vb,
                       sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb, xi,
                       zeta2_inv_vb, m2_alpha, m1_beta, m2_beta, mat_x_m1,

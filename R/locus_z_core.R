@@ -36,7 +36,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
     lb_new <- -Inf
     it <- 0
 
-    while ((!converged) & (it <= maxit)) {
+    while ((!converged) & (it < maxit)) {
 
       lb_old <- lb_new
       it <- it + 1
@@ -59,7 +59,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
       # % #
       eta_vb <- update_eta_z_vb_(n, q, eta, gam_vb)
-      kappa_vb <- update_kappa_z_vb_(Y, X, Z, kappa, mu_alpha_vb, m1_beta,
+      kappa_vb <- update_kappa_z_vb_(Y, Z, kappa, mu_alpha_vb, m1_beta,
                                      m2_alpha, m2_beta, mat_x_m1, mat_z_mu,
                                      sig2_inv_vb, zeta2_inv_vb)
 
@@ -197,7 +197,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
       sum_gam <- sum(rs_gam)
 
-      lb_new <- elbo_z_(Y, X, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
+      lb_new <- elbo_z_(Y, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
                         mu_alpha_vb, nu, phi, phi_vb, sig2_alpha_vb,
                         sig2_beta_vb, sig2_inv_vb, tau_vb, xi, zeta2_inv_vb,
                         m2_alpha, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sum_gam)
@@ -253,7 +253,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 # Internal function which implements the marginal log-likelihood variational
 # lower bound (ELBO) corresponding to the `locus_z_core` algorithm.
 #
-elbo_z_ <- function(Y, X, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
+elbo_z_ <- function(Y, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
                     mu_alpha_vb, nu, phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
                     sig2_inv_vb, tau_vb, xi, zeta2_inv_vb, m2_alpha, m1_beta,
                     m2_beta, mat_x_m1, mat_z_mu, sum_gam) {
@@ -266,7 +266,7 @@ elbo_z_ <- function(Y, X, Z, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
 
   eta_vb <- update_eta_z_vb_(n, q, eta, gam_vb)
 
-  kappa_vb <- update_kappa_z_vb_(Y, X, Z, kappa, mu_alpha_vb, m1_beta, m2_alpha,
+  kappa_vb <- update_kappa_z_vb_(Y, Z, kappa, mu_alpha_vb, m1_beta, m2_alpha,
                                  m2_beta, mat_x_m1, mat_z_mu, sig2_inv_vb,
                                  zeta2_inv_vb)
 

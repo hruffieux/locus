@@ -218,7 +218,7 @@ update_g_eta_vb_ <- function(n, eta, g_sizes, gam_vb) eta + n / 2 + as.numeric(c
 
 update_eta_z_vb_ <- function(n, q, eta, gam_vb) eta + n / 2 + colSums(gam_vb) / 2 + q / 2
 
-update_kappa_vb_ <- function(Y, X, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb) {
+update_kappa_vb_ <- function(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb) {
 
   n <- nrow(Y)
 
@@ -227,7 +227,6 @@ update_kappa_vb_ <- function(Y, X, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_v
              colSums(mat_x_m1^2) - (n - 1) * colSums(m1_beta^2))/ 2
 
 }
-
 
 update_g_kappa_vb_ <- function(Y, kappa, list_m1_beta, list_m1_btb,
                                list_m1_btXtXb, mat_x_m1, sig2_inv_vb) {
@@ -241,7 +240,8 @@ update_g_kappa_vb_ <- function(Y, kappa, list_m1_beta, list_m1_btb,
 
 }
 
-update_kappa_z_vb_ <- function(Y, X, Z, kappa, mu_alpha_vb, m1_beta, m2_alpha,
+
+update_kappa_z_vb_ <- function(Y, Z, kappa, mu_alpha_vb, m1_beta, m2_alpha,
                                m2_beta, mat_x_m1, mat_z_mu, sig2_inv_vb,
                                zeta2_inv_vb, intercept = FALSE) {
   n <- nrow(Y)

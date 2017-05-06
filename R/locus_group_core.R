@@ -37,7 +37,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
     lb_new <- -Inf
     it <- 0
 
-    while ((!converged) & (it <= maxit)) {
+    while ((!converged) & (it < maxit)) {
 
       lb_old <- lb_new
       it <- it + 1
