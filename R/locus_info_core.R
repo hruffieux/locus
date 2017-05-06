@@ -32,7 +32,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
     lb_new <- -Inf
     it <- 0
 
-    while ((!converged) & (it <= maxit)) {
+    while ((!converged) & (it < maxit)) {
 
       lb_old <- lb_new
       it <- it + 1

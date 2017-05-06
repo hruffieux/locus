@@ -36,7 +36,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
     lb_new <- -Inf
     it <- 0
 
-    while ((!converged) & (it <= maxit)) {
+    while ((!converged) & (it < maxit)) {
 
       lb_old <- lb_new
       it <- it + 1
