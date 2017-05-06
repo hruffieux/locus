@@ -79,7 +79,6 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
-
         for (g in 1:G) {
           mat_x_m1 <- mat_x_m1 - list_X[[g]] %*% list_m1_beta[[g]]
 
@@ -89,7 +88,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
                                                   g_sizes[g] * (log_sig2_inv_vb + log_tau_vb - log(tau_vb)) / 2 - # |g| * log(tau_vb) /2 came out of the determinant
                                                   colSums(list_mu_beta_vb[[g]] *
                                                                   (list_sig2_beta_star_inv[[g]] %*% list_mu_beta_vb[[g]])) * tau_vb / 2 -
-                                                  log(det(list_sig2_beta_star[[g]]) / 2)))
+                                                  log(det(list_sig2_beta_star[[g]])) / 2))
 
           list_m1_beta[[g]] <- sweep(list_mu_beta_vb[[g]], 2, gam_vb[g, ], `*`)
 
@@ -192,7 +191,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       b_vb <- update_b_vb(b, d, rs_gam)
       om_vb <- a_vb / (a_vb + b_vb)
 
-lb_new <- lb_old + 1
+      lb_new <- lb_old + 1
       # lb_new <- elbo_group_(Y, a, a_vb, b, b_vb, eta, g_sizes, gam_vb, kappa,
       #                       lambda, nu, rs_gam, list_sig2_beta_star, sig2_inv_vb,
       #                       tau_vb, list_m1_beta, list_m1_btb, list_m1_btXtXb,
@@ -205,7 +204,7 @@ lb_new <- lb_old + 1
         stop("ELBO not increasing monotonically. Exit. ")
 
       #converged <- (abs(lb_new - lb_old) < tol)
-converged <- FALSE
+      converged <- FALSE
     }
 
 
@@ -230,9 +229,15 @@ converged <- FALSE
       names_x <- colnames(X)
       names_y <- colnames(Y)
 
-      rownames(gam_vb) <- names_x
+      names_G <- NULL
+      for (g_s in g_sizes) {
+        names_G <- c(names_G, paste(names_x[1:g_s], collapse = "-"))
+        names_x <- names_x[-c(1:g_s)]
+      }
+
+      rownames(gam_vb) <- names_G
       colnames(gam_vb) <- names_y
-      names(om_vb) <- names_x
+      names(om_vb) <- names_G
 
       diff_lb <- abs(lb_opt - lb_old)
 

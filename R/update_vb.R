@@ -124,15 +124,14 @@ update_g_m1_btb_ <- function(gam_vb, list_mu_beta_vb, list_sig2_beta_star, tau_v
 
   lapply(1:G, function(g) {
     gam_vb[g, ]^2 * colSums(list_mu_beta_vb[[g]]^2) + # colSums(A^2) = diag(crossprod(A))
-      gam_vb[g, ] * (sum(diag(list_sig2_beta_star[[g]])) / tau_vb +
+      gam_vb[g, ] * (sum(diag(as.matrix(list_sig2_beta_star[[g]]))) / tau_vb +
                        sapply(1:d, function(k) (1-gam_vb[g, k]) * sum(list_mu_beta_vb[[g]][, k]^2))) # tr(mu_gt mu_gt^T) = sum(mu_gt^2)
   })
 
 }
 
 
-update_g_m1_btXtXb_ <- function(list_X, gam_vb, list_mu_beta_vb,
-                                list_sig2_beta_star, tau_vb) { ## not list_sig2_beta_star_inv!
+update_g_m1_btXtXb_ <- function(list_X, gam_vb, list_mu_beta_vb, list_sig2_beta_star, tau_vb) {
 
   G <- length(list_mu_beta_vb)
 
