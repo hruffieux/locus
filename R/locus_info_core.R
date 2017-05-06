@@ -49,7 +49,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
       # % #
       eta_vb <- update_eta_vb_(n, eta, gam_vb)
-      kappa_vb <- update_kappa_vb_(Y, X, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb)
+      kappa_vb <- update_kappa_vb_(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb)
 
       tau_vb <- eta_vb / kappa_vb
       # % #
@@ -212,7 +212,7 @@ elbo_info_ <- function(Y, X, V, eta, gam_vb, kappa, lambda, m0, mu_c0_vb,
   n <- nrow(Y)
 
   eta_vb <- update_eta_vb_(n, eta, gam_vb)
-  kappa_vb <- update_kappa_vb_(Y, X, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb)
+  kappa_vb <- update_kappa_vb_(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb)
 
   lambda_vb <- update_lambda_vb_(lambda, sum(gam_vb))
   nu_vb <- update_nu_vb_(nu, m2_beta, tau_vb)

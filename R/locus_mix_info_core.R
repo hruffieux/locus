@@ -80,8 +80,8 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
       # % #
       eta_vb <- update_eta_z_vb_(n, q, eta, gam_vb[, -ind_bin, drop = FALSE])
 
-      kappa_vb <- update_kappa_z_vb_(Y_cont, X, Z,
-                                     kappa, mu_alpha_vb[, -ind_bin, drop = FALSE],
+      kappa_vb <- update_kappa_z_vb_(Y_cont, Z, kappa,
+                                     mu_alpha_vb[, -ind_bin, drop = FALSE],
                                      m1_beta[, -ind_bin, drop = FALSE],
                                      m2_alpha[, -ind_bin, drop = FALSE],
                                      m2_beta[, -ind_bin, drop = FALSE],
@@ -297,8 +297,8 @@ elbo_mix_info_ <- function(Y_bin, Y_cont, ind_bin, X, V, Z, eta, gam_vb, kappa,
 
   eta_vb <- update_eta_z_vb_(n, q, eta, gam_vb[, -ind_bin, drop = FALSE])
 
-  kappa_vb <- update_kappa_z_vb_(Y_cont, X, Z,
-                                 kappa, mu_alpha_vb[, -ind_bin, drop = FALSE],
+  kappa_vb <- update_kappa_z_vb_(Y_cont, Z, kappa,
+                                 mu_alpha_vb[, -ind_bin, drop = FALSE],
                                  m1_beta[, -ind_bin, drop = FALSE],
                                  m2_alpha[, -ind_bin, drop = FALSE],
                                  m2_beta[, -ind_bin, drop = FALSE],
