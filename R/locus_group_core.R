@@ -15,6 +15,8 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
   n <- nrow(Y)
   G <- length(list_X)
 
+
+
   g_sizes <- sapply(list_X, ncol)
 
   with(list_hyper, { # list_init not used with the with() function to avoid
@@ -61,7 +63,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
       # % #
       eta_vb <- update_g_eta_vb_(n, eta, g_sizes, gam_vb)
-      kappa_vb <- update_g_kappa_vb_(Y, kappa, list_m1_beta, list_m1_btb,
+      kappa_vb <- update_g_kappa_vb_(Y, list_X, kappa, list_m1_beta, list_m1_btb,
                                      list_m1_btXtXb, mat_x_m1, sig2_inv_vb)
 
       tau_vb <- eta_vb / kappa_vb
@@ -151,10 +153,10 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       b_vb <- update_b_vb(b, d, rs_gam)
       om_vb <- a_vb / (a_vb + b_vb)
 
-      lb_new <- elbo_group_(Y, a, a_vb, b, b_vb, eta, g_sizes, gam_vb, kappa,
-                            lambda, nu, rs_gam, list_sig2_beta_star, sig2_inv_vb,
-                            tau_vb, list_m1_beta, list_m1_btb, list_m1_btXtXb,
-                            mat_x_m1)
+      lb_new <- elbo_group_(Y, list_X, a, a_vb, b, b_vb, eta, eta_vb, g_sizes,
+                            gam_vb, kappa, kappa_vb, lambda, lambda_vb, nu, nu_vb,
+                            rs_gam, list_sig2_beta_star, sig2_inv_vb, tau_vb,
+                            list_m1_beta, list_m1_btb, list_m1_btXtXb, mat_x_m1)
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
@@ -181,9 +183,10 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
     lb_opt <- lb_new
 
     if (full_output) { # for internal use only
-      create_named_list_(a, a_vb, b, b_vb, eta, g_sizes, gam_vb, kappa,
-                         lambda, nu, rs_gam, list_sig2_beta_star, sig2_inv_vb,
-                         tau_vb, list_m1_beta, list_m1_btb, list_m1_btXtXb)
+      create_named_list_(a, a_vb, b, b_vb, eta, eta_vb, g_sizes,
+                         gam_vb, kappa, kappa_vb, lambda, lambda_vb, nu, nu_vb,
+                         rs_gam, list_sig2_beta_star, sig2_inv_vb, tau_vb,
+                         list_m1_beta, list_m1_btb, list_m1_btXtXb)
     } else {
       names_x <- colnames(X)
       names_y <- colnames(Y)
@@ -210,18 +213,12 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 # Internal function which implements the marginal log-likelihood variational
 # lower bound (ELBO) corresponding to the `locus_core` algorithm.
 #
-elbo_group_ <- function(Y, a, a_vb, b, b_vb, eta, g_sizes, gam_vb, kappa, lambda,
-                        nu, rs_gam, list_sig2_beta_star, sig2_inv_vb, tau_vb,
+elbo_group_ <- function(Y, list_X, a, a_vb, b, b_vb, eta, eta_vb, g_sizes,
+                        gam_vb, kappa, kappa_vb, lambda, lambda_vb, nu, nu_vb,
+                        rs_gam, list_sig2_beta_star, sig2_inv_vb, tau_vb,
                         list_m1_beta, list_m1_btb, list_m1_btXtXb, mat_x_m1) {
 
   n <- nrow(Y)
-
-  eta_vb <- update_g_eta_vb_(n, eta, g_sizes, gam_vb)
-  kappa_vb <- update_g_kappa_vb_(Y, kappa, list_m1_beta, list_m1_btb,
-                                 list_m1_btXtXb, mat_x_m1, sig2_inv_vb)
-
-  lambda_vb <- update_g_lambda_vb_(lambda, g_sizes, rs_gam)
-  nu_vb <- update_g_nu_vb_(nu, list_m1_btb, tau_vb)
 
   log_tau_vb <- digamma(eta_vb) - log(kappa_vb)
   log_sig2_inv_vb <- digamma(lambda_vb) - log(nu_vb)

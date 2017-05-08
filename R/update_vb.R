@@ -203,6 +203,7 @@ update_nu_vb_ <- function(nu, m2_beta, tau_vb) as.numeric(nu + crossprod(tau_vb,
 
 update_g_nu_vb_ <- function(nu, list_m1_btb, tau_vb) nu + sum(tau_vb * colSums(do.call(rbind, list_m1_btb))) / 2
 
+
 update_nu_bin_vb_ <- function(nu, m2_beta) nu + sum(m2_beta) / 2
 
 update_log_sig2_inv_vb_ <- function(lambda_vb, nu_vb) digamma(lambda_vb) - log(nu_vb)
@@ -228,17 +229,20 @@ update_kappa_vb_ <- function(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb) 
 
 }
 
-update_g_kappa_vb_ <- function(Y, kappa, list_m1_beta, list_m1_btb,
+update_g_kappa_vb_ <- function(Y, list_X, kappa, list_m1_beta, list_m1_btb,
                                list_m1_btXtXb, mat_x_m1, sig2_inv_vb) {
 
   n <- nrow(Y)
+  G <- length(list_m1_beta)
 
   kappa + (colSums(Y^2) - 2 * colSums(Y * mat_x_m1)  +
              colSums(do.call(rbind, list_m1_btXtXb)) +
              sig2_inv_vb * colSums(do.call(rbind, list_m1_btb)) +
-             colSums(mat_x_m1^2) - (n - 1) * colSums(do.call(rbind, list_m1_beta)^2))/ 2
+             colSums(mat_x_m1^2) -
+             colSums(do.call(rbind, lapply(1:G, function(g) colSums((list_X[[g]] %*% list_m1_beta[[g]])^2) )))) / 2
 
 }
+
 
 
 update_kappa_z_vb_ <- function(Y, Z, kappa, mu_alpha_vb, m1_beta, m2_alpha,

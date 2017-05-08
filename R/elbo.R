@@ -64,7 +64,7 @@ e_g_beta_gamma_ <- function(gam_vb, g_sizes, log_om_vb, log_1_min_om_vb, log_sig
         sum(g_sizes[g] / 2 * gam_vb[g, ] * (log_sig2_inv_vb + log_tau_vb) -
             list_m1_btb[[g]] * tau_vb * sig2_inv_vb / 2 +
             gam_vb[g, ] * log_om_vb[g] + (1 - gam_vb[g, ]) * log_1_min_om_vb[g] +
-            1 / 2 * gam_vb[g, ] * (log(det(list_sig2_beta_star[[g]]) + eps) - g_sizes[g] * log(tau_vb + eps) + g_sizes[g]) -
+            1 / 2 * gam_vb[g, ] * (log(det(list_sig2_beta_star[[g]])) - g_sizes[g] * log(tau_vb) + g_sizes[g]) -
             gam_vb[g, ] * log(gam_vb[g, ] + eps) - (1 - gam_vb[g, ]) * log(1 - gam_vb[g, ] + eps))
         })))
 
