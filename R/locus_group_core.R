@@ -11,6 +11,8 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
   # Y must have been centered, and X, standardized.
 
+  # TODO: suppress initialization of tau_vb
+
   d <- ncol(Y)
   n <- nrow(Y)
   G <- length(list_X)
@@ -20,19 +22,39 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects
 
+    # % #
+    eta_vb <- eta
+    kappa_vb <- kappa
+
+    # get caught into a local maximum
+    #
+    # eta_vb <- update_g_eta_vb_(n, eta, g_sizes, gam_vb)
+    # kappa_vb <- update_g_kappa_vb_(Y, list_X, kappa, list_m1_beta, list_m1_btb,
+    #                                list_m1_btXtXb, mat_x_m1, sig2_inv_vb)
+
+    tau_vb <- eta_vb / kappa_vb
+    # % #
+
+    log_tau_vb <- update_log_tau_vb_(eta_vb, kappa_vb)
+
     list_sig2_beta_star_inv <- lapply(list_X, function(X_g) crossprod(X_g) + diag(sig2_inv_vb, nrow = ncol(X_g)))
 
     list_sig2_beta_star <- lapply(list_sig2_beta_star_inv, solve)
 
     list_m1_beta <- update_g_m1_beta_(list_mu_beta_vb, gam_vb)
+
     list_m1_btb <- update_g_m1_btb_(gam_vb, list_mu_beta_vb, list_sig2_beta_star, tau_vb)
 
     list_m1_btXtXb <- update_g_m1_btXtXb_(list_X, gam_vb, list_mu_beta_vb,
                                           list_sig2_beta_star, tau_vb)
 
+
     mat_x_m1 <- update_g_mat_x_m1_(list_X, list_m1_beta)
 
     rs_gam <- rowSums(gam_vb)
+
+
+
 
     converged <- FALSE
     lb_new <- -Inf
@@ -56,19 +78,12 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       sig2_inv_vb <- lambda_vb / nu_vb
 
       list_sig2_beta_star_inv <- lapply(list_sig2_beta_star_inv, function(sig2_beta_star_inv)
-        sig2_beta_star_inv + diag(sig2_inv_vb, nrow = nrow(sig2_beta_star_inv))) # to avoid recomputing X_g^TX_g each time
+        sig2_beta_star_inv + diag(sig2_inv_vb, nrow = nrow(sig2_beta_star_inv)))
 
       list_sig2_beta_star <- lapply(list_sig2_beta_star_inv, solve)
-      # % #
 
       # % #
-      eta_vb <- update_g_eta_vb_(n, eta, g_sizes, gam_vb)
-      kappa_vb <- update_g_kappa_vb_(Y, list_X, kappa, list_m1_beta, list_m1_btb,
-                                     list_m1_btXtXb, mat_x_m1, sig2_inv_vb)
-      tau_vb <- eta_vb / kappa_vb
-      # % #
 
-      log_tau_vb <- update_log_tau_vb_(eta_vb, kappa_vb)
       log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
 
       digam_sum <- digamma(a + b + d)
@@ -152,15 +167,24 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       b_vb <- update_b_vb(b, d, rs_gam)
       om_vb <- a_vb / (a_vb + b_vb)
 
+      # % #
+      eta_vb <- update_g_eta_vb_(n, eta, g_sizes, gam_vb)
+      kappa_vb <- update_g_kappa_vb_(Y, list_X, kappa, list_m1_beta, list_m1_btb,
+                                     list_m1_btXtXb, mat_x_m1, sig2_inv_vb)
+
+
       lb_new <- elbo_group_(Y, list_X, a, a_vb, b, b_vb, eta, eta_vb, g_sizes,
                             gam_vb, kappa, kappa_vb, lambda, lambda_vb, nu, nu_vb,
                             rs_gam, list_sig2_beta_star, sig2_inv_vb, tau_vb,
                             list_m1_beta, list_m1_btb, list_m1_btXtXb, mat_x_m1)
 
-      # if (verbose & (it == 1 | it %% 5 == 0))
-      #   cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
+      tau_vb <- eta_vb / kappa_vb # has to be updated after the elbo, as list_sig2_beta_star depends on it.
+      # % #
 
-      cat(paste("ELBO = ", lb_new, "\n\n", sep = ""))
+      log_tau_vb <- update_log_tau_vb_(eta_vb, kappa_vb)
+
+      if (verbose & (it == 1 | it %% 5 == 0))
+        cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
 
       if (debug && lb_new < lb_old)
         stop("ELBO not increasing monotonically. Exit. ")
@@ -194,7 +218,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
       names_G <- NULL
       for (g_s in g_sizes) {
-        names_G <- c(names_G, paste(names_x[1:g_s], collapse = "-"))
+        names_G <- c(names_G, paste(as.character(names_x[1:g_s]), collapse = "-"))
         names_x <- names_x[-c(1:g_s)]
       }
 
