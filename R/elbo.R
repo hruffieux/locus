@@ -197,6 +197,14 @@ e_y_ <- function(n, kappa, kappa_vb, log_tau_vb, m2_beta, sig2_inv_vb, tau_vb,
 
 }
 
+e_g_y_ <- function(n, kappa, kappa_vb, list_m1_btb, log_tau_vb, sig2_inv_vb, tau_vb) {
+
+  sum(-n / 2 * log(2 * pi) + n / 2 * log_tau_vb - tau_vb *
+    (kappa_vb - Reduce(`+`, list_m1_btb) * sig2_inv_vb / 2 - kappa))
+
+}
+
+
 
 e_y_logit_ <- function(X, Y, Z, chi_vb, m1_beta, m2_alpha, m2_beta, mat_x_m1,
                        mat_z_mu, mu_alpha_vb, psi_vb) {

@@ -15,14 +15,13 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
   n <- nrow(Y)
   G <- length(list_X)
 
-
-
   g_sizes <- sapply(list_X, ncol)
 
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects
 
-    list_sig2_beta_star_inv <- lapply(list_X, function(X_g) crossprod(X_g) + sig2_inv_vb)
+    list_sig2_beta_star_inv <- lapply(list_X, function(X_g) crossprod(X_g) + diag(sig2_inv_vb, nrow = ncol(X_g)))
+
     list_sig2_beta_star <- lapply(list_sig2_beta_star_inv, solve)
 
     list_m1_beta <- update_g_m1_beta_(list_mu_beta_vb, gam_vb)
@@ -51,13 +50,14 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       lambda_vb <- update_g_lambda_vb_(lambda, g_sizes, rs_gam)
       nu_vb <- update_g_nu_vb_(nu, list_m1_btb, tau_vb)
 
-      list_sig2_beta_star_inv <- mapply(`-`, list_sig2_beta_star_inv,
-                                        sig2_inv_vb, SIMPLIFY = F) # to avoid recomputing X_g^TX_g each time
+      list_sig2_beta_star_inv <- lapply(list_sig2_beta_star_inv, function(sig2_beta_star_inv)
+        sig2_beta_star_inv - diag(sig2_inv_vb, nrow = nrow(sig2_beta_star_inv))) # to avoid recomputing X_g^TX_g each time
 
       sig2_inv_vb <- lambda_vb / nu_vb
 
-      list_sig2_beta_star_inv <- mapply(`+`, list_sig2_beta_star_inv,
-                                        sig2_inv_vb, SIMPLIFY = F)
+      list_sig2_beta_star_inv <- lapply(list_sig2_beta_star_inv, function(sig2_beta_star_inv)
+        sig2_beta_star_inv + diag(sig2_inv_vb, nrow = nrow(sig2_beta_star_inv))) # to avoid recomputing X_g^TX_g each time
+
       list_sig2_beta_star <- lapply(list_sig2_beta_star_inv, solve)
       # % #
 
@@ -65,7 +65,6 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       eta_vb <- update_g_eta_vb_(n, eta, g_sizes, gam_vb)
       kappa_vb <- update_g_kappa_vb_(Y, list_X, kappa, list_m1_beta, list_m1_btb,
                                      list_m1_btXtXb, mat_x_m1, sig2_inv_vb)
-
       tau_vb <- eta_vb / kappa_vb
       # % #
 
@@ -158,8 +157,10 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
                             rs_gam, list_sig2_beta_star, sig2_inv_vb, tau_vb,
                             list_m1_beta, list_m1_btb, list_m1_btXtXb, mat_x_m1)
 
-      if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
+      # if (verbose & (it == 1 | it %% 5 == 0))
+      #   cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
+
+      cat(paste("ELBO = ", lb_new, "\n\n", sep = ""))
 
       if (debug && lb_new < lb_old)
         stop("ELBO not increasing monotonically. Exit. ")
@@ -226,8 +227,7 @@ elbo_group_ <- function(Y, list_X, a, a_vb, b, b_vb, eta, eta_vb, g_sizes,
   log_1_min_om_vb <- digamma(b_vb) - digamma(a_vb + b_vb)
 
 
-  elbo_A <- e_y_(n, kappa, kappa_vb, log_tau_vb, do.call(rbind, list_m1_btb),
-                 sig2_inv_vb, tau_vb)
+  elbo_A <- e_g_y_(n, kappa, kappa_vb, list_m1_btb, log_tau_vb, sig2_inv_vb, tau_vb)
 
   elbo_B <- e_g_beta_gamma_(gam_vb, g_sizes, log_om_vb, log_1_min_om_vb,
                             log_sig2_inv_vb, log_tau_vb, list_m1_btb,
