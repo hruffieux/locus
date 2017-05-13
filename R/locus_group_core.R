@@ -1,8 +1,8 @@
 # This file is part of the `locus` R package:
 #     https://github.com/hruffieux/locus
 #
-# Internal core function to call the variational algorithm for identity link, no
-# fixed covariates and no external annotation variables.
+# Internal core function to call the variational algorithm for group selection
+# with identity link, no fixed covariates and no external annotation variables.
 # See help of `locus` function for details.
 #
 locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
