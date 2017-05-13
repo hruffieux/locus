@@ -874,10 +874,9 @@ prepare_groups_ <- function(list_groups, X, q, r, bool_rmvd_x, link, list_cv) {
 }
 
 
-#' Gather settings for application of the `locus` function with
-#' group selection.
+#' Gather settings for application of the `locus` function with group selection.
 #'
-#' [FUNCTIONALITY UNDER ACTIVE DEVELOPMENT, RELIABLE ESTIMATION IS NOT GUARANTEED].
+#' [FUNCTIONALITY UNDER ACTIVE DEVELOPMENT, PERFORMANCE (CPU TIME) NOT OPTIMIZED].
 #' Posterior probabilities of associations are computed for predefined groups of
 #' candidate predictors. Within each group, the mean-field inference procedure
 #' makes no independence assumptions for the regression coefficients; variables

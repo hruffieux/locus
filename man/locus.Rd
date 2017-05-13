@@ -267,5 +267,5 @@ Y. Xu, and W. Yin. A block coordinate descent method for
 }
 \seealso{
 \code{\link{set_hyper}}, \code{\link{set_init}},
-  \code{\link{set_cv}}, \code{\link{set_blocks}}
+  \code{\link{set_cv}}, \code{\link{set_blocks}}, \code{\link{set_groups}}.
 }

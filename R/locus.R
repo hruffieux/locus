@@ -240,7 +240,7 @@
 #'   pp.1758-1789, 2013.
 #'
 #' @seealso \code{\link{set_hyper}}, \code{\link{set_init}},
-#'   \code{\link{set_cv}}, \code{\link{set_blocks}}
+#'   \code{\link{set_cv}}, \code{\link{set_blocks}}, \code{\link{set_groups}}.
 #'
 #' @export
 #'

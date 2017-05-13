@@ -141,5 +141,6 @@ list_perm <- generate_null(n_perm = 10, Y, X, p0_av = p0, link = "identity",
 
 }
 \seealso{
-\code{\link{locus}}
+@seealso \code{\link{locus}}, \code{\link{set_hyper}},
+  \code{\link{set_init}}, \code{\link{set_blocks}}, \code{\link{set_groups}}.
 }

@@ -2,8 +2,7 @@
 % Please edit documentation in R/prepare_locus.R
 \name{set_groups}
 \alias{set_groups}
-\title{Gather settings for application of the `locus` function with
-group selection.}
+\title{Gather settings for application of the `locus` function with group selection.}
 \usage{
 set_groups(p, pos_gr, verbose = TRUE)
 }
@@ -22,7 +21,7 @@ An object of class "\code{groups}" preparing the settings for group
   function.
 }
 \description{
-[FUNCTIONALITY UNDER ACTIVE DEVELOPMENT, RELIABLE ESTIMATION IS NOT GUARANTEED].
+[FUNCTIONALITY UNDER ACTIVE DEVELOPMENT, PERFORMANCE (CPU TIME) NOT OPTIMIZED].
 Posterior probabilities of associations are computed for predefined groups of
 candidate predictors. Within each group, the mean-field inference procedure
 makes no independence assumptions for the regression coefficients; variables

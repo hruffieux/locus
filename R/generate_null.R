@@ -72,7 +72,8 @@
 #'               Entry s controls the proportion of responses associated with
 #'               candidate predictor s.}
 #
-#' @seealso \code{\link{locus}}
+#' @seealso @seealso \code{\link{locus}}, \code{\link{set_hyper}},
+#'   \code{\link{set_init}}, \code{\link{set_blocks}}, \code{\link{set_groups}}.
 #'
 #' @examples
 #' seed <- 123; set.seed(seed)

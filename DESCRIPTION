@@ -9,13 +9,13 @@ Authors@R: c(
             role = c("aut", "cre")),
     person(given = "Nestle Institute of Health Sciences SA, Lausanne, Switzerland",
             role = "cph"))
-Description: Variational inference for a sparse multivariate regression model
-    that allows combined selection of covariates and associated responses in
+Description: Variational inference for sparse multivariate regression models
+    that allow combined selection of covariates and associated responses in
     high-dimensional set-ups (Helene Ruffieux, Anthony C. Davison, Jorg Hager,
-    Irina Irincheeva, 2017, Biostatistics). This software used on genetic data
-    from molecular quantitative trait locus (QTL) problems with over 200K single
-    nucleotide polymorphisms (SNPs), hundreds of molecular expression levels and
-    hundreds of individuals.
+    Irina Irincheeva, 2017, Biostatistics). This software has been used with
+    genetic data from molecular quantitative trait locus (QTL) problems with over 
+    500K single nucleotide polymorphisms (SNPs), thousands of molecular expression 
+    levels and hundreds of individuals.
 Depends:
     R (>= 3.2.0)
 License: GPL (>= 2) | file LICENSE
