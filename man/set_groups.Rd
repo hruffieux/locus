@@ -73,7 +73,10 @@ n_gr <- 100
 pos_gr <- seq(1, p, by = ceiling(p/n_gr))
 list_groups <- set_groups(p, pos_gr)
 
-vb <- locus(Y = Y, X = X, p0_av = p0, link = "identity",
+g0_av <- 50 # Number of active groups. /!\\ Often best to set it large, as a
+            # too small value may (wrong) result in no group being selected.
+
+vb <- locus(Y = Y, X = X, p0_av = g0_av, link = "identity",
   list_groups = list_groups, user_seed = seed)
 
 }

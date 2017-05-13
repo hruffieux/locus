@@ -644,7 +644,7 @@ prepare_cv_ <- function(list_cv, n, p, r, bool_rmvd_x, p0_av, link, list_hyper,
 # Internal function implementing sanity checks and needed preprocessing to the
 # settings provided by the user for block-wise parallel inference.
 #
-prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv) {
+prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv, list_groups) {
 
   if (!inherits(list_blocks, "blocks"))
     stop(paste("The provided list_blocks must be an object of class ``blocks''. \n",
@@ -657,6 +657,10 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv) {
   if (!is.null(list_cv))
     stop(paste("list_cv must be NULL if non NULL ",
                "list_blocks is provided (cross-validation not yet implemented).",sep = ""))
+
+  if (!is.null(list_groups))
+    stop(paste("Group selection not implemented for block-wise parallel inference. ",
+               "list_blocks and list_groups can't be both non-NULL.",sep = ""))
 
   if (list_blocks$p_blocks != length(bool_rmvd_x))
     stop(paste("The number of candidate predictors p provided to the function set_blocks ",
@@ -834,8 +838,6 @@ prepare_ind_bin_ <- function(d, ind_bin, link) {
 
 
 
-
-
 # Internal function implementing sanity checks and needed preprocessing to the
 # settings provided by the user for block-wise parallel inference.
 #
@@ -936,7 +938,10 @@ prepare_groups_ <- function(list_groups, X, q, r, bool_rmvd_x, link, list_cv) {
 #' pos_gr <- seq(1, p, by = ceiling(p/n_gr))
 #' list_groups <- set_groups(p, pos_gr)
 #'
-#' vb <- locus(Y = Y, X = X, p0_av = p0, link = "identity",
+#' g0_av <- 50 # Number of active groups. /!\ Often best to set it large, as a
+#'             # too small value may (wrong) result in no group being selected.
+#'
+#' vb <- locus(Y = Y, X = X, p0_av = g0_av, link = "identity",
 #'   list_groups = list_groups, user_seed = seed)
 #'
 #' @seealso \code{\link{locus}}

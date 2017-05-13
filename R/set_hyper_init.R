@@ -361,13 +361,13 @@ auto_set_hyper_ <- function(Y, G, p, p_star, q, r, link, ind_bin) {
 
   if (is.null(r)) {
 
-    b <- d * (p - p_star) / p_star
-
-    if(is.null(G)) {
+    if (is.null(G)) {
       a <- rep(1, p)
+      b <- d * (p - p_star) / p_star
       if (length(b) == 1) b <- rep(b, p)
     } else {
       a <- rep(1, G)
+      b <- d * (G - p_star) / p_star
       if (length(b) == 1) b <- rep(b, G)
     }
 
@@ -803,10 +803,10 @@ auto_set_init_ <- function(Y, G, p, p_star, q, r, user_seed, link, ind_bin) {
   if (!is.null(user_seed)) set.seed(user_seed)
 
   shape1_gam <- 1
-  shape2_gam <- d * (p - p_star) / p_star
-
 
   if (is.null(G)) {
+
+    shape2_gam <- d * (p - p_star) / p_star
 
     if (length(p_star) > 1)
       shape1_gam <- rep(shape1_gam, p)
@@ -815,6 +815,8 @@ auto_set_init_ <- function(Y, G, p, p_star, q, r, user_seed, link, ind_bin) {
                      nrow = p)
 
   } else {
+
+    shape2_gam <- d * (G - p_star) / p_star
 
     if (length(p_star) > 1)
       shape1_gam <- rep(shape1_gam, G)

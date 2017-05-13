@@ -29,11 +29,13 @@
 #'   observations and d is the number of response variables.
 #' @param X Input matrix of dimension n x p, where p is the number of candidate
 #'   predictors. \code{X} cannot contain NAs. No intercept must be supplied.
-#' @param p0_av Prior average number of predictors expected to be included in
-#'   the model. Must be \code{NULL} if \code{list_init} and \code{list_hyper}
+#' @param p0_av Prior average number of predictors (or groups of predictor if
+#'   \code{list_groups} is non-\code{NULL}) expected to be included in the
+#'   model. Must be \code{NULL} if \code{list_init} and \code{list_hyper}
 #'   are both non-\code{NULL} or if \code{list_cv} is non-\code{NULL}. Can also
-#'   be a vector of length p with entry s corresponding to the prior probability
-#'   that candidate predictor s is associated with at least one response.
+#'   be a vector of length p (resp. of length the number of groups) with entry s
+#'   corresponding to the prior probability that candidate predictor s (resp.
+#'   group s) is associated with at least one response.
 #' @param Z Covariate matrix of dimension n x q, where q is the number of
 #'   covariates. Variables in \code{Z} are not subject to selection. \code{NULL}
 #'   if no covariate. Factor covariates must be supplied after transformation to
@@ -306,7 +308,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     if (!is.null(list_blocks)) {
 
-      list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, list_cv)
+      list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, list_cv, list_groups)
 
       n_bl <- list_blocks$n_bl
       n_cpus <- list_blocks$n_cpus
@@ -331,13 +333,15 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     if (is.null(list_hyper) | is.null(list_init)) {
 
-      p_star <- convert_p0_av_(p0_av, p, list_blocks, verbose)
+      if (is.null(list_groups)) p_tot <- p
+      else p_tot <- length(unique(vec_fac_gr))
+
+      p_star <- convert_p0_av_(p0_av, p_tot, list_blocks, verbose)
 
       # remove the entries corresponding to the removed constant covariates in X (if any)
       if (length(p_star) > 1) {
-        p_star <- p_star[!bool_rmvd_x]
-        if (!is.null(vec_fac_gr)) # reduce p_star to a vector of size G
-          p_star <- sapply(unique(vec_fac_gr), function(g) mean(p_star[vec_fac_gr == g]))
+        if (is.null(list_groups)) p_star <- p_star[!bool_rmvd_x]
+        else p_star <- p_star[unique(vec_fac_gr)]
       }
 
 
@@ -463,8 +467,8 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
         # X is a list (transformed in prepare_data)
         # mu_beta_vb is a list (transformed in prepare_init)
         vb <- locus_group_core_(Y, X, list_hyper, list_init$gam_vb,
-                          list_init$mu_beta_vb, list_init$sig2_inv_vb,
-                          list_init$tau_vb, tol, maxit, verbose)
+                                list_init$mu_beta_vb, list_init$sig2_inv_vb,
+                                list_init$tau_vb, tol, maxit, verbose)
 
       }
 

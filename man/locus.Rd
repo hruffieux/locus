@@ -16,11 +16,13 @@ observations and d is the number of response variables.}
 \item{X}{Input matrix of dimension n x p, where p is the number of candidate
 predictors. \code{X} cannot contain NAs. No intercept must be supplied.}
 
-\item{p0_av}{Prior average number of predictors expected to be included in
-the model. Must be \code{NULL} if \code{list_init} and \code{list_hyper}
+\item{p0_av}{Prior average number of predictors (or groups of predictor if
+\code{list_groups} is non-\code{NULL}) expected to be included in the
+model. Must be \code{NULL} if \code{list_init} and \code{list_hyper}
 are both non-\code{NULL} or if \code{list_cv} is non-\code{NULL}. Can also
-be a vector of length p with entry s corresponding to the prior probability
-that candidate predictor s is associated with at least one response.}
+be a vector of length p (resp. of length the number of groups) with entry s
+corresponding to the prior probability that candidate predictor s (resp.
+group s) is associated with at least one response.}
 
 \item{Z}{Covariate matrix of dimension n x q, where q is the number of
 covariates. Variables in \code{Z} are not subject to selection. \code{NULL}
