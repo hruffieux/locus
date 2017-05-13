@@ -11,8 +11,6 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
   # Y must have been centered, and X, standardized.
 
-  # TODO: suppress initialization of tau_vb
-
   d <- ncol(Y)
   n <- nrow(Y)
   G <- length(list_X)
@@ -21,21 +19,6 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects
-
-    # % #
-    eta_vb <- eta
-    kappa_vb <- kappa
-
-    # get caught into a local maximum
-    #
-    # eta_vb <- update_g_eta_vb_(n, eta, g_sizes, gam_vb)
-    # kappa_vb <- update_g_kappa_vb_(Y, list_X, kappa, list_m1_beta, list_m1_btb,
-    #                                list_m1_btXtXb, mat_x_m1, sig2_inv_vb)
-
-    tau_vb <- eta_vb / kappa_vb
-    # % #
-
-    log_tau_vb <- update_log_tau_vb_(eta_vb, kappa_vb)
 
     list_sig2_beta_star_inv <- lapply(list_X, function(X_g) crossprod(X_g) + diag(sig2_inv_vb, nrow = ncol(X_g)))
 
@@ -51,9 +34,11 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
     mat_x_m1 <- update_g_mat_x_m1_(list_X, list_m1_beta)
 
+    log_tau_vb <- update_log_tau_vb_(eta, kappa) # do not update tau_vb here as
+                                                 # its current form was already used
+                                                 # in list_m1_btb as part of the vb
+                                                 # parameter sig2_beta = sig2_beta_star / tau_vb
     rs_gam <- rowSums(gam_vb)
-
-
 
 
     converged <- FALSE
