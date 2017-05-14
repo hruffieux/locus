@@ -121,7 +121,8 @@ log_sigmoid_ <- function(chi) {
 
 inv_mills_ratio_ <- function(Y, U) {
 
-  m <- matrix(NA, nrow = nrow(U), ncol = ncol(U))
+  if (is.matrix(U)) m <- matrix(NA, nrow = nrow(U), ncol = ncol(U))
+  else m <- rep(NA, length(U))
 
   U_1 <- U[Y==1]
   m_1 <- exp(dnorm(U_1, log = TRUE) - pnorm(U_1, log.p = TRUE))

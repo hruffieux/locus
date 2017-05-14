@@ -267,6 +267,27 @@ update_kappa_z_vb_ <- function(Y, Z, kappa, mu_alpha_vb, m1_beta, m2_alpha,
 update_log_tau_vb_ <- function(eta_vb, kappa_vb) digamma(eta_vb) - log(kappa_vb)
 
 
+#####################
+## theta's updates ##
+#####################
+
+update_mu_theta_vb_ <- function(W, m0, list_S0_inv, list_sig2_theta_vb, vec_fac_st) {
+
+  bl_ids <- unique(vec_fac_st)
+  n_bl <- length(bl_ids)
+
+  unlist(lapply(1:n_bl, function(bl)
+    list_sig2_theta_vb[[bl]] %*% (rowSums(W[vec_fac_st == bl_ids[bl], , drop = FALSE]) + list_S0_inv[[bl]] %*% m0[vec_fac_st == bl_ids[bl]])))
+
+}
+
+update_sig2_theta_vb_ <- function(d, list_S0_inv) {
+
+  lapply(list_S0_inv, function(S0_inv) S0_inv + diag(d, nrow(S0_inv)))
+
+}
+
+
 #################
 ## W's updates ##
 #################
@@ -280,6 +301,12 @@ update_W_info_ <- function(gam_vb, mat_v_mu) {
 
 update_W_probit_ <- function(Y, mat_z_mu, mat_x_m1) mat_z_mu + mat_x_m1 + inv_mills_ratio_(Y, mat_z_mu + mat_x_m1)
 
+update_W_struct_ <- function(gam_vb, mu_theta_vb) {
+
+  sweep(sweep(gam_vb, 1, (inv_mills_ratio_(1, mu_theta_vb) - inv_mills_ratio_(0, mu_theta_vb)), `*`),
+        1,  mu_theta_vb + inv_mills_ratio_(0, mu_theta_vb), `+`)
+
+}
 
 ####################
 ## zeta's updates ##

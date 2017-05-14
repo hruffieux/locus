@@ -26,7 +26,7 @@
 #'
 #'
 #' @param Y Response data matrix of dimension n x d, where n is the number of
-#'   observations and d is the number of response variables.
+#'   samples and d is the number of response variables.
 #' @param X Input matrix of dimension n x p, where p is the number of candidate
 #'   predictors. \code{X} cannot contain NAs. No intercept must be supplied.
 #' @param p0_av Prior average number of predictors (or groups of predictor if
@@ -72,6 +72,10 @@
 #' @param list_groups An object of class "\code{groups}" containing settings for
 #'   group selection of candidate predictors. Must be filled using the
 #'   \code{\link{set_groups}} function or must be \code{NULL} for group
+#'   selection.
+#' @param list_struct An object of class "\code{struct}" containing settings for
+#'   structure sparsity priors. Must be filled using the
+#'   \code{\link{set_struct}} function or must be \code{NULL} for structured
 #'   selection.
 #' @param user_seed Seed set for reproducible default choices of hyperparameters
 #'   (if \code{list_hyper} is \code{NULL}) and initial variational parameters
@@ -240,15 +244,17 @@
 #'   pp.1758-1789, 2013.
 #'
 #' @seealso \code{\link{set_hyper}}, \code{\link{set_init}},
-#'   \code{\link{set_cv}}, \code{\link{set_blocks}}, \code{\link{set_groups}}.
+#'   \code{\link{set_cv}}, \code{\link{set_blocks}}, \code{\link{set_groups}}
+#'   and \code{\link{set_struct}}.
 #'
 #' @export
 #'
 locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, list_groups = NULL,
-                  user_seed = NULL, tol = 1e-3, maxit = 1000,
-                  save_hyper = FALSE, save_init = FALSE, verbose = TRUE) { ##
+                  list_struct = NULL, user_seed = NULL, tol = 1e-3,
+                  maxit = 1000, save_hyper = FALSE, save_init = FALSE,
+                  verbose = TRUE) { ##
 
   if (verbose) cat("== Preparing the data ... \n")
   dat <- prepare_data_(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verbose)
@@ -290,7 +296,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
 
 
-  if (!is.null(list_cv) & is.null(list_blocks) & is.null(list_groups)) { ## TODO: allow cross-validation when list_blocks is used.
+  if (!is.null(list_cv) & is.null(list_blocks) & is.null(list_groups) & is.null(list_struct)) { ## TODO: allow cross-validation when list_blocks is used.
 
     if (verbose) {
       cat("=============================== \n")
@@ -302,13 +308,13 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     p_star <- cross_validate_(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
-    vec_fac_gr <- NULL
+    vec_fac_gr <- vec_fac_st <- NULL
 
   } else {
 
     if (!is.null(list_blocks)) {
 
-      list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, list_cv, list_groups)
+      list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, list_cv, list_groups, list_struct)
 
       n_bl <- list_blocks$n_bl
       n_cpus <- list_blocks$n_cpus
@@ -327,6 +333,19 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
     } else {
 
       vec_fac_gr <- NULL
+
+    }
+
+
+    if (!is.null(list_struct)) {
+
+      list_struct <- prepare_struct_(list_struct, n, q, r, bool_rmvd_x, link, list_cv, list_groups)
+
+      vec_fac_st <- list_struct$vec_fac_st
+
+    } else {
+
+      vec_fac_st <- NULL
 
     }
 
@@ -359,7 +378,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
   if (verbose) cat("== Preparing the hyperparameters ... \n\n")
   list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, r, link, ind_bin,
-                                    vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
+                                    vec_fac_gr, vec_fac_st, bool_rmvd_x, bool_rmvd_z,
                                     bool_rmvd_v, names_x, names_y, names_z, verbose)
   if (verbose) cat("... done. == \n\n")
 
@@ -431,7 +450,10 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     if (link == "identity") {
 
-      if (is.null(list_groups)){
+      ng  <- is.null(list_groups)
+      ns <- is.null(list_struct)
+
+      if (ng & ns){
 
         if (nq & nr) {
 
@@ -453,7 +475,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                               list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                               list_init$tau_vb, tol, maxit, verbose)
 
-        } else { # both q and r non - null
+        } else { # both q and r non-null
 
           vb <- locus_z_info_core_(Y, X, Z, V, list_hyper, list_init$gam_vb,
                                    list_init$mu_alpha_vb, list_init$mu_beta_vb,
@@ -462,13 +484,19 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                    list_init$tau_vb, tol, maxit, verbose)
         }
 
-      } else {
+      } else if (ns){ # list_group non-null
 
         # X is a list (transformed in prepare_data)
         # mu_beta_vb is a list (transformed in prepare_init)
         vb <- locus_group_core_(Y, X, list_hyper, list_init$gam_vb,
                                 list_init$mu_beta_vb, list_init$sig2_inv_vb,
                                 list_init$tau_vb, tol, maxit, verbose)
+
+      } else if (ng) { # list_struct non-null
+
+        vb <- locus_struct_core_(Y, X, list_hyper, list_init$gam_vb,
+                                 list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                 list_init$tau_vb, vec_fac_st, tol, maxit, verbose)
 
       }
 

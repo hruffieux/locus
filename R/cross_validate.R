@@ -11,11 +11,11 @@
 #' This cross-validation procedure is available only for
 #' \code{link = "identity"}.
 #'
-#' @param n Number of observations.
+#' @param n Number of samples.
 #' @param p Number of candidate predictors.
 #' @param n_folds Number of number of folds. Large folds are not recommended for
 #'   large datasets as the procedure may become computationally expensive. Must
-#'   be greater than 2 and smaller than the number of observations.
+#'   be greater than 2 and smaller than the number of samples.
 #' @param size_p0_av_grid Number of possible values of p0_av to be compared.
 #'   Large numbers are not recommended for large datasets as the procedure may
 #'   become computationally expensive.
@@ -89,7 +89,7 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
   check_natural_(n_folds)
 
   if (!(n_folds %in% 2:n))
-    stop("n_folds must be a natural number greater than 2 and smaller than the number of observations.")
+    stop("n_folds must be a natural number greater than 2 and smaller than the number of samples.")
 
   # 16 may correspond to (a multiple of) the number of cores available
   if (n_folds > 16) warning("n_folds is large and may induce expensive computations.")
@@ -254,7 +254,8 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
 
         list_hyper_pg <- auto_set_hyper_(Y_tr, G = NULL, p, pg, q, r = NULL,
-                                         link = link, ind_bin = ind_bin)
+                                         link = link, ind_bin = ind_bin,
+                                         bool_struct = FALSE)
         list_init_pg <- auto_set_init_(Y_tr, G = NULL, p, pg, q, r = NULL,
                                        user_seed, link = link, ind_bin = ind_bin)
 

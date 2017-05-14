@@ -41,7 +41,7 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verb
 
   }
 
-  if (nrow(Y) != n) stop("X and Y must have the same number of observations.")
+  if (nrow(Y) != n) stop("X and Y must have the same number of samples.")
 
   if (is.null(rownames(X)) & is.null(rownames(Y)))
     rownames(X) <- rownames(Y) <- paste("Ind_", 1:n, sep="")
@@ -63,7 +63,7 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verb
 
     q <- ncol(Z)
 
-    if (nrow(Z) != n) stop("Z must have the same number of observations as Y and X.")
+    if (nrow(Z) != n) stop("Z must have the same number of samples as Y and X.")
 
     if (is.null(rownames(Z))) rownames(Z) <- rownames(X)
     else if(any(rownames(Z) != rownames(X)))
@@ -259,7 +259,7 @@ convert_p0_av_ <- function(p0_av, p, list_blocks, verbose, eps = .Machine$double
 # algorithms.
 #
 prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
-                                vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
+                                vec_fac_gr, vec_fac_st, bool_rmvd_x, bool_rmvd_z,
                                 bool_rmvd_v, names_x, names_y, names_z, verbose) {
 
   d <- ncol(Y)
@@ -269,11 +269,14 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
     G <- NULL
   }
 
+  ns <- is.null(vec_fac_st)
+
   if (is.null(list_hyper)) {
 
     if (verbose) cat("list_hyper set automatically. \n")
 
-    list_hyper <- auto_set_hyper_(Y, G, p, p_star, q, r, link, ind_bin)
+    bool_struct <- !ns
+    list_hyper <- auto_set_hyper_(Y, G, p, p_star, q, r, link, ind_bin, bool_struct)
 
   } else {
 
@@ -323,7 +326,8 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
                    ind_bin_hyper in list_hyper", sep=""))
     }
 
-    if (is.null(r)) {
+    nr <- is.null(r)
+    if (nr & ns) {
 
       if (!is.null(list_hyper$r_hyper))
         stop(paste("The dimension (r) of the provided hyperparameters ",
@@ -351,9 +355,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
         }
       }
 
-
-
-    } else {
+    } else if (ns) { # r non-NULL
 
       if (inherits(list_hyper, "hyper")) {
         # remove the entries corresponding to the removed constant predictors in X
@@ -367,6 +369,13 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
       if (list_hyper$r_hyper != r_hyper_match)
         stop(paste("The dimensions of the provided hyperparameters ",
                    "(list_hyper) are not consistent with that of V.", sep=""))
+
+      if (!is.null(names(list_hyper$m0)) && names(list_hyper$m0) != names_x)
+        stop("Provided names for the entries of m0 do not match the colnames of X.")
+
+    } else { # list_struct non-NULL
+
+      list_hyper$m0 <- list_hyper$m0[!bool_rmvd_x]
 
       if (!is.null(names(list_hyper$m0)) && names(list_hyper$m0) != names_x)
         stop("Provided names for the entries of m0 do not match the colnames of X.")
@@ -609,7 +618,7 @@ prepare_cv_ <- function(list_cv, n, p, r, bool_rmvd_x, p0_av, link, list_hyper,
                "list_cv is provided (cross-validation).", sep = ""))
 
   if (list_cv$n_cv != n)
-    stop(paste("The number of observations n provided to the function set_cv",
+    stop(paste("The number of samples n provided to the function set_cv",
                "is not consistent with those of the data.", sep=""))
 
   if (list_cv$p_cv != length(bool_rmvd_x))
@@ -644,7 +653,7 @@ prepare_cv_ <- function(list_cv, n, p, r, bool_rmvd_x, p0_av, link, list_hyper,
 # Internal function implementing sanity checks and needed preprocessing to the
 # settings provided by the user for block-wise parallel inference.
 #
-prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv, list_groups) {
+prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv, list_groups, list_struct) {
 
   if (!inherits(list_blocks, "blocks"))
     stop(paste("The provided list_blocks must be an object of class ``blocks''. \n",
@@ -660,7 +669,11 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv, list_groups) {
 
   if (!is.null(list_groups))
     stop(paste("Group selection not implemented for block-wise parallel inference. ",
-               "list_blocks and list_groups can't be both non-NULL.",sep = ""))
+               "list_blocks and list_groups can't be both non-NULL.", sep = ""))
+
+  if (!is.null(list_struct))
+    stop(paste("Structured sparse priors not enabled for block-wise parallel inference. ",
+               "list_blocks and list_struct can't be both non-NULL.", sep = ""))
 
   if (list_blocks$p_blocks != length(bool_rmvd_x))
     stop(paste("The number of candidate predictors p provided to the function set_blocks ",
@@ -839,7 +852,7 @@ prepare_ind_bin_ <- function(d, ind_bin, link) {
 
 
 # Internal function implementing sanity checks and needed preprocessing to the
-# settings provided by the user for block-wise parallel inference.
+# settings provided by the user for group selection.
 #
 prepare_groups_ <- function(list_groups, X, q, r, bool_rmvd_x, link, list_cv) {
 
@@ -980,3 +993,165 @@ set_groups <- function(p, pos_gr, verbose = TRUE) {
   list_groups
 }
 
+
+
+
+
+
+# Internal function implementing sanity checks and needed preprocessing to the
+# settings provided by the user for structured sparsity priors.
+#
+prepare_struct_ <- function(list_struct, n, q, r, bool_rmvd_x, link, list_cv, list_groups) {
+
+  if (!inherits(list_struct, "struct"))
+    stop(paste("The provided list_struct must be an object of class ``struct''. \n",
+               "*** you must use the function set_struct to give the settings ",
+               "for structured sparse priors. ***",
+               sep=""))
+
+  if (!is.null(list_cv))
+    stop(paste("list_cv must be NULL if non NULL ",
+               "list_struct is provided (cross-validation not yet implemented). \n",sep = ""))
+
+  if (list_struct$n_struct != n)
+    stop(paste("The number of samples n provided to the function set_struct ",
+               "is not consistent with X.\n", sep=""))
+
+  if (list_struct$p_struct != length(bool_rmvd_x))
+    stop(paste("The number of candidate predictors p provided to the function set_struct ",
+               "is not consistent with X.\n", sep=""))
+
+  p <- length(bool_rmvd_x)
+
+  if(!(is.factor(list_struct$vec_fac_st) && length(list_struct$vec_fac_st) == p))
+    stop(paste("list_struct$vec_fac_st must be a non-empty a factor of length ", p, ".", sep = ""))
+
+  if(link != "identity" | !is.null(q) | !is.null(r) | !is.null(list_groups))
+    stop("Structured sparse priors enabled only for identity link, Z = NULL, V = NULL and with no group selection. Exit.")
+
+
+  vec_fac_st <- list_struct$vec_fac_st[!bool_rmvd_x] # some blocks may disappear here, but this is not a problem
+
+  create_named_list_(vec_fac_st)
+
+}
+
+
+
+
+#' Gather settings for application of the `locus` function with structured
+#' sparse prior.
+#'
+#' [FUNCTIONALITY UNDER ACTIVE DEVELOPMENT, PERFORMANCE (CPU TIME) NOT OPTIMIZED].
+#' Posterior probabilities of associations are computed using an empirical
+#' covariance estimate of the candidate predictors. This estimate has a block
+#' structure (which could reflect linkage disequilibrium patterns when
+#' considering genome-wide associations). Such a structure is necessary in
+#' large problems for tractability both time- and memory-wise. The posterior
+#' probablity of inclusion corresponding to a given block are approximated by a
+#' multivariate distribution through a Bernoulli-probit link function.
+#'
+#' @param n Number of samples.
+#' @param p Number of candidate predictors.
+#' @param pos_st Vector gathering the predictor block positions (first index of
+#'   each block). The predictors must be ordered by blocks.
+#' @param verbose If \code{TRUE}, messages are displayed when calling
+#'   \code{set_struct}.
+#'
+#' @return An object of class "\code{struct}" preparing the settings for group
+#'   selection in a form that can be passed to the \code{\link{locus}}
+#'   function.
+#'
+#' @examples
+#' seed <- 123; set.seed(seed)
+#'
+#' ###################
+#' ## Simulate data ##
+#' ###################
+#'
+#' ## Example using small problem sizes:
+#' ##
+#' n <- 200; p <- 300; p0 <- 100; d <- 50; d0 <- 40
+#'
+#' ## Candidate predictors (subject to selection)
+#' ##
+#' # Here we simulate common genetic variants (but any type of candidate
+#' # predictors can be supplied).
+#' # 0 = homozygous, major allele, 1 = heterozygous, 2 = homozygous, minor allele
+#' #
+#' X_act <- matrix(rbinom(n * p0, size = 2, p = 0.25), nrow = n)
+#' X_inact <- matrix(rbinom(n * (p - p0), size = 2, p = 0.25), nrow = n)
+#'
+#' shuff_x_ind <- sample(p)
+#' X <- cbind(X_act, X_inact)[, shuff_x_ind]
+#'
+#' bool_x_act <- shuff_x_ind <= p0
+#'
+#' pat_act <- beta <- matrix(0, nrow = p0, ncol = d0)
+#' pat_act[sample(p0*d0, floor(p0*d0/5))] <- 1
+#' beta[as.logical(pat_act)] <-  rnorm(sum(pat_act))
+#'
+#' ## Gaussian responses
+#' ##
+#' Y_act <- matrix(rnorm(n * d0, mean = X_act %*% beta, sd = 0.5), nrow = n)
+#' Y_inact <- matrix(rnorm(n * (d - d0), sd = 0.5), nrow = n)
+#' shuff_y_ind <- sample(d)
+#' Y <- cbind(Y_act, Y_inact)[, shuff_y_ind]
+#'
+#' ########################
+#' ## Infer associations ##
+#' ########################
+#'
+#' n_st <- 100
+#' pos_st <- seq(1, p, by = ceiling(p/n_st))
+#' list_struct <- set_struct(n, p, pos_st)
+#'
+#' vb <- locus(Y = Y, X = X, p0_av = p0, link = "identity",
+#'    list_struct = list_struct, user_seed = seed)
+#'
+#' @seealso \code{\link{locus}}
+#'
+#' @export
+#'
+set_struct <- function(n, p, pos_st, verbose = TRUE) {
+
+  check_structure_(verbose, "vector", "logical", 1)
+
+  check_structure_(pos_st, "vector", "numeric")
+  check_natural_(pos_st)
+
+  if (p / length(pos_st) > 500)
+    warning(paste("The provided number of blocks may be too small for tractable ",
+                  "inference. If possible, use more blocks.", sep = ""))
+
+  if (any(pos_st < 1) | any(pos_st > p))
+    stop("The positions provided in pos_st must range between 1 and total number of variables in X, p.")
+
+  if (any(duplicated(pos_st)))
+    stop("The positions provided in pos_st must be unique.")
+
+  if (any(pos_st != cummax(pos_st)))
+    stop("The positions provided in pos_st must be monotonically increasing.")
+
+  vec_fac_st <- as.factor(cumsum(seq_along(1:p) %in% pos_st))
+
+  if (max(table(vec_fac_st)) >= n)
+    stop(paste("One or more block size(s) is greater or equal to n.  ",
+                  "Corresponding empirical covariances not positive definite. Use smaller block sizes.", sep = ""))
+
+  if (max(table(vec_fac_st)) >= n/2)
+    warning(paste("One or more block size(s) is greater or equal to n/2.  ",
+               "Corresponding empirical covariances may not be positive definite. ",
+               "Regularization will be used but this may affect the quality of inference.", sep = ""))
+
+  if (verbose) print(paste("Number of blocks: ", length(unique(vec_fac_st)), sep = ""))
+
+  n_struct <- n
+  p_struct <- p
+
+  list_struct <- create_named_list_(n_struct, p_struct, vec_fac_st)
+
+  class(list_struct) <- "struct"
+
+  list_struct
+}

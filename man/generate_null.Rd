@@ -14,7 +14,7 @@ generate_null(n_perm, Y, X, p0_av, Z = NULL, link = "identity",
 run.}
 
 \item{Y}{Response data matrix (without permuted sample indices) of size
-n x d, where n is the number of observations and d is the number of
+n x d, where n is the number of samples and d is the number of
 response variables.}
 
 \item{X}{Input matrix of size n x p, where p is the number of candidate

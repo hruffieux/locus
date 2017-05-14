@@ -6,12 +6,13 @@
 \usage{
 locus(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL, list_cv = NULL,
-  list_blocks = NULL, list_groups = NULL, user_seed = NULL, tol = 0.001,
-  maxit = 1000, save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
+  list_blocks = NULL, list_groups = NULL, list_struct = NULL,
+  user_seed = NULL, tol = 0.001, maxit = 1000, save_hyper = FALSE,
+  save_init = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of
-observations and d is the number of response variables.}
+samples and d is the number of response variables.}
 
 \item{X}{Input matrix of dimension n x p, where p is the number of candidate
 predictors. \code{X} cannot contain NAs. No intercept must be supplied.}
@@ -68,6 +69,11 @@ partitioning.}
 \item{list_groups}{An object of class "\code{groups}" containing settings for
 group selection of candidate predictors. Must be filled using the
 \code{\link{set_groups}} function or must be \code{NULL} for group
+selection.}
+
+\item{list_struct}{An object of class "\code{struct}" containing settings for
+structure sparsity priors. Must be filled using the
+\code{\link{set_struct}} function or must be \code{NULL} for structured
 selection.}
 
 \item{user_seed}{Seed set for reproducible default choices of hyperparameters
@@ -267,5 +273,6 @@ Y. Xu, and W. Yin. A block coordinate descent method for
 }
 \seealso{
 \code{\link{set_hyper}}, \code{\link{set_init}},
-  \code{\link{set_cv}}, \code{\link{set_blocks}}, \code{\link{set_groups}}.
+  \code{\link{set_cv}}, \code{\link{set_blocks}}, \code{\link{set_groups}}
+  and \code{\link{set_struct}}.
 }

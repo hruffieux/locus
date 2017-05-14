@@ -11,7 +11,7 @@
 #' @param n_perm Number of permuted datasets on which \code{\link{locus}} is
 #'   run.
 #' @param Y Response data matrix (without permuted sample indices) of size
-#'   n x d, where n is the number of observations and d is the number of
+#'   n x d, where n is the number of samples and d is the number of
 #'   response variables.
 #' @param X Input matrix of size n x p, where p is the number of candidate
 #'   predictors. \code{X} cannot contain NAs. No intercept must be supplied.

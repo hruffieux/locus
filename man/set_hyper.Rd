@@ -6,7 +6,7 @@
 \usage{
 set_hyper(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
   ind_bin = NULL, q = NULL, phi = NULL, xi = NULL, r = NULL,
-  m0 = NULL, G = NULL)
+  m0 = NULL, G = NULL, bool_struct = FALSE)
 }
 \arguments{
 \item{d}{Number of responses.}
@@ -76,12 +76,16 @@ candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.}
 \item{m0}{Vector of length 1 or p providing the values of hyperparameter
 \eqn{m0} for the prior distribution of \eqn{c0} linked to the proportion of
 responses associated with each candidate predictor. If of length 1, the
-provided value is repeated p times. Default is \code{NULL}, for \code{V}
-\code{NULL}.}
+provided value is repeated p times. Default is \code{NULL}, for both
+\code{V} and \code{list_struct} \code{NULL}.}
 
 \item{G}{Number of candidate predictor groups when using the group selection
 model from the \code{\link{locus}} function. Default is \code{NULL},
 for no group selection.}
+
+\item{bool_struct}{Boolean indicating the use of structured sparse priors
+set through the \code{\link{set_struct}} function. Default is \code{FALSE},
+for no structured selection.}
 }
 \value{
 An object of class "\code{hyper}" preparing user hyperparameter in a

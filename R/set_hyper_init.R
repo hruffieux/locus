@@ -64,11 +64,14 @@
 #' @param m0 Vector of length 1 or p providing the values of hyperparameter
 #'   \eqn{m0} for the prior distribution of \eqn{c0} linked to the proportion of
 #'   responses associated with each candidate predictor. If of length 1, the
-#'   provided value is repeated p times. Default is \code{NULL}, for \code{V}
-#'   \code{NULL}.
+#'   provided value is repeated p times. Default is \code{NULL}, for both
+#'   \code{V} and \code{list_struct} \code{NULL}.
 #' @param G Number of candidate predictor groups when using the group selection
 #'   model from the \code{\link{locus}} function. Default is \code{NULL},
 #'   for no group selection.
+#' @param bool_struct Boolean indicating the use of structured sparse priors
+#'   set through the \code{\link{set_struct}} function. Default is \code{FALSE},
+#'   for no structured selection.
 #'
 #' @return An object of class "\code{hyper}" preparing user hyperparameter in a
 #'   form that can be passed to the \code{\link{locus}} function.
@@ -201,7 +204,7 @@
 #'
 set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
                       ind_bin = NULL, q = NULL, phi = NULL, xi = NULL,
-                      r = NULL, m0 = NULL, G = NULL) {
+                      r = NULL, m0 = NULL, G = NULL, bool_struct = FALSE) {
 
   check_structure_(d, "vector", "numeric", 1)
   check_natural_(d)
@@ -218,14 +221,22 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
   check_structure_(G, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(G)) check_natural_(G)
 
+  check_structure_(bool_struct, "vector", "logical", 1)
+
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
-  if(!is.null(G) && (link != "identity" | !is.null(q) | !is.null(r)))
-    stop("Group selection(G non-NULL) implemented only for identity link, Z = NULL and V = NULL. Exit.")
+  if (!is.null(G) && (link != "identity" | !is.null(q) | !is.null(r) | bool_struct))
+    stop("Group selection (G non-NULL) implemented only for identity link, Z = NULL, V = NULL and list_struct = NULL. Exit.")
+
+  if (bool_struct && (link != "identity" | !is.null(q) | !is.null(r)))
+    stop("Structured sparse priors (list_struct non-NULL) enabled only for identity link, Z = NULL and V = NULL. Exit.")
 
   ind_bin <- prepare_ind_bin_(d, ind_bin, link)
 
-  if (is.null(r)) {
+  nr <- is.null(r)
+  ns <- !bool_struct
+
+  if (nr & ns) {
 
     if (is.null(G)) {
 
@@ -252,20 +263,20 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
     s02 <- s2 <- NULL
 
     if (!is.null(m0))
-      stop("Provided r = NULL, not consitent with m0 being non-null.")
+      stop("Provided r = NULL and bool_struct = FALSE, not consitent with m0 being non-null.")
 
-  } else {
+  } else { # either !nr or !ns
 
     check_structure_(m0, "vector", "double", c(1, p))
     if (length(m0) == 1) m0 <- rep(m0, p)
 
     # prior info
     s02 <- 0.1 # prior variance for the intercept, bernoulli-probit
-    s2 <- 1e-2 # prior variance for external info coefficients
-    # (effects likely to be concentrated around zero)
+    if (!nr) s2 <- 1e-2 # prior variance for external info coefficients (effects likely to be concentrated around zero)
+    else s2 <- NULL
 
     if (!is.null(a) | !is.null(b))
-      stop("Provided r != NULL, not consitent with a and b being non-null.")
+      stop("Provided r != NULL or bool_struct = TRUE, not consitent with a and b being non-null.")
 
   }
 
@@ -334,7 +345,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 # Internal function setting default model hyperparameters when not provided by
 # the user.
 #
-auto_set_hyper_ <- function(Y, G, p, p_star, q, r, link, ind_bin) {
+auto_set_hyper_ <- function(Y, G, p, p_star, q, r, link, ind_bin, bool_struct) {
 
   d <- ncol(Y)
 
@@ -359,7 +370,11 @@ auto_set_hyper_ <- function(Y, G, p, p_star, q, r, link, ind_bin) {
 
   }
 
-  if (is.null(r)) {
+
+  nr <- is.null(r)
+  ns <- !bool_struct
+
+  if (nr & ns) {
 
     if (is.null(G)) {
       a <- rep(1, p)
@@ -381,7 +396,8 @@ auto_set_hyper_ <- function(Y, G, p, p_star, q, r, link, ind_bin) {
 
     # hyperparameters external info model
     s02 <- 0.1 # prior variance for the intercept, bernoulli-probit
-    s2 <- 1e-2 # prior variance for external info coefficients (effects likely to be concentrated around zero)
+    if (!nr) s2 <- 1e-2 # prior variance for external info coefficients (effects likely to be concentrated around zero)
+    else s2 <- NULL
 
     up <- 1e6 # we solve the equation below numerically as no closed form exists.
     m0 <- - sapply(p_star, function(ps) uniroot(function(x)    # sparsity control, m0 = - m0_star
