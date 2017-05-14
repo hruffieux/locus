@@ -662,7 +662,7 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   check_structure_(r, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(r)) check_natural_(r)
 
-  check_structure_(G, "vector", "numeric", p, null_ok = TRUE)
+  check_structure_(G, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(G)) check_natural_(G)
 
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
@@ -696,7 +696,7 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
     } else {
 
-      check_structure_(sig2_inv_vb, "vector", "double", d)
+      check_structure_(sig2_inv_vb, "vector", "double", 1)
       if (!is.null(sig2_beta_vb))
         stop("sig2_beta_vb is not used when G is non-NULL.")
 
