@@ -28,6 +28,7 @@ update_m2_alpha_ <- function(mu_alpha_vb, sig2_alpha_vb, sweep = FALSE) {
 
 }
 
+
 update_sig2_alpha_vb_ <- function(n, zeta2_inv_vb, tau_vb = NULL, intercept = FALSE) {
 
   den <- n - 1 + zeta2_inv_vb
@@ -53,6 +54,7 @@ update_sig2_alpha_logit_vb_ <- function(Z, psi_vb, zeta2_inv_vb) {
   1 / sweep(2 * crossprod(Z ^ 2, psi_vb), 1, zeta2_inv_vb, `+`)
 
 }
+
 
 update_mat_z_mu_ <- function(Z, mu_alpha_vb) Z %*% mu_alpha_vb
 
@@ -101,6 +103,7 @@ update_sig2_beta_vb_ <- function(n, sig2_inv_vb, tau_vb = NULL) {
   }
 }
 
+
 update_sig2_beta_logit_vb_ <- function(X, psi_vb, sig2_inv_vb) {
 
   1 / (2 * crossprod(X ^ 2, psi_vb) + sig2_inv_vb)
@@ -109,6 +112,7 @@ update_sig2_beta_logit_vb_ <- function(X, psi_vb, sig2_inv_vb) {
 
 
 update_mat_x_m1_ <- function(X, m1_beta) X %*% m1_beta
+
 
 update_g_mat_x_m1_ <- function(list_X, list_m1_beta) {
 
@@ -145,17 +149,18 @@ update_g_m1_btXtXb_ <- function(list_X, gam_vb, list_mu_beta_vb, list_sig2_beta_
 }
 
 
-
-
 ########################
 ## c0 and c's updates ##
 ########################
 
 update_mu_c0_vb_ <- function(W, mat_v_mu, m0, s02, sig2_c0_vb) sig2_c0_vb * (rowSums(W - mat_v_mu) + m0 / s02)
 
+
 update_sig2_c0_vb_ <- function(d, s02) 1 / (d + (1/s02))
 
+
 update_sig2_c_vb_ <- function(p, s2) 1 / (p - 1 + (1/s2))
+
 
 update_mat_v_mu_ <- function(V, mu_c0_vb, mu_c_vb) sweep(V %*% mu_c_vb, 1, mu_c0_vb, `+`)
 
@@ -164,12 +169,14 @@ update_mat_v_mu_ <- function(V, mu_c0_vb, mu_c_vb) sweep(V %*% mu_c_vb, 1, mu_c0
 ## omega's updates ##
 #####################
 
-
 a_vb <- update_a_vb <- function(a, rs_gam) a + rs_gam
+
 
 b_vb <- update_b_vb <- function(b, d, rs_gam) b - rs_gam + d
 
+
 update_log_om_vb <- function(a, digam_sum, rs_gam) digamma(a + rs_gam) - digam_sum
+
 
 update_log_1_min_om_vb <- function(b, d, digam_sum, rs_gam) digamma(b - rs_gam + d) - digam_sum
 
@@ -184,6 +191,7 @@ update_chi_vb_ <- function(X, Z, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sig2_alph
          mat_z_mu^2 + 2 * mat_x_m1 * mat_z_mu)
 }
 
+
 update_psi_logit_vb_ <- function(chi_vb) {
 
   exp(log(exp(log_sigmoid_(chi_vb)) - 1 / 2) - log(2 * chi_vb))
@@ -197,14 +205,18 @@ update_psi_logit_vb_ <- function(chi_vb) {
 
 update_lambda_vb_ <- function(lambda, sum_gam) lambda + sum_gam / 2
 
+
 update_g_lambda_vb_ <- function(lambda, g_sizes, rs_gam) lambda + sum(g_sizes * rs_gam) / 2
 
+
 update_nu_vb_ <- function(nu, m2_beta, tau_vb) as.numeric(nu + crossprod(tau_vb, colSums(m2_beta)) / 2)
+
 
 update_g_nu_vb_ <- function(nu, list_m1_btb, tau_vb) nu + sum(tau_vb * Reduce(`+`, list_m1_btb))/2
 
 
 update_nu_bin_vb_ <- function(nu, m2_beta) nu + sum(m2_beta) / 2
+
 
 update_log_sig2_inv_vb_ <- function(lambda_vb, nu_vb) digamma(lambda_vb) - log(nu_vb)
 
@@ -215,9 +227,12 @@ update_log_sig2_inv_vb_ <- function(lambda_vb, nu_vb) digamma(lambda_vb) - log(n
 
 update_eta_vb_ <- function(n, eta, gam_vb) eta + n / 2 + colSums(gam_vb) / 2
 
+
 update_g_eta_vb_ <- function(n, eta, g_sizes, gam_vb) eta + n / 2 + as.numeric(crossprod(gam_vb, g_sizes)) / 2
 
+
 update_eta_z_vb_ <- function(n, q, eta, gam_vb) eta + n / 2 + colSums(gam_vb) / 2 + q / 2
+
 
 update_kappa_vb_ <- function(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb) {
 
@@ -228,6 +243,7 @@ update_kappa_vb_ <- function(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb) 
              colSums(mat_x_m1^2) - (n - 1) * colSums(m1_beta^2))/ 2
 
 }
+
 
 update_g_kappa_vb_ <- function(Y, list_X, kappa, list_m1_beta, list_m1_btb,
                                list_m1_btXtXb, mat_x_m1, sig2_inv_vb) {
@@ -242,7 +258,6 @@ update_g_kappa_vb_ <- function(Y, list_X, kappa, list_m1_beta, list_m1_btb,
              colSums(mat_x_m1^2) -
              Reduce(`+`, lapply(1:G, function(g) colSums((list_X[[g]] %*% list_m1_beta[[g]])^2) ))) / 2
 }
-
 
 
 update_kappa_z_vb_ <- function(Y, Z, kappa, mu_alpha_vb, m1_beta, m2_alpha,
@@ -264,6 +279,7 @@ update_kappa_z_vb_ <- function(Y, Z, kappa, mu_alpha_vb, m1_beta, m2_alpha,
   kappa_vb
 }
 
+
 update_log_tau_vb_ <- function(eta_vb, kappa_vb) digamma(eta_vb) - log(kappa_vb)
 
 
@@ -281,9 +297,10 @@ update_mu_theta_vb_ <- function(W, m0, list_S0_inv, list_sig2_theta_vb, vec_fac_
 
 }
 
+
 update_sig2_theta_vb_ <- function(d, list_S0_inv) {
 
-  lapply(list_S0_inv, function(S0_inv) S0_inv + diag(d, nrow(S0_inv)))
+  lapply(list_S0_inv, function(S0_inv) as.matrix(solve(S0_inv + diag(d, nrow(S0_inv)))))
 
 }
 
@@ -299,7 +316,9 @@ update_W_info_ <- function(gam_vb, mat_v_mu) {
 
 }
 
+
 update_W_probit_ <- function(Y, mat_z_mu, mat_x_m1) mat_z_mu + mat_x_m1 + inv_mills_ratio_(Y, mat_z_mu + mat_x_m1)
+
 
 update_W_struct_ <- function(gam_vb, mu_theta_vb) {
 
@@ -308,14 +327,18 @@ update_W_struct_ <- function(gam_vb, mu_theta_vb) {
 
 }
 
+
 ####################
 ## zeta's updates ##
 ####################
 
 update_phi_z_vb_ <- function(phi, d) phi + d / 2
 
+
 update_xi_z_vb_ <- function(xi, tau_vb, m2_alpha) xi + m2_alpha %*% tau_vb / 2
 
+
 update_xi_bin_vb_ <- function(xi, m2_alpha) xi + rowSums(m2_alpha) / 2
+
 
 update_log_zeta2_inv_vb_ <- function(phi_vb, xi_vb) digamma(phi_vb) - log(xi_vb)

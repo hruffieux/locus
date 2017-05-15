@@ -221,7 +221,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
 
 # Internal function which implements the marginal log-likelihood variational
-# lower bound (ELBO) corresponding to the `locus_core` algorithm.
+# lower bound (ELBO) corresponding to the `locus_group_core` algorithm.
 #
 elbo_group_ <- function(Y, list_X, a, a_vb, b, b_vb, eta, eta_vb, g_sizes,
                         gam_vb, kappa, kappa_vb, lambda, lambda_vb, nu, nu_vb,

@@ -2,31 +2,30 @@
 #     https://github.com/hruffieux/locus
 #
 # Internal core function to call the variational algorithm for structured
-# sparsity with identity link, no fixed covariates.
+# sparse regression with identity link, no fixed covariates.
 # See help of `locus` function for details.
 #
 locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
                                tau_vb, vec_fac_st, tol, maxit, verbose, batch = "y",
                                full_output = FALSE, debug = FALSE) {
 
-  # Y must have been centered, and X, V standardized.
+  # Y must have been centered, and X standardized.
 
   d <- ncol(Y)
   n <- nrow(Y)
   p <- ncol(X)
 
   with(list_hyper, { # list_init not used with the with() function to avoid
-    # copy-on-write for large objects
+                     # copy-on-write for large objects
 
     mu_theta_vb <- m0
 
-    list_S0_inv <- lapply(unique(vec_fac_st), function(g) {
-      corX <- cor(X[, vec_fac_st == g, drop = FALSE])
+    list_S0_inv <- lapply(unique(vec_fac_st), function(bl) {
+      corX <- cor(X[, vec_fac_st == bl, drop = FALSE])
       corX <- as.matrix(Matrix::nearPD(corX, corr = TRUE, do2eigen = TRUE)$mat) # regularization in case of non-positive definiteness.
-      solve(corX)/s02})
+      as.matrix(solve(corX) / s02)})
 
-    list_sig2_theta_vb_inv <- update_sig2_theta_vb_(d, list_S0_inv)
-    list_sig2_theta_vb <- lapply(list_sig2_theta_vb_inv, solve)
+    list_sig2_theta_vb <- update_sig2_theta_vb_(d, list_S0_inv)
 
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
     m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
@@ -73,10 +72,6 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
 
       if (batch == "y") { # optimal scheme
 
-        # for c++ version:
-        # log_Phi_mu_theta_vb <- pnorm(mu_theta_vb, log.p = TRUE)
-        # log_1_min_Phi_mu_theta_vb <- pnorm(mu_theta_vb, lower.tail = FALSE, log.p = TRUE)
-
         for (j in 1:p) {
 
           mat_x_m1 <- mat_x_m1 - tcrossprod(X[, j], m1_beta[j, ])
@@ -99,7 +94,6 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
       } else if (batch == "0"){ # no batch, used only internally
         # schemes "x" of "x-y" are not batch concave
         # hence not implemented as they may diverge
-
 
         for (k in 1:d) {
 
@@ -130,22 +124,18 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
 
       m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
-      # lb_new <- elbo_struct_(Y, eta, gam_vb, kappa, lambda, m0, mu_theta_vb,
-      #                      mu_c_vb, nu, sig2_beta_vb, sig2_theta_vb, sig2_c_vb,
-      #                      sig2_inv_vb, s02, s2, tau_vb, m1_beta, m2_beta,
-      #                      mat_x_m1, mu_theta_vb)
-      #
-      #       if (verbose & (it == 1 | it %% 5 == 0))
-      #         cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
-      #
-      #
-      #       if (debug && lb_new < lb_old)
-      #         stop("ELBO not increasing monotonically. Exit. ")
-      #
-      #       converged <- (abs(lb_new - lb_old) < tol)
+      lb_new <- elbo_struct_(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
+                             lambda_vb, m0, mu_theta_vb, nu, nu_vb, sig2_beta_vb,
+                             list_S0_inv, list_sig2_theta_vb, sig2_inv_vb, tau_vb,
+                             m1_beta, m2_beta, mat_x_m1, vec_fac_st)
 
-      converged <- FALSE
-      lb_new <- lb_old <- -Inf
+      if (verbose & (it == 1 | it %% 5 == 0))
+        cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
+
+      if (debug && lb_new < lb_old)
+        stop("ELBO not increasing monotonically. Exit. ")
+
+      converged <- (abs(lb_new - lb_old) < tol)
 
     }
 
@@ -164,9 +154,10 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
 
     if (full_output) { # for internal use only
 
-      create_named_list_(eta, gam_vb, kappa, lambda, m0, mu_theta_vb, mu_c_vb,
-                         nu, sig2_beta_vb, sig2_theta_vb, sig2_c_vb, sig2_inv_vb,
-                         s02, s2, tau_vb, m1_beta, m2_beta, mat_x_m1)
+      create_named_list_(eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
+                         lambda_vb, m0, mu_theta_vb, nu, nu_vb, sig2_beta_vb,
+                         list_S0_inv, list_sig2_theta_vb, sig2_inv_vb, tau_vb,
+                         m1_beta, m2_beta, vec_fac_st)
 
     } else {
 
@@ -188,39 +179,42 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
 
 
 
-# # Internal function which implements the marginal log-likelihood variational
-# # lower bound (ELBO) corresponding to the `locus_info_core` algorithm.
-# #
-# elbo_struct_ <- function(Y, V, eta, gam_vb, kappa, lambda, m0, mu_theta_vb, mu_c_vb,
-#                          nu, sig2_beta_vb, sig2_theta_vb, sig2_c_vb, sig2_inv_vb,
-#                          s02, s2, tau_vb, m1_beta, m2_beta, mat_x_m1) {
+# Internal function which implements the marginal log-likelihood variational
+# lower bound (ELBO) corresponding to the `locus_struct_core` algorithm.
 #
-#   n <- nrow(Y)
-#
-#   eta_vb <- update_eta_vb_(n, eta, gam_vb)
-#   kappa_vb <- update_kappa_vb_(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb)
-#
-#   lambda_vb <- update_lambda_vb_(lambda, sum(gam_vb))
-#   nu_vb <- update_nu_vb_(nu, m2_beta, tau_vb)
-#
-#   log_tau_vb <- update_log_tau_vb_(eta_vb, kappa_vb)
-#   log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
-#
-#   elbo_A <- e_y_(n, kappa, kappa_vb, log_tau_vb, m2_beta, sig2_inv_vb, tau_vb)
-#
-#   elbo_B <- e_beta_gamma_info_(V, gam_vb, log_sig2_inv_vb, log_tau_vb, mu_theta_vb,
-#                                m2_beta, sig2_beta_vb, sig2_theta_vb, sig2_c_vb,
-#                                sig2_inv_vb, tau_vb)
-#
-#   elbo_C <- e_theta_(m0, mu_theta_vb, s02, sig2_theta_vb)
-#
-#   elbo_D <- e_c_(mu_c_vb, s2, sig2_c_vb)
-#
-#   elbo_E <- e_tau_(eta, eta_vb, kappa, kappa_vb, log_tau_vb, tau_vb)
-#
-#   elbo_F <- e_sig2_inv_(lambda, lambda_vb, log_sig2_inv_vb, nu, nu_vb, sig2_inv_vb)
-#
-#   elbo_A + elbo_B + elbo_C + elbo_D + elbo_E + elbo_F
-#
-# }
+elbo_struct_ <- function(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
+                         lambda_vb, m0, mu_theta_vb, nu, nu_vb, sig2_beta_vb,
+                         list_S0_inv, list_sig2_theta_vb, sig2_inv_vb, tau_vb,
+                         m1_beta, m2_beta, mat_x_m1, vec_fac_st) {
+
+
+  n <- nrow(Y)
+
+  # needed for monotonically increasing elbo.
+  #
+  eta_vb <- update_eta_vb_(n, eta, gam_vb)
+  kappa_vb <- update_kappa_vb_(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb)
+
+  lambda_vb <- update_lambda_vb_(lambda, sum(gam_vb))
+  nu_vb <- update_nu_vb_(nu, m2_beta, tau_vb)
+
+  log_tau_vb <- update_log_tau_vb_(eta_vb, kappa_vb)
+  log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
+
+
+  elbo_A <- e_y_(n, kappa, kappa_vb, log_tau_vb, m2_beta, sig2_inv_vb, tau_vb)
+
+  elbo_B <- e_beta_gamma_struct_(gam_vb, log_sig2_inv_vb, log_tau_vb,
+                                 mu_theta_vb, m2_beta, sig2_beta_vb,
+                                 list_sig2_theta_vb, sig2_inv_vb, tau_vb)
+
+  elbo_C <- e_theta_(m0, mu_theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_st)
+
+  elbo_D <- e_tau_(eta, eta_vb, kappa, kappa_vb, log_tau_vb, tau_vb)
+
+  elbo_E <- e_sig2_inv_(lambda, lambda_vb, log_sig2_inv_vb, nu, nu_vb, sig2_inv_vb)
+
+  elbo_A + elbo_B + elbo_C + elbo_D + elbo_E
+
+}
 
