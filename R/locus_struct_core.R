@@ -64,9 +64,6 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
       log_tau_vb <- update_log_tau_vb_(eta_vb, kappa_vb)
       log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
 
-      W <- update_W_struct_(gam_vb, mu_theta_vb)
-
-      mu_theta_vb <- update_mu_theta_vb_(W, m0, list_S0_inv, list_sig2_theta_vb, vec_fac_st)
 
       # different possible batch-coordinate ascent schemes:
 
@@ -123,6 +120,12 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
       }
 
       m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
+
+
+      W <- update_W_struct_(gam_vb, mu_theta_vb)
+
+      mu_theta_vb <- update_mu_theta_vb_(W, m0, list_S0_inv, list_sig2_theta_vb, vec_fac_st)
+
 
       lb_new <- elbo_struct_(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                              lambda_vb, m0, mu_theta_vb, nu, nu_vb, sig2_beta_vb,
