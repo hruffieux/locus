@@ -31,6 +31,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
 
     rs_gam <- rowSums(gam_vb)
     sum_gam <- sum(rs_gam)
+    digam_sum <- digamma(a + b + d)
 
     phi_vb <- update_phi_z_vb_(phi, d)
 
@@ -63,8 +64,6 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb,
       sig2_beta_vb <- update_sig2_beta_vb_(n, sig2_inv_vb)
 
       log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
-
-      digam_sum <- digamma(a + b + d)
 
 
       # different possible batch-coordinate ascent schemes:
