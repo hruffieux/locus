@@ -25,6 +25,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
     rs_gam <- rowSums(gam_vb)
     sum_gam <- sum(rs_gam)
+    digam_sum <- digamma(a + b + d)
 
     converged <- FALSE
     lb_new <- -Inf
@@ -56,8 +57,6 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       log_tau_vb <- update_log_tau_vb_(eta_vb, kappa_vb)
       log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
-
-      digam_sum <- digamma(a + b + d)
 
 
       # different possible batch-coordinate ascent schemes:

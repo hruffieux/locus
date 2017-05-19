@@ -9,6 +9,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
                               sig2_inv_vb, tau_vb, tol, maxit, verbose,
                               batch = "y", full_output = FALSE, debug = FALSE) {
 
+
   # Y must have been centered, and X, standardized.
 
   d <- ncol(Y)
@@ -39,7 +40,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
                                                  # in list_m1_btb as part of the vb
                                                  # parameter sig2_beta = sig2_beta_star / tau_vb
     rs_gam <- rowSums(gam_vb)
-
+    digam_sum <- digamma(a + b + d)
 
     converged <- FALSE
     lb_new <- -Inf
@@ -62,6 +63,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
       sig2_inv_vb <- lambda_vb / nu_vb
 
+
       list_sig2_beta_star_inv <- lapply(list_sig2_beta_star_inv, function(sig2_beta_star_inv)
         sig2_beta_star_inv + diag(sig2_inv_vb, nrow = nrow(sig2_beta_star_inv)))
 
@@ -70,8 +72,6 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       # % #
 
       log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
-
-      digam_sum <- digamma(a + b + d)
 
 
       # different possible batch-coordinate ascent schemes:
@@ -151,6 +151,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       a_vb <- update_a_vb(a, rs_gam)
       b_vb <- update_b_vb(b, d, rs_gam)
       om_vb <- a_vb / (a_vb + b_vb)
+
 
       # % #
       eta_vb <- update_g_eta_vb_(n, eta, g_sizes, gam_vb)
