@@ -15,7 +15,7 @@
 #'
 #' @docType package
 #' @name locus-package
-#' @useDynLib locus
+#' @useDynLib locus, .registration = TRUE
 #' @import RcppEigen
 #' @importFrom Rcpp evalCpp
 #' @importFrom stats dnorm median pnorm qnorm rbeta rbinom rgamma rnorm setNames uniroot var
