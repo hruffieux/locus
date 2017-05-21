@@ -763,6 +763,9 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv, list_groups, list
 #' @export
 set_blocks <- function(p, pos_bl, n_cpus, verbose = TRUE) {
 
+  check_structure_(p, "vector", "numeric", 1)
+  check_natural_(p)
+
   check_structure_(verbose, "vector", "logical", 1)
 
   check_structure_(pos_bl, "vector", "numeric")
@@ -896,6 +899,7 @@ prepare_groups_ <- function(list_groups, X, q, r, bool_rmvd_x, link, list_cv) {
 #' in each group are approximated by a multivariate normal distribution, and
 #' they share a single binary latent selection variable.
 #'
+#' @param n Number of samples.
 #' @param p Number of candidate predictors.
 #' @param pos_gr Vector gathering the predictor group positions (first index of
 #'   each group). The predictors must be ordered by groups.
@@ -948,7 +952,7 @@ prepare_groups_ <- function(list_groups, X, q, r, bool_rmvd_x, link, list_cv) {
 #'
 #' n_gr <- 100
 #' pos_gr <- seq(1, p, by = ceiling(p/n_gr))
-#' list_groups <- set_groups(p, pos_gr)
+#' list_groups <- set_groups(n, p, pos_gr)
 #'
 #' g0_av <- 50 # Number of active groups. /!\ Often best to set it large, as a
 #'             # too small value may (wrong) result in no group being selected.
@@ -960,7 +964,13 @@ prepare_groups_ <- function(list_groups, X, q, r, bool_rmvd_x, link, list_cv) {
 #'
 #' @export
 #'
-set_groups <- function(p, pos_gr, verbose = TRUE) {
+set_groups <- function(n, p, pos_gr, verbose = TRUE) {
+
+  check_structure_(n, "vector", "numeric", 1)
+  check_natural_(n)
+
+  check_structure_(p, "vector", "numeric", 1)
+  check_natural_(p)
 
   check_structure_(verbose, "vector", "logical", 1)
 
@@ -981,6 +991,14 @@ set_groups <- function(p, pos_gr, verbose = TRUE) {
     stop("The positions provided in pos_gr must be monotonically increasing.")
 
   vec_fac_gr <- as.factor(cumsum(seq_along(1:p) %in% pos_gr))
+
+  if (length(unique(vec_fac_gr)) == p)
+    stop(paste("All the groups are of size one, no group selection will be performed. ",
+               "Set argument list_groups to NULL in the locus function.", sep = ""))
+
+  if (max(table(vec_fac_gr)) >= n)
+    stop(paste("One or more group size(s) is greater or equal to n.  ",
+               "Corresponding empirical covariances not positive definite. Use smaller group sizes.", sep = ""))
 
   if (verbose) print(paste("Number of groups: ", length(unique(vec_fac_gr)), sep = ""))
 
@@ -1115,6 +1133,12 @@ prepare_struct_ <- function(list_struct, n, q, r, bool_rmvd_x, link, list_cv, li
 #'
 set_struct <- function(n, p, pos_st, verbose = TRUE) {
 
+  check_structure_(n, "vector", "numeric", 1)
+  check_natural_(n)
+
+  check_structure_(p, "vector", "numeric", 1)
+  check_natural_(p)
+
   check_structure_(verbose, "vector", "logical", 1)
 
   check_structure_(pos_st, "vector", "numeric")
@@ -1134,6 +1158,10 @@ set_struct <- function(n, p, pos_st, verbose = TRUE) {
     stop("The positions provided in pos_st must be monotonically increasing.")
 
   vec_fac_st <- as.factor(cumsum(seq_along(1:p) %in% pos_st))
+
+  if (length(unique(vec_fac_st)) == p)
+    stop(paste("All the blocks are of size one, no structured selection will be performed. ",
+               "Set argument list_struct to NULL in the locus function.", sep = ""))
 
   if (max(table(vec_fac_st)) >= n)
     stop(paste("One or more block size(s) is greater or equal to n.  ",

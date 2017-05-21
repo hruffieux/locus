@@ -4,9 +4,11 @@
 \alias{set_groups}
 \title{Gather settings for application of the `locus` function with group selection.}
 \usage{
-set_groups(p, pos_gr, verbose = TRUE)
+set_groups(n, p, pos_gr, verbose = TRUE)
 }
 \arguments{
+\item{n}{Number of samples.}
+
 \item{p}{Number of candidate predictors.}
 
 \item{pos_gr}{Vector gathering the predictor group positions (first index of
@@ -70,7 +72,7 @@ Y <- cbind(Y_act, Y_inact)[, shuff_y_ind]
 
 n_gr <- 100
 pos_gr <- seq(1, p, by = ceiling(p/n_gr))
-list_groups <- set_groups(p, pos_gr)
+list_groups <- set_groups(n, p, pos_gr)
 
 g0_av <- 50 # Number of active groups. /!\\ Often best to set it large, as a
             # too small value may (wrong) result in no group being selected.
