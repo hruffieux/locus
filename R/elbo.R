@@ -200,7 +200,7 @@ e_tau_ <- function(eta, eta_vb, kappa, kappa_vb, log_tau_vb, tau_vb) {
 ############################################
 
 # S0_inv is assumed to be block-diagonal
-e_theta_ <- function(m0, mu_theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_st) {
+e_theta_ <- function(m0, mu_theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_st, vec_sum_log_det) {
 
   bl_ids <- unique(vec_fac_st)
   n_bl <- length(list_S0_inv)
@@ -212,7 +212,7 @@ e_theta_ <- function(m0, mu_theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_s
     S0_inv_bl <- list_S0_inv[[bl]]
     sig2_theta_vb_bl <- list_sig2_theta_vb[[bl]]
 
-    (log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl)) -
+    (vec_sum_log_det[bl] - # vec_sum_log_det[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
        crossprod((mu_theta_vb_bl - m0_bl),
                  S0_inv_bl %*% (mu_theta_vb_bl - m0_bl)) -
        sum(S0_inv_bl * sig2_theta_vb_bl) + ncol(S0_inv_bl)) / 2 # trace of a product

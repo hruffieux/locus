@@ -27,6 +27,8 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
 
     list_sig2_theta_vb <- update_sig2_theta_vb_(d, list_S0_inv)
 
+    vec_sum_log_det <- log_det(list_S0_inv) + log_det(list_sig2_theta_vb) # vec_sum_log_det[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
+
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
     m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
@@ -89,8 +91,8 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
 
 
       } else if (batch == "0"){ # no batch, used only internally
-        # schemes "x" of "x-y" are not batch concave
-        # hence not implemented as they may diverge
+                                # schemes "x" of "x-y" are not batch concave
+                                # hence not implemented as they may diverge
 
         for (k in 1:d) {
 
@@ -130,7 +132,7 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
       lb_new <- elbo_struct_(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                              lambda_vb, m0, mu_theta_vb, nu, nu_vb, sig2_beta_vb,
                              list_S0_inv, list_sig2_theta_vb, sig2_inv_vb, tau_vb,
-                             m1_beta, m2_beta, mat_x_m1, vec_fac_st)
+                             m1_beta, m2_beta, mat_x_m1, vec_fac_st, vec_sum_log_det)
 
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
@@ -160,7 +162,7 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
       create_named_list_(eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                          lambda_vb, m0, mu_theta_vb, nu, nu_vb, sig2_beta_vb,
                          list_S0_inv, list_sig2_theta_vb, sig2_inv_vb, tau_vb,
-                         m1_beta, m2_beta, vec_fac_st)
+                         m1_beta, m2_beta, vec_fac_st, vec_sum_log_det)
 
     } else {
 
@@ -188,7 +190,7 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
 elbo_struct_ <- function(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                          lambda_vb, m0, mu_theta_vb, nu, nu_vb, sig2_beta_vb,
                          list_S0_inv, list_sig2_theta_vb, sig2_inv_vb, tau_vb,
-                         m1_beta, m2_beta, mat_x_m1, vec_fac_st) {
+                         m1_beta, m2_beta, mat_x_m1, vec_fac_st, vec_sum_log_det) {
 
 
   n <- nrow(Y)
@@ -211,7 +213,7 @@ elbo_struct_ <- function(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                                  mu_theta_vb, m2_beta, sig2_beta_vb,
                                  list_sig2_theta_vb, sig2_inv_vb, tau_vb)
 
-  elbo_C <- e_theta_(m0, mu_theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_st)
+  elbo_C <- e_theta_(m0, mu_theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_st, vec_sum_log_det)
 
   elbo_D <- e_tau_(eta, eta_vb, kappa, kappa_vb, log_tau_vb, tau_vb)
 
