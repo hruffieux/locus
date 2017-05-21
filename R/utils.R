@@ -15,7 +15,8 @@ check_natural_ <- function(x, eps = .Machine$double.eps^0.75){
 
 check_positive_ <- function(x, eps = .Machine$double.eps^0.75){
   if (any(x < eps)) {
-    err_mess <- paste(deparse(substitute(x)), " must be positive.", sep="")
+    err_mess <- paste(deparse(substitute(x)), " must be positive, greater than ",
+                      format(eps, digits = 3), ".", sep="")
     if (length(x) > 1) err_mess <- paste("All entries of ", err_mess, sep="")
     stop(err_mess)
   }
