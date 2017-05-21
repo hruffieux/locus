@@ -345,11 +345,25 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 # Internal function setting default model hyperparameters when not provided by
 # the user.
 #
-auto_set_hyper_ <- function(Y, G, p, p_star, q, r, link, ind_bin, bool_struct) {
+auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_fac_gr) {
 
   d <- ncol(Y)
 
-  lambda <- 1e-2
+  if (is.null(vec_fac_gr)) {
+
+    G <- NULL
+    lambda <- 1e-2
+
+  } else {
+
+    G <- length(unique(vec_fac_gr))
+    lambda <- 50 * median(table(vec_fac_gr)) # we found empirically that the prior size
+                                             # of sig2_inv_vb should be proportional to median group size
+                                             # since the larger the groups, the smaller 1 / sig2_inv_vb.
+                                             # Otherwise, if 1 / sig2_inv_vb is too large, no group will be selected
+                                             # (as there are usually only a few `causal' covariates in the group).
+  }
+
   nu <- 1
 
   if (link %in% c("identity", "mix")) {

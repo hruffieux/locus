@@ -6,8 +6,8 @@
 # See help of `locus` function for details.
 #
 locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
-                              sig2_inv_vb, tau_vb, tol, maxit, verbose,
-                              batch = "y", full_output = FALSE, debug = FALSE) {
+                               sig2_inv_vb, tau_vb, tol, maxit, verbose,
+                               batch = "y", full_output = FALSE, debug = FALSE) {
 
 
   # Y must have been centered, and X, standardized.
@@ -32,13 +32,13 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
     list_m1_btXtXb <- update_g_m1_btXtXb_(list_X, gam_vb, list_mu_beta_vb,
                                           list_sig2_beta_star, tau_vb)
 
-
     mat_x_m1 <- update_g_mat_x_m1_(list_X, list_m1_beta)
 
-    log_tau_vb <- update_log_tau_vb_(eta, kappa) # do not update tau_vb here as
-                                                 # its current form was already used
-                                                 # in list_m1_btb as part of the vb
-                                                 # parameter sig2_beta = sig2_beta_star / tau_vb
+
+    log_tau_vb <- update_log_tau_vb_(eta, kappa)  # do not update tau_vb here as
+                                                  # its current form was already used
+                                                  # in list_m1_btb as part of the vb
+                                                  # parameter sig2_beta = sig2_beta_star / tau_vb
     rs_gam <- rowSums(gam_vb)
     digam_sum <- digamma(a + b + d)
 
@@ -63,12 +63,12 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
       sig2_inv_vb <- lambda_vb / nu_vb
 
-
       list_sig2_beta_star_inv <- lapply(list_sig2_beta_star_inv, function(sig2_beta_star_inv)
         sig2_beta_star_inv + diag(sig2_inv_vb, nrow = nrow(sig2_beta_star_inv)))
 
       list_sig2_beta_star <- lapply(list_sig2_beta_star_inv, solve)
 
+      vec_log_det <- log_det(list_sig2_beta_star)
       # % #
 
       log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
@@ -89,8 +89,8 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
           gam_vb[g, ] <- exp(-log_one_plus_exp_(log_1_min_om_vb[g] - log_om_vb[g] -
                                                   g_sizes[g] * (log_sig2_inv_vb + log_tau_vb - log(tau_vb)) / 2 - # |g| * log(tau_vb) /2 came out of the determinant
                                                   colSums(list_mu_beta_vb[[g]] *
-                                                                  (list_sig2_beta_star_inv[[g]] %*% list_mu_beta_vb[[g]])) * tau_vb / 2 -
-                                                  log(det(list_sig2_beta_star[[g]])) / 2))
+                                                            (list_sig2_beta_star_inv[[g]] %*% list_mu_beta_vb[[g]])) * tau_vb / 2 -
+                                                  vec_log_det[g] / 2))
 
           list_m1_beta[[g]] <- sweep(list_mu_beta_vb[[g]], 2, gam_vb[g, ], `*`)
 
@@ -123,7 +123,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
             gam_vb[g, k] <- exp(-log_one_plus_exp_(log_1_min_om_vb[g] - log_om_vb[g] -
                                                      g_sizes[g] * (log_sig2_inv_vb + log_tau_vb[k] - log(tau_vb[k])) / 2 -
                                                      sum(list_mu_beta_vb[[g]][, k] * (list_sig2_beta_star_inv[[g]] %*% list_mu_beta_vb[[g]][, k])) * tau_vb[k] / 2 -
-                                                     log(det(list_sig2_beta_star[[g]])) / 2))
+                                                     vec_log_det[g] / 2))
 
             list_m1_beta[[g]][, k] <- list_mu_beta_vb[[g]][, k] * gam_vb[g, k]
 
@@ -142,8 +142,8 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       }
 
 
-      list_m1_btb <- update_g_m1_btb_(gam_vb, list_mu_beta_vb, list_sig2_beta_star,
-                                      tau_vb)
+      list_m1_btb <- update_g_m1_btb_(gam_vb, list_mu_beta_vb, list_sig2_beta_star, tau_vb)
+
       list_m1_btXtXb <- update_g_m1_btXtXb_(list_X, gam_vb, list_mu_beta_vb,
                                             list_sig2_beta_star, tau_vb)
 
@@ -162,7 +162,8 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       lb_new <- elbo_group_(Y, list_X, a, a_vb, b, b_vb, eta, eta_vb, g_sizes,
                             gam_vb, kappa, kappa_vb, lambda, lambda_vb, nu, nu_vb,
                             rs_gam, list_sig2_beta_star, sig2_inv_vb, tau_vb,
-                            list_m1_beta, list_m1_btb, list_m1_btXtXb, mat_x_m1)
+                            vec_log_det, list_m1_beta, list_m1_btb,
+                            list_m1_btXtXb, mat_x_m1)
 
       tau_vb <- eta_vb / kappa_vb # has to be updated after the elbo, as list_sig2_beta_star depends on it.
       # % #
@@ -178,7 +179,6 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       converged <- (abs(lb_new - lb_old) < tol)
 
     }
-
 
 
     if (verbose) {
@@ -197,16 +197,12 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       create_named_list_(a, a_vb, b, b_vb, eta, eta_vb, g_sizes,
                          gam_vb, kappa, kappa_vb, lambda, lambda_vb, nu, nu_vb,
                          rs_gam, list_sig2_beta_star, sig2_inv_vb, tau_vb,
-                         list_m1_beta, list_m1_btb, list_m1_btXtXb)
+                         vec_log_det, list_m1_beta, list_m1_btb, list_m1_btXtXb)
     } else {
-      names_x <- colnames(X)
       names_y <- colnames(Y)
 
-      names_G <- NULL
-      for (g_s in g_sizes) {
-        names_G <- c(names_G, paste(as.character(names_x[1:g_s]), collapse = "-"))
-        names_x <- names_x[-c(1:g_s)]
-      }
+      names_G <- unlist(lapply(list_X,
+                               function(X_g) paste(as.character(colnames(X_g)), collapse = "-")))
 
       rownames(gam_vb) <- names_G
       colnames(gam_vb) <- names_y
@@ -227,7 +223,8 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 elbo_group_ <- function(Y, list_X, a, a_vb, b, b_vb, eta, eta_vb, g_sizes,
                         gam_vb, kappa, kappa_vb, lambda, lambda_vb, nu, nu_vb,
                         rs_gam, list_sig2_beta_star, sig2_inv_vb, tau_vb,
-                        list_m1_beta, list_m1_btb, list_m1_btXtXb, mat_x_m1) {
+                        vec_log_det, list_m1_beta, list_m1_btb, list_m1_btXtXb,
+                        mat_x_m1) {
 
   n <- nrow(Y)
 
@@ -241,7 +238,7 @@ elbo_group_ <- function(Y, list_X, a, a_vb, b, b_vb, eta, eta_vb, g_sizes,
 
   elbo_B <- e_g_beta_gamma_(gam_vb, g_sizes, log_om_vb, log_1_min_om_vb,
                             log_sig2_inv_vb, log_tau_vb, list_m1_btb,
-                            list_sig2_beta_star, sig2_inv_vb, tau_vb)
+                            list_sig2_beta_star, sig2_inv_vb, tau_vb, vec_log_det)
 
   elbo_C <- e_tau_(eta, eta_vb, kappa, kappa_vb, log_tau_vb, tau_vb)
 

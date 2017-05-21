@@ -276,7 +276,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
     if (verbose) cat("list_hyper set automatically. \n")
 
     bool_struct <- !ns
-    list_hyper <- auto_set_hyper_(Y, G, p, p_star, q, r, link, ind_bin, bool_struct)
+    list_hyper <- auto_set_hyper_(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_fac_gr)
 
   } else {
 

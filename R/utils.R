@@ -118,6 +118,14 @@ log_sigmoid_ <- function(chi) {
 
 }
 
+log_det <- function(list_mat) {
+
+  sapply(list_mat, function(mat) {
+    log_det <- determinant(mat, logarithm = TRUE)
+    log_det$modulus * log_det$sign
+  })
+
+}
 
 inv_mills_ratio_ <- function(Y, U) {
 
