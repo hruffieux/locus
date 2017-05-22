@@ -71,24 +71,13 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
 
       if (batch == "y") { # optimal scheme
 
-        for (j in 1:p) {
+        log_Phi_mu_theta_vb <- pnorm(mu_theta_vb, log.p = TRUE)
+        log_1_min_Phi_mu_theta_vb <- pnorm(mu_theta_vb, lower.tail = FALSE, log.p = TRUE)
 
-          mat_x_m1 <- mat_x_m1 - tcrossprod(X[, j], m1_beta[j, ])
-
-          mu_beta_vb[j, ] <- sig2_beta_vb * (tau_vb * crossprod(Y - mat_x_m1, X[, j]))
-
-          gam_vb[j, ] <- exp(-log_one_plus_exp_(pnorm(mu_theta_vb[j], lower.tail = FALSE, log.p = TRUE) -
-                                                  pnorm(mu_theta_vb[j], log.p = TRUE) -
-                                                  log_tau_vb / 2 - log_sig2_inv_vb / 2 -
-                                                  mu_beta_vb[j, ] ^ 2 / (2 * sig2_beta_vb) -
-                                                  log(sig2_beta_vb) / 2))
-
-          m1_beta[j, ] <- gam_vb[j, ] * mu_beta_vb[j, ]
-
-          mat_x_m1 <- mat_x_m1 + tcrossprod(X[, j], m1_beta[j, ])
-
-        }
-
+        # C++ Eigen call for expensive updates
+        coreStructLoop(X, Y, gam_vb, log_Phi_mu_theta_vb, log_1_min_Phi_mu_theta_vb,
+                       log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb,
+                       sig2_beta_vb, tau_vb)
 
       } else if (batch == "0"){ # no batch, used only internally
                                 # schemes "x" of "x-y" are not batch concave

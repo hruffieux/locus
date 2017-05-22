@@ -238,3 +238,24 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// coreStructLoop
+void coreStructLoop(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr1D log_Phi_mu_theta_vb, const MapArr1D log_1_min_Phi_mu_theta_vb, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat m1_beta, MapMat mat_x_m1, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb);
+RcppExport SEXP locus_coreStructLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_Phi_mu_theta_vbSEXP, SEXP log_1_min_Phi_mu_theta_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const MapMat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< MapArr2D >::type gam_vb(gam_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_Phi_mu_theta_vb(log_Phi_mu_theta_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_1_min_Phi_mu_theta_vb(log_1_min_Phi_mu_theta_vbSEXP);
+    Rcpp::traits::input_parameter< const double >::type log_sig2_inv_vb(log_sig2_inv_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_tau_vb(log_tau_vbSEXP);
+    Rcpp::traits::input_parameter< MapMat >::type m1_beta(m1_betaSEXP);
+    Rcpp::traits::input_parameter< MapMat >::type mat_x_m1(mat_x_m1SEXP);
+    Rcpp::traits::input_parameter< MapArr2D >::type mu_beta_vb(mu_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type sig2_beta_vb(sig2_beta_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type tau_vb(tau_vbSEXP);
+    coreStructLoop(X, Y, gam_vb, log_Phi_mu_theta_vb, log_1_min_Phi_mu_theta_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb);
+    return R_NilValue;
+END_RCPP
+}
