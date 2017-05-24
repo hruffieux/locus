@@ -81,7 +81,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
-        for (i in 1:q) {
+        for (i in sample(1:q)) {
           mat_z_mu <- mat_z_mu - tcrossprod(Z[, i], mu_alpha_vb[i, ])
 
           mu_alpha_vb[i, ] <- sig2_alpha_vb[i, ] * (tau_vb *
@@ -91,9 +91,11 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
         }
 
         # C++ Eigen call for expensive updates
+        shuffled_ind <- as.numeric(sample(0:(p-1))) # Zero-based index in C++
+
         coreZLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
                   log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb,
-                  sig2_beta_vb, tau_vb)
+                  sig2_beta_vb, tau_vb, shuffled_ind)
 
         rs_gam <- rowSums(gam_vb)
 
@@ -102,7 +104,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
-        for (k in 1:d) {
+        for (k in sample(1:d)) {
 
           mu_alpha_vb[, k] <- sig2_alpha_vb[, k] * tau_vb[k] *
             (crossprod(Y[, k]  - mat_z_mu[, k] - mat_x_m1[, k], Z) +  (n - 1) * mu_alpha_vb[, k])
@@ -143,12 +145,12 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
 
       } else if (batch == "0"){ # no batch, used only internally
 
-        for (k in 1:d) {
+        for (k in sample(1:d)) {
 
           log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
           log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
-          for (i in 1:q) {
+          for (i in sample(1:q)) {
 
             mat_z_mu[, k] <- mat_z_mu[, k] - Z[, i] * mu_alpha_vb[i, k]
 
@@ -158,7 +160,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, mu_alpha_vb, mu_beta_vb,
             mat_z_mu[, k] <- mat_z_mu[, k] + Z[, i] * mu_alpha_vb[i, k]
           }
 
-          for (j in 1:p) {
+          for (j in sample(1:p)) {
 
             mat_x_m1[, k] <- mat_x_m1[, k] - X[, j] * m1_beta[j, k]
 

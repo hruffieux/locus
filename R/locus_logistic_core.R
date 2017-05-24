@@ -76,7 +76,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
-        for (i in 1:q) {
+        for (i in sample(1:q)) {
           mat_z_mu <- mat_z_mu - tcrossprod(Z[, i], mu_alpha_vb[i, ])
 
           mu_alpha_vb[i, ] <- sig2_alpha_vb[i, ] * crossprod(Y - 2 * psi_vb * (mat_z_mu + mat_x_m1), Z[, i])
@@ -85,8 +85,11 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
         }
 
         # C++ Eigen call for expensive updates
+        shuffled_ind <- as.numeric(sample(0:(p-1))) # Zero-based index in C++
+
         coreLogitLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
-                      m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, psi_vb, sig2_beta_vb)
+                      m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, psi_vb,
+                      sig2_beta_vb, shuffled_ind)
 
         rs_gam <- rowSums(gam_vb)
 
@@ -96,7 +99,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
-        for (k in 1:d) {
+        for (k in sample(1:d)) {
 
           mu_alpha_vb[, k] <- sig2_alpha_vb[, k] * (crossprod(Y[, k] - 2 * psi_vb[, k] * (mat_z_mu[, k] + mat_x_m1[, k]), Z) +
                                                       colSums(sweep(sweep(Z, 2, mu_alpha_vb[, k], `*`), 1, 2 * psi_vb[, k], `*`) * Z))
@@ -152,12 +155,12 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
       } else if (batch == "0"){ # no batch, used only internally
 
 
-        for (k in 1:d) {
+        for (k in sample(1:d)) {
 
           log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
           log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
-          for (i in 1:q) {
+          for (i in sample(1:q)) {
 
             mat_z_mu[, k] <- mat_z_mu[, k] - Z[, i] * mu_alpha_vb[i, k]
 
@@ -168,7 +171,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
 
           }
 
-          for (j in 1:p) {
+          for (j in sample(1:p)) {
 
             mat_x_m1[, k] <- mat_x_m1[, k] - X[, j] * m1_beta[j, k]
 

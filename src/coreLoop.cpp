@@ -14,6 +14,7 @@
 
 #include "utils.h"
 
+
 // for locus_core function
 // [[Rcpp::export]]
 void coreLoop(const MapMat X,
@@ -27,11 +28,14 @@ void coreLoop(const MapMat X,
               MapMat mat_x_m1,
               MapArr2D mu_beta_vb,
               const MapArr1D sig2_beta_vb,
-              const MapArr1D tau_vb) {
+              const MapArr1D tau_vb,
+              const MapArr1D shuffled_ind) {
 
   const Arr1D c = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
-  for (int j = 0; j < X.cols(); ++j) {
+  for (int i = 0; i < X.cols(); ++i) {
+
+    int j = shuffled_ind[i];
 
     mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
 
@@ -50,6 +54,7 @@ void coreLoop(const MapMat X,
 }
 
 
+
 // for locus_z_core and locus_mix_core function
 // [[Rcpp::export]]
 void coreZLoop(const MapMat X,
@@ -64,11 +69,14 @@ void coreZLoop(const MapMat X,
                MapMat mat_z_mu,
                MapArr2D mu_beta_vb,
                const MapArr1D sig2_beta_vb,
-               const MapArr1D tau_vb) {
+               const MapArr1D tau_vb,
+               const MapArr1D shuffled_ind) {
 
   const Arr1D c = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
-  for (int j = 0; j < X.cols(); ++j) {
+  for (int i = 0; i < X.cols(); ++i) {
+
+    int j = shuffled_ind[i];
 
     mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
 
@@ -100,9 +108,12 @@ void coreLogitLoop(const MapMat X,
                    MapArr2D mat_z_mu,
                    MapArr2D mu_beta_vb,
                    const MapArr2D psi_vb,
-                   const MapArr2D sig2_beta_vb) {
+                   const MapArr2D sig2_beta_vb,
+                   const MapArr1D shuffled_ind) {
 
-  for (int j = 0; j < X.cols(); ++j) {
+  for (int i = 0; i < X.cols(); ++i) {
+
+    int j = shuffled_ind[i];
 
     mat_x_m1.matrix().noalias() -= X.col(j) * m1_beta.row(j);
 
@@ -134,11 +145,14 @@ void coreProbitLoop(const MapMat X,
                     MapMat mat_x_m1,
                     MapMat mat_z_mu,
                     MapArr2D mu_beta_vb,
-                    const double sig2_beta_vb) {
+                    const double sig2_beta_vb,
+                    const MapArr1D shuffled_ind) {
 
   const double c = -(log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
-  for (int j = 0; j < X.cols(); ++j) {
+  for (int i = 0; i < X.cols(); ++i) {
+
+    int j = shuffled_ind[i];
 
     mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
 

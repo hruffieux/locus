@@ -7,7 +7,7 @@
 #
 locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
                              mu_c_vb, sig2_beta_vb, tau_vb, tol, maxit, verbose,
-                             batch = "y", full_output = FALSE, debug = FALSE) {
+                             batch = "0", full_output = FALSE, debug = FALSE) {
 
   # Y must have been centered, and X, V standardized.
 
@@ -70,9 +70,11 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
         log_1_min_Phi_mat_v_mu <- pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE)
 
         # C++ Eigen call for expensive updates
+        shuffled_ind <- as.numeric(sample(0:(p-1))) # Zero-based index in C++
+
         coreInfoLoop(X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu,
                      log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb,
-                     sig2_beta_vb, tau_vb)
+                     sig2_beta_vb, tau_vb, shuffled_ind)
 
         mat_v_mu <- sweep(mat_v_mu, 1, mu_c0_vb, `-`)
 
@@ -80,7 +82,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
         mat_v_mu <- sweep(mat_v_mu, 1, mu_c0_vb, `+`)
 
-        for (l in 1:r) {
+        for (l in sample(1:r)) {
 
           mat_v_mu <- mat_v_mu - tcrossprod(V[, l], mu_c_vb[l, ])
 
@@ -95,9 +97,9 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
         # hence not implemented as they may diverge
 
 
-        for (k in 1:d) {
+        for (k in sample(1:d)) {
 
-          for (j in 1:p) {
+          for (j in sample(1:p)) {
 
             mat_x_m1[, k] <- mat_x_m1[, k] - X[, j] * m1_beta[j, k]
 
@@ -121,7 +123,7 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
           mat_v_mu <- sweep(mat_v_mu, 1, mu_c0_vb, `+`)
 
-          for (l in 1:r) {
+          for (l in sample(1:r)) {
 
             mat_v_mu[, k] <- mat_v_mu[, k] - V[, l] * mu_c_vb[l, k]
 
