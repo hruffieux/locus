@@ -11,13 +11,19 @@ same covariates is captured through the model hierarchical structure
 (H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva, Efficient inference 
 for genetic association studies with multiple outcomes, *Biostatistics*, 2017). 
 
+## Warning
+
+**This is a development branch**, it is not guaranteed to be stable at any given time 
+and features are subject to change. Please use the [stable version](https://github.com/hruffieux/locus),
+unless you want to test and report issues.
+
 ## Installation
 
 To install, run the following commands in R:
 
 ``` r
 install.packages("devtools")
-devtools::install_github("hruffieux/locus")
+devtools::install_github("hruffieux/locus", ref = "devel")
 ```
 
 ## Algorithms
