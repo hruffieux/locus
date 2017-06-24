@@ -7,7 +7,7 @@
 #
 locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
                              mu_c_vb, sig2_beta_vb, tau_vb, tol, maxit, verbose,
-                             batch = "0", full_output = FALSE, debug = FALSE) {
+                             batch = "y", full_output = FALSE, debug = FALSE) {
 
   # Y must have been centered, and X, V standardized.
 
