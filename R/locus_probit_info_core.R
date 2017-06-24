@@ -75,7 +75,7 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
       if (batch == "y") { # some updates are made batch-wise
 
-        for (i in 1:q) {
+        for (i in sample(1:q)) {
 
           mat_z_mu <- mat_z_mu - tcrossprod(Z[, i], mu_alpha_vb[i, ])
 
@@ -89,9 +89,12 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
         log_1_min_Phi_mat_v_mu <- pnorm(mat_v_mu, lower.tail = FALSE, log.p = TRUE)
 
         # C++ Eigen call for expensive updates
+        shuffled_ind <- as.numeric(sample(0:(p-1))) # Zero-based index in C++
+
         coreProbitInfoLoop(X, Wy, gam_vb, log_Phi_mat_v_mu,
                            log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, m1_beta,
-                           mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb)
+                           mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb,
+                           shuffled_ind)
 
         mat_v_mu <- sweep(mat_v_mu, 1, mu_c0_vb, `-`)
 
@@ -100,7 +103,7 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
         mat_v_mu <- sweep(mat_v_mu, 1, mu_c0_vb, `+`)
 
 
-        for (l in 1:r) {
+        for (l in sample(1:r)) {
 
           mat_v_mu <- mat_v_mu - tcrossprod(V[, l], mu_c_vb[l, ])
 
@@ -112,9 +115,9 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
       } else if (batch == "0"){
 
-        for (k in 1:d) {
+        for (k in sample(1:d)) {
 
-          for (i in 1:q) {
+          for (i in sample(1:q)) {
 
             mat_z_mu[, k] <- mat_z_mu[, k] - Z[, i] * mu_alpha_vb[i, k]
 
@@ -125,7 +128,7 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
           }
 
 
-          for (j in 1:p) {
+          for (j in sample(1:p)) {
 
             mat_x_m1[, k] <- mat_x_m1[, k] - X[, j] * m1_beta[j, k]
 
@@ -149,7 +152,7 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
           mat_v_mu <- sweep(mat_v_mu, 1, mu_c0_vb, `+`)
 
-          for (l in 1:r) {
+          for (l in sample(1:r)) {
 
             mat_v_mu[, k] <- mat_v_mu[, k] - V[, l] * mu_c_vb[l, k]
 

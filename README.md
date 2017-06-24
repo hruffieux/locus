@@ -1,7 +1,7 @@
-# locus – large-scale variational inference for combined covariate and response selection in sparse regression models
+## locus – large-scale variational inference for combined covariate and response selection in sparse regression models
 
 [![Travis-CI Build Status](https://travis-ci.org/hruffieux/locus.svg?branch=master)](https://travis-ci.org/hruffieux/locus)
- 
+
 ## Overview
 
 **locus** is an R package providing efficient variational algorithms for
@@ -27,12 +27,13 @@ implement inference for regression models with
 
 * identity link;
 * logistic link;
-* probit link; 
+* probit link;
 * identity-probit link.
 
-Inference on a model for group selection is also implemented. Moreover, 
-covariate-level external information variables can be incorporated to inform 
-the selection.
+Inference on models for group selection and based on a spatial Gaussian process to 
+encode the dependence structure of the candidate predictors are also implemented. 
+Moreover, covariate-level external information variables can be incorporated to 
+inform the selection.
 
 ## License and authors
 

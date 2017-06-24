@@ -66,9 +66,13 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
+
         # C++ Eigen call for expensive updates
+        shuffled_ind <- as.numeric(sample(0:(p-1))) # Zero-based index in C++
+
         coreLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
-                 log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb)
+                 log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb,
+                 tau_vb, shuffled_ind)
 
 
         rs_gam <- rowSums(gam_vb)
@@ -78,7 +82,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
-        for (k in 1:d) {
+        for (k in sample(1:d)) {
 
           mu_beta_vb[, k] <- sig2_beta_vb[k] * tau_vb[k] *
             (crossprod(Y[, k] - mat_x_m1[, k], X) + (n - 1) * m1_beta[, k])
@@ -110,12 +114,12 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       } else if (batch == "0") { # no batch, used only internally
 
-        for (k in 1:d) {
+        for (k in sample(1:d)) {
 
           log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
           log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
-          for (j in 1:p) {
+          for (j in sample(1:p)) {
 
             mat_x_m1[, k] <- mat_x_m1[, k] - X[, j] * m1_beta[j, k]
 

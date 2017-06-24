@@ -28,11 +28,14 @@ void coreInfoLoop(const MapMat X,
                   MapMat mat_x_m1,
                   MapArr2D mu_beta_vb,
                   const MapArr1D sig2_beta_vb,
-                  const MapArr1D tau_vb) {
+                  const MapArr1D tau_vb,
+                  const MapArr1D shuffled_ind) {
 
   const Arr1D c = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
-  for (int j = 0; j < X.cols(); ++j) {
+  for (int i = 0; i < X.cols(); ++i) {
+
+    int j = shuffled_ind[i];
 
     mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
 
@@ -65,11 +68,14 @@ void coreZInfoLoop(const MapMat X,
                    const MapMat mat_z_mu,
                    MapArr2D mu_beta_vb,
                    const MapArr1D sig2_beta_vb,
-                   const MapArr1D tau_vb) {
+                   const MapArr1D tau_vb,
+                   const MapArr1D shuffled_ind) {
 
   const Arr1D c = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
-  for (int j = 0; j < X.cols(); ++j) {
+  for (int i = 0; i < X.cols(); ++i) {
+
+    int j = shuffled_ind[i];
 
     mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
 
@@ -101,9 +107,12 @@ void coreLogitInfoLoop(const MapMat X,
                        MapArr2D mat_z_mu,
                        MapArr2D mu_beta_vb,
                        const MapArr2D psi_vb,
-                       const MapArr2D sig2_beta_vb) {
+                       const MapArr2D sig2_beta_vb,
+                       const MapArr1D shuffled_ind) {
 
-  for (int j = 0; j < X.cols(); ++j) {
+  for (int i = 0; i < X.cols(); ++i) {
+
+    int j = shuffled_ind[i];
 
     mat_x_m1.matrix().noalias() -= X.col(j) * m1_beta.row(j);
 
@@ -135,11 +144,14 @@ void coreProbitInfoLoop(const MapMat X,
                         MapMat mat_x_m1,
                         MapMat mat_z_mu,
                         MapArr2D mu_beta_vb,
-                        const double sig2_beta_vb) {
+                        const double sig2_beta_vb,
+                        const MapArr1D shuffled_ind) {
 
   const double c = -(log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
-  for (int j = 0; j < X.cols(); ++j) {
+  for (int i = 0; i < X.cols(); ++i) {
+
+    int j = shuffled_ind[i];
 
     mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
 
