@@ -26,11 +26,14 @@ void coreStructLoop(const MapMat X,
                     MapMat mat_x_m1,
                     MapArr2D mu_beta_vb,
                     const MapArr1D sig2_beta_vb,
-                    const MapArr1D tau_vb) {
+                    const MapArr1D tau_vb,
+                    const MapArr1D shuffled_ind) {
 
   const Arr1D c = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
-  for (int j = 0; j < X.cols(); ++j) {
+  for (int i = 0; i < X.cols(); ++i) {
+
+    int j = shuffled_ind[i];
 
     mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
 

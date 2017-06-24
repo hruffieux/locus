@@ -75,17 +75,19 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
         log_1_min_Phi_mu_theta_vb <- pnorm(mu_theta_vb, lower.tail = FALSE, log.p = TRUE)
 
         # C++ Eigen call for expensive updates
+        shuffled_ind <- as.numeric(sample(0:(p-1))) # Zero-based index in C++
+
         coreStructLoop(X, Y, gam_vb, log_Phi_mu_theta_vb, log_1_min_Phi_mu_theta_vb,
                        log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb,
-                       sig2_beta_vb, tau_vb)
+                       sig2_beta_vb, tau_vb, shuffled_ind)
 
       } else if (batch == "0"){ # no batch, used only internally
                                 # schemes "x" of "x-y" are not batch concave
                                 # hence not implemented as they may diverge
 
-        for (k in 1:d) {
+        for (k in sample(1:d)) {
 
-          for (j in 1:p) {
+          for (j in sample(1:p)) {
 
             mat_x_m1[, k] <- mat_x_m1[, k] - X[, j] * m1_beta[j, k]
 

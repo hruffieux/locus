@@ -919,7 +919,7 @@ prepare_groups_ <- function(list_groups, X, q, r, bool_rmvd_x, link, list_cv) {
 #'
 #' ## Example using small problem sizes:
 #' ##
-#' n <- 200; p <- 300; p0 <- 100; d <- 50; d0 <- 40
+#' n <- 200; p <- 250; p0 <- 75; d <- 50; d0 <- 40
 #'
 #' ## Candidate predictors (subject to selection)
 #' ##

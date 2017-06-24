@@ -81,7 +81,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
         log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
         log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
-        for (g in 1:G) {
+        for (g in sample(1:G)) {
           mat_x_m1 <- mat_x_m1 - list_X[[g]] %*% list_m1_beta[[g]]
 
           list_mu_beta_vb[[g]] <- list_sig2_beta_star[[g]] %*% crossprod(list_X[[g]], Y - mat_x_m1)
@@ -109,12 +109,12 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
       } else if (batch == "0") { # no batch, used only internally
 
-        for (k in 1:d) {
+        for (k in sample(1:d)) {
 
           log_om_vb <- update_log_om_vb(a, digam_sum, rs_gam)
           log_1_min_om_vb <- update_log_1_min_om_vb(b, d, digam_sum, rs_gam)
 
-          for (g in 1:G) {
+          for (g in sample(1:G)) {
 
             mat_x_m1[, k] <- mat_x_m1[, k] - list_X[[g]] %*% list_m1_beta[[g]][, k]
 
