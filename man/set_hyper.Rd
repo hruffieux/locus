@@ -6,7 +6,7 @@
 \usage{
 set_hyper(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
   ind_bin = NULL, q = NULL, phi = NULL, xi = NULL, r = NULL,
-  m0 = NULL, G = NULL, bool_struct = FALSE)
+  m0 = NULL, n0 = NULL, G = NULL, bool_struct = FALSE)
 }
 \arguments{
 \item{d}{Number of responses.}
@@ -74,10 +74,15 @@ repeated q times. Default is \code{NULL}, for \code{Z} \code{NULL}.}
 candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.}
 
 \item{m0}{Vector of length 1 or p providing the values of hyperparameter
-\eqn{m0} for the prior distribution of \eqn{c0} linked to the proportion of
-responses associated with each candidate predictor. If of length 1, the
-provided value is repeated p times. Default is \code{NULL}, for both
-\code{V} and \code{list_struct} \code{NULL}.}
+\eqn{m0} related to the proportion of responses associated with each
+candidate predictor. If of length 1, the provided value is repeated p
+times. Default is \code{NULL}, for both \code{V} and \code{list_struct}
+\code{NULL}.}
+
+\item{n0}{Only used for dual propensity control; default is \code{NULL}.
+Vector of length 1 or d providing the values of hyperparameter
+ \eqn{n0} related to the proportion of predictors associated with each
+ response. If of length 1, the provided value is repeated d times.}
 
 \item{G}{Number of candidate predictor groups when using the group selection
 model from the \code{\link{locus}} function. Default is \code{NULL},

@@ -137,6 +137,33 @@ e_beta_gamma_struct_ <- function(gam_vb, log_sig2_inv_vb, log_tau_vb, mu_theta_v
 }
 
 
+e_beta_gamma_dual_ <- function(gam_vb, log_sig2_inv_vb, log_tau_vb,
+                               mu_rho_vb, mu_theta_vb, m2_beta,
+                               sig2_beta_vb, sig2_rho_vb,
+                               list_sig2_theta_vb, sig2_inv_vb, tau_vb) {
+
+  eps <- .Machine$double.eps^0.75 # to control the argument of the log when gamma is very small
+
+  d <- length(tau_vb)
+
+  diag_sig2_theta_vb <- unlist(lapply(list_sig2_theta_vb, diag))
+  diag_sig2_rho_vb <- diag(sig2_rho_vb)
+
+  mat_struct <- sweep(tcrossprod(mu_theta_vb, rep(1, d)), 2, mu_rho_vb, `+`)
+
+  sum(log_sig2_inv_vb * gam_vb / 2 +
+        sweep(gam_vb, 2, log_tau_vb, `*`) / 2 -
+        sweep(m2_beta, 2, tau_vb, `*`) * sig2_inv_vb / 2 +
+        gam_vb * pnorm(mat_struct, log.p = TRUE) +
+        sweep(sweep((1 - gam_vb) * pnorm(mat_struct, lower.tail = FALSE, log.p = TRUE),
+                    1, diag_sig2_theta_vb / 2, `-`),
+              2, diag_sig2_rho_vb / 2, `-`) +
+        1 / 2 * sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) -
+        gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
+
+}
+
+
 ######################################
 ## E log p(c0 | rest) - E log q(c0) ##
 ######################################
@@ -167,6 +194,19 @@ e_c_ <- function(mu_c_vb, s2, sig2_c_vb) {
 e_omega_ <- function(a, a_vb, b, b_vb, log_om_vb, log_1_min_om_vb) {
 
   sum((a - a_vb) * log_om_vb + (b - b_vb) * log_1_min_om_vb - lbeta(a, b) + lbeta(a_vb, b_vb))
+
+}
+
+
+############################################
+## E log p(rho | rest) - E log q(rho) ##
+############################################
+
+e_rho_ <- function(mu_rho_vb, n0, sig2_rho_vb, T0_inv, vec_sum_log_det_rho) {
+
+  sum(vec_sum_log_det_rho - # vec_sum_log_det_rho = log(det(T0_inv)) + log(det(sig2_rho_vb))
+    crossprod((mu_rho_vb - n0), T0_inv %*% (mu_rho_vb - n0)) -
+    sum(T0_inv * sig2_rho_vb) + ncol(T0_inv)) / 2 # trace of a product
 
 }
 

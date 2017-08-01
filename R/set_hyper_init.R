@@ -62,10 +62,14 @@
 #' @param r Number of variables representing external information on the
 #'   candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.
 #' @param m0 Vector of length 1 or p providing the values of hyperparameter
-#'   \eqn{m0} for the prior distribution of \eqn{c0} linked to the proportion of
-#'   responses associated with each candidate predictor. If of length 1, the
-#'   provided value is repeated p times. Default is \code{NULL}, for both
-#'   \code{V} and \code{list_struct} \code{NULL}.
+#'   \eqn{m0} related to the proportion of responses associated with each
+#'   candidate predictor. If of length 1, the provided value is repeated p
+#'   times. Default is \code{NULL}, for both \code{V} and \code{list_struct}
+#'   \code{NULL}.
+#' @param n0 Only used for dual propensity control; default is \code{NULL}.
+#'  Vector of length 1 or d providing the values of hyperparameter
+#'   \eqn{n0} related to the proportion of predictors associated with each
+#'   response. If of length 1, the provided value is repeated d times.
 #' @param G Number of candidate predictor groups when using the group selection
 #'   model from the \code{\link{locus}} function. Default is \code{NULL},
 #'   for no group selection.
@@ -204,7 +208,7 @@
 #'
 set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
                       ind_bin = NULL, q = NULL, phi = NULL, xi = NULL,
-                      r = NULL, m0 = NULL, G = NULL, bool_struct = FALSE) {
+                      r = NULL, m0 = NULL, n0 = NULL, G = NULL, bool_struct = FALSE) {
 
   check_structure_(d, "vector", "numeric", 1)
   check_natural_(d)
@@ -233,10 +237,11 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 
   ind_bin <- prepare_ind_bin_(d, ind_bin, link)
 
+  nd <- is.null(n0)
   nr <- is.null(r)
   ns <- !bool_struct
 
-  if (nr & ns) {
+  if (nd & nr & ns) {
 
     if (is.null(G)) {
 
@@ -260,12 +265,12 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
     check_positive_(b)
 
 
-    s02 <- s2 <- NULL
+    s02 <- s2 <- t02 <- NULL
 
     if (!is.null(m0))
       stop("Provided r = NULL and bool_struct = FALSE, not consitent with m0 being non-null.")
 
-  } else { # either !nr or !ns
+  } else {
 
     check_structure_(m0, "vector", "double", c(1, p))
     if (length(m0) == 1) m0 <- rep(m0, p)
@@ -274,6 +279,15 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
     s02 <- 0.1 # prior variance for the intercept, bernoulli-probit
     if (!nr) s2 <- 1e-2 # prior variance for external info coefficients (effects likely to be concentrated around zero)
     else s2 <- NULL
+
+    if (!nd) {
+      check_structure_(n0, "vector", "double", c(1, d))
+      if (length(n0) == 1) n0 <- rep(n0, d)
+      t02 <- 0.1
+    } else {
+      n0 <- NULL
+      t02 <- NULL
+    }
 
     if (!is.null(a) | !is.null(b))
       stop("Provided r != NULL or bool_struct = TRUE, not consitent with a and b being non-null.")
@@ -333,7 +347,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 
   list_hyper <- create_named_list_(d_hyper, G_hyper, p_hyper, q_hyper, r_hyper,
                                    link_hyper, ind_bin_hyper, eta, kappa,
-                                   lambda, nu, a, b, phi, xi, m0, s02, s2)
+                                   lambda, nu, a, b, phi, xi, m0, n0, s02, s2, t02)
 
   class(list_hyper) <- "hyper"
 
@@ -345,7 +359,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 # Internal function setting default model hyperparameters when not provided by
 # the user.
 #
-auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_fac_gr) {
+auto_set_hyper_ <- function(Y, d_star, p, p_star, q, r, link, ind_bin, bool_struct, vec_fac_gr) { ####### add d_star and nd <- is.null(d_star)
 
   d <- ncol(Y)
 
@@ -385,10 +399,11 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_
   }
 
 
+  nd <- is.null(d_star)
   nr <- is.null(r)
   ns <- !bool_struct
 
-  if (nr & ns) {
+  if (nd & nr & ns) {
 
     if (is.null(G)) {
       a <- rep(1, p)
@@ -404,7 +419,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_
     check_positive_(a)
     check_positive_(b)
 
-    m0 <- s02 <- s2 <- NULL
+    m0 <- n0 <- s02 <- s2 <- t02 <- NULL
 
   } else {
 
@@ -419,6 +434,15 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_
       interval = c(-up, up))$root)
 
     if (length(m0) == 1) m0 <- rep(m0, p)
+
+    if (!nd) {
+      m0 <- m0 / 2
+      n0 <- rep(m0[1], d)
+      t02 <- 0.1
+    } else {
+      n0 <- NULL
+      t02 <- NULL
+    }
 
     a <- b <- NULL
 
@@ -446,7 +470,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_
 
   list_hyper <- create_named_list_(d_hyper, G_hyper, p_hyper, q_hyper, r_hyper,
                                    link_hyper, ind_bin_hyper, eta, kappa,
-                                   lambda, nu, a, b, phi, xi, m0, s02, s2)
+                                   lambda, nu, a, b, phi, xi, m0, n0, s02, s2, t02)
 
   class(list_hyper) <- "out_hyper"
 

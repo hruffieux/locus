@@ -165,6 +165,24 @@ update_sig2_c_vb_ <- function(p, s2) 1 / (p - 1 + (1/s2))
 update_mat_v_mu_ <- function(V, mu_c0_vb, mu_c_vb) sweep(V %*% mu_c_vb, 1, mu_c0_vb, `+`)
 
 
+###################
+## chi's updates ##
+###################
+
+update_chi_vb_ <- function(X, Z, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sig2_alpha_vb) {
+
+  sqrt(X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 + Z^2 %*% sig2_alpha_vb +
+         mat_z_mu^2 + 2 * mat_x_m1 * mat_z_mu)
+}
+
+
+update_psi_logit_vb_ <- function(chi_vb) {
+
+  exp(log(exp(log_sigmoid_(chi_vb)) - 1 / 2) - log(2 * chi_vb))
+
+}
+
+
 #####################
 ## omega's updates ##
 #####################
@@ -181,20 +199,21 @@ update_log_om_vb <- function(a, digam_sum, rs_gam) digamma(a + rs_gam) - digam_s
 update_log_1_min_om_vb <- function(b, d, digam_sum, rs_gam) digamma(b - rs_gam + d) - digam_sum
 
 
-###################
-## chi's updates ##
-###################
+#####################
+## rho's updates ##
+#####################
 
-update_chi_vb_ <- function(X, Z, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sig2_alpha_vb) {
 
-  sqrt(X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 + Z^2 %*% sig2_alpha_vb +
-         mat_z_mu^2 + 2 * mat_x_m1 * mat_z_mu)
+update_mu_rho_vb_ <- function(W, mu_theta_vb, n0, sig2_rho_vb, T0_inv) {
+
+  as.vector(sig2_rho_vb %*% (colSums(W) + T0_inv %*% n0 - sum(mu_theta_vb)))
+
 }
 
 
-update_psi_logit_vb_ <- function(chi_vb) {
+update_sig2_rho_vb_ <- function(p, T0_inv) {
 
-  exp(log(exp(log_sigmoid_(chi_vb)) - 1 / 2) - log(2 * chi_vb))
+  as.matrix(solve(T0_inv + diag(p, nrow(T0_inv))))
 
 }
 
@@ -287,13 +306,16 @@ update_log_tau_vb_ <- function(eta_vb, kappa_vb) digamma(eta_vb) - log(kappa_vb)
 ## theta's updates ##
 #####################
 
-update_mu_theta_vb_ <- function(W, m0, list_S0_inv, list_sig2_theta_vb, vec_fac_st) {
+update_mu_theta_vb_ <- function(W, m0, list_S0_inv, list_sig2_theta_vb, vec_fac_st, mu_rho_vb = 0) {
 
   bl_ids <- unique(vec_fac_st)
   n_bl <- length(bl_ids)
 
-  unlist(lapply(1:n_bl, function(bl)
-    list_sig2_theta_vb[[bl]] %*% (rowSums(W[vec_fac_st == bl_ids[bl], , drop = FALSE]) + list_S0_inv[[bl]] %*% m0[vec_fac_st == bl_ids[bl]])))
+  mu_theta_vb <- unlist(lapply(1:n_bl, function(bl) {
+    list_sig2_theta_vb[[bl]] %*% (rowSums(W[vec_fac_st == bl_ids[bl], , drop = FALSE]) +
+                                    list_S0_inv[[bl]] %*% m0[vec_fac_st == bl_ids[bl]] -
+                                    sum(mu_rho_vb))
+  }))
 
 }
 
