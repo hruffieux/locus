@@ -35,12 +35,7 @@
 #'   are both non-\code{NULL} or if \code{list_cv} is non-\code{NULL}. Can also
 #'   be a vector of length p (resp. of length the number of groups) with entry s
 #'   corresponding to the prior probability that candidate predictor s (resp.
-#'   group s) is associated with at least one response. For the special model
-#'   variant with dual propensity control for predictors and responses, must be
-#'   a list of size 2, with the first element corresponding to the prior number
-#'   of responses expected to be active and the second element the prior number
-#'   of predictors expected to be active. Can also be vectors of size d and p
-#'   respectively.
+#'   group s) is associated with at least one response.
 #' @param Z Covariate matrix of dimension n x q, where q is the number of
 #'   covariates. Variables in \code{Z} are not subject to selection. \code{NULL}
 #'   if no covariate. Factor covariates must be supplied after transformation to
@@ -82,6 +77,9 @@
 #'   structure sparsity priors. Must be filled using the
 #'   \code{\link{set_struct}} function or must be \code{NULL} for structured
 #'   selection.
+#' @param dual If \code{TRUE}, dual propensity control (by candidate predictors
+#'   and by responses). Functionality under development and with limited
+#'   associated functionalities. Default is \code{FALSE}.
 #' @param user_seed Seed set for reproducible default choices of hyperparameters
 #'   (if \code{list_hyper} is \code{NULL}) and initial variational parameters
 #'   (if \code{list_init} is \code{NULL}). Also used at the cross-validation
@@ -257,9 +255,9 @@
 locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, list_groups = NULL,
-                  list_struct = NULL, user_seed = NULL, tol = 1e-3,
-                  maxit = 1000, save_hyper = FALSE, save_init = FALSE,
-                  verbose = TRUE) { ##
+                  list_struct = NULL, dual = FALSE, user_seed = NULL,
+                  tol = 1e-3, maxit = 1000, save_hyper = FALSE,
+                  save_init = FALSE, verbose = TRUE) { ##
 
   if (verbose) cat("== Preparing the data ... \n")
   dat <- prepare_data_(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verbose)
@@ -299,9 +297,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
   if (verbose) cat("... done. == \n\n")
 
-
-
-  if (!is.null(list_cv) & is.null(list_blocks) & is.null(list_groups) & is.null(list_struct)) { ## TODO: allow cross-validation when list_blocks is used.
+  if (!is.null(list_cv) & is.null(list_blocks) & is.null(list_groups) & is.null(list_struct) & !dual) { ## TODO: allow cross-validation when list_blocks is used.
 
     if (verbose) {
       cat("=============================== \n")
@@ -313,13 +309,13 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     p_star <- cross_validate_(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
-    d_star <- vec_fac_gr <- vec_fac_st <- NULL
+    vec_fac_gr <- vec_fac_st <- NULL
 
   } else {
 
     if (!is.null(list_blocks)) {
 
-      list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, list_cv, list_groups, list_struct)
+      list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, dual, list_cv, list_groups, list_struct)
 
       n_bl <- list_blocks$n_bl
       n_cpus <- list_blocks$n_cpus
@@ -330,7 +326,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     if (!is.null(list_groups)) {
 
-      list_groups <- prepare_groups_(list_groups, X, q, r, bool_rmvd_x, link, list_cv)
+      list_groups <- prepare_groups_(list_groups, X, q, r, bool_rmvd_x, dual, link, list_cv)
 
       X <- list_groups$X
       vec_fac_gr <- list_groups$vec_fac_gr
@@ -360,10 +356,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
       if (is.null(list_groups)) p_tot <- p
       else p_tot <- length(unique(vec_fac_gr))
 
-      list_star <- convert_p0_av_(p0_av, d, p_tot, list_blocks, verbose)
-
-      d_star <- list_star$d_star
-      p_star <- list_star$p_star
+      p_star <- convert_p0_av_(p0_av, p_tot, list_blocks, verbose)
 
       # remove the entries corresponding to the removed constant covariates in X (if any)
       if (length(p_star) > 1) {
@@ -378,23 +371,20 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
         warning(paste("Provided argument p0_av not used, as both list_hyper ",
                       "and list_init were provided.", sep = ""))
 
-      d_star <- p_star <- NULL
+      p_star <- NULL
 
     }
 
   }
 
   if (verbose) cat("== Preparing the hyperparameters ... \n\n")
-  list_hyper <- prepare_list_hyper_(list_hyper, Y, d_star, p, p_star, q, r, link, ind_bin,
+  list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, r, dual, link, ind_bin,
                                     vec_fac_gr, vec_fac_st, bool_rmvd_x, bool_rmvd_z,
                                     bool_rmvd_v, names_x, names_y, names_z, verbose)
 
-  if (!is.null(list_hyper$n0) | !is.null(list_hyper$t02)) {
-    if(link != "identity" | !is.null(q) | !is.null(r) | !is.null(list_blocks) | !is.null(list_groups))
-      stop(paste("Dual propensity control (p0_av is a list) enabled only ",
-                 "for identity link, Z = NULL, V = NULL, with no group ",
-                 "selection and no block-wise parallel inference. Exit.", sep = ""))
-  }
+  if(dual && (link != "identity" | !is.null(q) | !is.null(r)))
+    stop(paste("Dual propensity control (p0_av is a list) enabled only for ",
+               "identity link, Z = NULL, V = NULL. Exit.", sep = ""))
 
   if (verbose) cat("... done. == \n\n")
 
@@ -466,11 +456,10 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     if (link == "identity") {
 
-      nd <- is.null(d_star)
       ng  <- is.null(list_groups)
       ns <- is.null(list_struct)
 
-      if (nd & ng & ns){
+      if (!dual & ng & ns){
 
         if (nq & nr) {
 
@@ -509,7 +498,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                 list_init$mu_beta_vb, list_init$sig2_inv_vb,
                                 list_init$tau_vb, tol, maxit, verbose)
 
-      } else if (!nd) {
+      } else if (dual) {
 
         # list_struct can be non-null for injected  predictor correlation structure,
         # see core function below
@@ -521,8 +510,8 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
       } else { # list_struct non-null, and only predictor propensity control.
 
         vb <- locus_struct_core_(Y, X, list_hyper, list_init$gam_vb,
-                                        list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                        list_init$tau_vb, vec_fac_st, tol, maxit, verbose)
+                                 list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                 list_init$tau_vb, vec_fac_st, tol, maxit, verbose)
       }
 
     } else if (link == "logit"){
@@ -782,7 +771,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
   }
 
-  vb$d_star <- d_star
   vb$p_star <- p_star
 
   vb$rmvd_cst_x <- dat$rmvd_cst_x

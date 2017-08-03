@@ -18,6 +18,7 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects
 
+    n0 <- rep(0, d) # keep this in case we want to re-introduce a non-centered rho later...
     mu_theta_vb <- m0
     mu_rho_vb <- n0
 

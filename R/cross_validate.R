@@ -253,9 +253,9 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
         if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
 
 
-        list_hyper_pg <- auto_set_hyper_(Y_tr, d_star = NULL, p, pg, q, r = NULL,
-                                         link = link, ind_bin = ind_bin,
-                                         bool_struct = FALSE,  vec_fac_gr = NULL)
+        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, r = NULL, link = link,
+                                         ind_bin = ind_bin, dual = FALSE,
+                                         struct = FALSE,  vec_fac_gr = NULL)
         list_init_pg <- auto_set_init_(Y_tr, G = NULL, p, pg, q, r = NULL,
                                        user_seed, link = link, ind_bin = ind_bin)
 

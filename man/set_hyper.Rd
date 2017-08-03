@@ -6,7 +6,7 @@
 \usage{
 set_hyper(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
   ind_bin = NULL, q = NULL, phi = NULL, xi = NULL, r = NULL,
-  m0 = NULL, n0 = NULL, G = NULL, bool_struct = FALSE)
+  m0 = NULL, G = NULL, dual = FALSE, struct = FALSE)
 }
 \arguments{
 \item{d}{Number of responses.}
@@ -79,16 +79,15 @@ candidate predictor. If of length 1, the provided value is repeated p
 times. Default is \code{NULL}, for both \code{V} and \code{list_struct}
 \code{NULL}.}
 
-\item{n0}{Only used for dual propensity control; default is \code{NULL}.
-Vector of length 1 or d providing the values of hyperparameter
- \eqn{n0} related to the proportion of predictors associated with each
- response. If of length 1, the provided value is repeated d times.}
-
 \item{G}{Number of candidate predictor groups when using the group selection
 model from the \code{\link{locus}} function. Default is \code{NULL},
 for no group selection.}
 
-\item{bool_struct}{Boolean indicating the use of structured sparse priors
+\item{dual}{If \code{TRUE}, dual propensity control (by candidate predictors
+and by responses). Functionality under development and with limited
+associated functionalities. Default is \code{FALSE}.}
+
+\item{struct}{Boolean indicating the use of structured sparse priors
 set through the \code{\link{set_struct}} function. Default is \code{FALSE},
 for no structured selection.}
 }

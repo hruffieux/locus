@@ -7,8 +7,8 @@
 locus(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL, list_cv = NULL,
   list_blocks = NULL, list_groups = NULL, list_struct = NULL,
-  user_seed = NULL, tol = 0.001, maxit = 1000, save_hyper = FALSE,
-  save_init = FALSE, verbose = TRUE)
+  dual = FALSE, user_seed = NULL, tol = 0.001, maxit = 1000,
+  save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of
@@ -75,6 +75,10 @@ selection.}
 structure sparsity priors. Must be filled using the
 \code{\link{set_struct}} function or must be \code{NULL} for structured
 selection.}
+
+\item{dual}{If \code{TRUE}, dual propensity control (by candidate predictors
+and by responses). Functionality under development and with limited
+associated functionalities. Default is \code{FALSE}.}
 
 \item{user_seed}{Seed set for reproducible default choices of hyperparameters
 (if \code{list_hyper} is \code{NULL}) and initial variational parameters
