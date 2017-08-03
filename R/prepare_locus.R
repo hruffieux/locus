@@ -1163,9 +1163,10 @@ set_struct <- function(n, p, pos_st, verbose = TRUE) {
     stop(paste("All the blocks are of size one, no structured selection will be performed. ",
                "Set argument list_struct to NULL in the locus function.", sep = ""))
 
-  if (max(table(vec_fac_st)) >= n)
-    stop(paste("One or more block size(s) is greater or equal to n.  ",
-                  "Corresponding empirical covariances not positive definite. Use smaller block sizes.", sep = ""))
+  # Should not be needed as regularization performed anyway.
+  # if (max(table(vec_fac_st)) >= n)
+  #   stop(paste("One or more block size(s) is greater or equal to n.  ",
+  #                 "Corresponding empirical covariances not positive definite. Use smaller block sizes.", sep = ""))
 
   if (max(table(vec_fac_st)) >= n/2)
     warning(paste("One or more block size(s) is greater or equal to n/2.  ",
