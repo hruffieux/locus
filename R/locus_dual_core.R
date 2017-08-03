@@ -22,31 +22,45 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
     mu_theta_vb <- m0
     mu_rho_vb <- n0
 
-    list_S0_inv <- lapply(unique(vec_fac_st), function(bl) {
+    if (is.null(list_struct)) {
 
-      # if(is.null(list_struct)) {
-        corX <- diag(1, sum(vec_fac_st == bl))
-      # } else {
-      #   corX <- cor(X[, vec_fac_st == bl, drop = FALSE]  + matrix(rnorm(n*sum(vec_fac_st == bl)), nrow = n))
-      #   corX <- as.matrix(Matrix::nearPD(corX, corr = TRUE, do2eigen = TRUE)$mat) # regularization in case of non-positive definiteness.
-      # }
+      S0_inv <- 1 / s02 # stands for a diagonal matrix of size p with this value on the (constant) diagonal
+      sig2_theta_vb <- 1 / (d + S0_inv) # idem
 
-      as.matrix(solve(corX) / s02)
-    })
+      vec_sum_log_det_theta <- - p * (log(s02) + log(d + S0_inv))
 
-    list_sig2_theta_vb <- update_sig2_theta_vb_(d, list_S0_inv)
-    vec_sum_log_det_theta <- log_det(list_S0_inv) + log_det(list_sig2_theta_vb) # vec_sum_log_det_theta[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
+      vec_fac_st <- NULL
 
+    } else {
+
+      S0_inv <- lapply(unique(vec_fac_st), function(bl) {
+
+        corX <- cor(X[, vec_fac_st == bl, drop = FALSE]  + matrix(rnorm(n*sum(vec_fac_st == bl)), nrow = n))
+        corX <- as.matrix(Matrix::nearPD(corX, corr = TRUE, do2eigen = TRUE)$mat) # regularization in case of non-positive definiteness.
+
+        as.matrix(solve(corX) / s02)
+      })
+
+      sig2_theta_vb <- update_sig2_theta_vb_(d, S0_inv)
+      vec_sum_log_det_theta <- log_det(S0_inv) + log_det(sig2_theta_vb) # vec_sum_log_det_theta[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
+
+    }
 
     # Not used.
     # corY <- cor(Y + matrix(rnorm(n*d), nrow = n))
     # corY <- as.matrix(Matrix::nearPD(corY, corr = TRUE, do2eigen = TRUE)$mat)
-    corY <- diag(1, d)
-    T0_inv <- as.matrix(solve(corY) / t02)
-    rm(corY)
 
-    sig2_rho_vb <- update_sig2_rho_vb_(p, T0_inv)
-    vec_sum_log_det_rho <- log_det(T0_inv) + log_det(sig2_rho_vb) # vec_sum_log_det_rho[bl] = log(det(T0_inv)) + log(det(sig2_rho_vb))
+    # corY <- diag(1, d)
+    # T0_inv <- as.matrix(solve(corY) / t02)
+    # rm(corY)
+    #
+    # sig2_rho_vb <- update_sig2_rho_vb_(p, T0_inv)
+    # vec_sum_log_det_rho <- log_det(T0_inv) + log_det(sig2_rho_vb) # vec_sum_log_det_rho[bl] = log(det(T0_inv)) + log(det(sig2_rho_vb))
+
+    T0_inv <- 1 / t02 # stands for a diagonal matrix of size d with this value on the (constant) diagonal
+    sig2_rho_vb <- 1 / (p + T0_inv) # idem
+
+    vec_sum_log_det_rho <- - d * (log(t02) + log(p + T0_inv))
 
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
     m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
@@ -140,13 +154,13 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       W <- update_W_info_(gam_vb, sweep(tcrossprod(mu_theta_vb, rep(1, d)), 2, mu_rho_vb, `+`)) # we use info_ so that the second argument is a matrix
 
-      mu_theta_vb <- update_mu_theta_vb_(W, m0, list_S0_inv, list_sig2_theta_vb, vec_fac_st, mu_rho_vb)
+      mu_theta_vb <- update_mu_theta_vb_(W, m0, S0_inv, sig2_theta_vb, vec_fac_st, mu_rho_vb)
 
       mu_rho_vb <- update_mu_rho_vb_(W, mu_theta_vb, n0, sig2_rho_vb, T0_inv) # update_mu_rho_vb_(W, mu_theta_vb, sig2_rho_vb)
 
       lb_new <- elbo_dual_(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                            lambda_vb, m0, n0, mu_rho_vb, mu_theta_vb, nu, nu_vb,
-                           sig2_beta_vb, list_S0_inv, list_sig2_theta_vb,
+                           sig2_beta_vb, S0_inv, sig2_theta_vb,
                            sig2_inv_vb, sig2_rho_vb, T0_inv, tau_vb, m1_beta,
                            m2_beta, mat_x_m1, vec_fac_st, vec_sum_log_det_rho,
                            vec_sum_log_det_theta)
@@ -178,7 +192,7 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       create_named_list_(eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                          lambda_vb, m0, n0, mu_rho_vb, mu_theta_vb, nu, nu_vb,
-                         sig2_beta_vb, list_S0_inv, list_sig2_theta_vb,
+                         sig2_beta_vb, S0_inv, sig2_theta_vb,
                          sig2_inv_vb, sig2_rho_vb, T0_inv, tau_vb, m1_beta,
                          m2_beta, mat_x_m1, vec_fac_st, vec_sum_log_det_rho,
                          vec_sum_log_det_theta)
@@ -209,7 +223,7 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 #
 elbo_dual_ <- function(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                        lambda_vb, m0, n0, mu_rho_vb, mu_theta_vb, nu, nu_vb,
-                       sig2_beta_vb, list_S0_inv, list_sig2_theta_vb,
+                       sig2_beta_vb, S0_inv, sig2_theta_vb,
                        sig2_inv_vb, sig2_rho_vb, T0_inv, tau_vb, m1_beta,
                        m2_beta, mat_x_m1, vec_fac_st, vec_sum_log_det_rho,
                        vec_sum_log_det_theta) {
@@ -233,9 +247,9 @@ elbo_dual_ <- function(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
   elbo_B <- e_beta_gamma_dual_(gam_vb, log_sig2_inv_vb, log_tau_vb,
                                         mu_rho_vb, mu_theta_vb, m2_beta,
                                         sig2_beta_vb, sig2_rho_vb,
-                                        list_sig2_theta_vb, sig2_inv_vb, tau_vb)
+                                        sig2_theta_vb, sig2_inv_vb, tau_vb)
 
-  elbo_C <- e_theta_(m0, mu_theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_st,
+  elbo_C <- e_theta_(m0, mu_theta_vb, S0_inv, sig2_theta_vb, vec_fac_st,
                      vec_sum_log_det_theta)
 
   elbo_D <- e_rho_(mu_rho_vb, n0, sig2_rho_vb, T0_inv, vec_sum_log_det_rho)

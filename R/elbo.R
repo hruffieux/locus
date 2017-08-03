@@ -146,20 +146,23 @@ e_beta_gamma_dual_ <- function(gam_vb, log_sig2_inv_vb, log_tau_vb,
 
   d <- length(tau_vb)
 
-  diag_sig2_theta_vb <- unlist(lapply(list_sig2_theta_vb, diag))
-  diag_sig2_rho_vb <- diag(sig2_rho_vb)
-
   mat_struct <- sweep(tcrossprod(mu_theta_vb, rep(1, d)), 2, mu_rho_vb, `+`)
 
-  sum(log_sig2_inv_vb * gam_vb / 2 +
-        sweep(gam_vb, 2, log_tau_vb, `*`) / 2 -
-        sweep(m2_beta, 2, tau_vb, `*`) * sig2_inv_vb / 2 +
-        gam_vb * pnorm(mat_struct, log.p = TRUE) +
-        sweep(sweep((1 - gam_vb) * pnorm(mat_struct, lower.tail = FALSE, log.p = TRUE),
-                    1, diag_sig2_theta_vb / 2, `-`),
-              2, diag_sig2_rho_vb / 2, `-`) +
-        1 / 2 * sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) -
-        gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
+  arg <- log_sig2_inv_vb * gam_vb / 2 +
+    sweep(gam_vb, 2, log_tau_vb, `*`) / 2 -
+    sweep(m2_beta, 2, tau_vb, `*`) * sig2_inv_vb / 2 +
+    gam_vb * pnorm(mat_struct, log.p = TRUE) +
+    (1 - gam_vb) * pnorm(mat_struct, lower.tail = FALSE, log.p = TRUE) -
+    sig2_rho_vb / 2 + 1 / 2 * sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) -
+    gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps)
+
+  if (is.list(list_sig2_theta_vb)) {
+    arg <- sweep(arg, 1, unlist(lapply(list_sig2_theta_vb, diag)) / 2, `-`)
+  } else {
+    arg <- arg - list_sig2_theta_vb / 2
+  }
+
+  sum(arg)
 
 }
 
@@ -204,9 +207,10 @@ e_omega_ <- function(a, a_vb, b, b_vb, log_om_vb, log_1_min_om_vb) {
 
 e_rho_ <- function(mu_rho_vb, n0, sig2_rho_vb, T0_inv, vec_sum_log_det_rho) {
 
+  d <- length(mu_rho_vb)
   sum(vec_sum_log_det_rho - # vec_sum_log_det_rho = log(det(T0_inv)) + log(det(sig2_rho_vb))
-    crossprod((mu_rho_vb - n0), T0_inv %*% (mu_rho_vb - n0)) -
-    sum(T0_inv * sig2_rho_vb) + ncol(T0_inv)) / 2 # trace of a product
+        T0_inv * crossprod(mu_rho_vb - n0) -
+        d * T0_inv * sig2_rho_vb + d) / 2 # trace of a product
 
 }
 
@@ -242,21 +246,32 @@ e_tau_ <- function(eta, eta_vb, kappa, kappa_vb, log_tau_vb, tau_vb) {
 # S0_inv is assumed to be block-diagonal
 e_theta_ <- function(m0, mu_theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_st, vec_sum_log_det) {
 
-  bl_ids <- unique(vec_fac_st)
-  n_bl <- length(list_S0_inv)
+  if (is.null(vec_fac_st)) {
 
-  arg <- unlist(lapply(1:n_bl, function(bl) {
+    p <- length(mu_theta_vb)
 
-    mu_theta_vb_bl <- mu_theta_vb[vec_fac_st == bl_ids[bl]]
-    m0_bl <- m0[vec_fac_st == bl_ids[bl]]
-    S0_inv_bl <- list_S0_inv[[bl]]
-    sig2_theta_vb_bl <- list_sig2_theta_vb[[bl]]
+    arg <- (vec_sum_log_det - # vec_sum_log_det[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
+              list_S0_inv * crossprod(mu_theta_vb - m0) -
+              p * list_S0_inv * list_sig2_theta_vb + p) / 2 # trace of a product
 
-    (vec_sum_log_det[bl] - # vec_sum_log_det[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
-       crossprod((mu_theta_vb_bl - m0_bl),
-                 S0_inv_bl %*% (mu_theta_vb_bl - m0_bl)) -
-       sum(S0_inv_bl * sig2_theta_vb_bl) + ncol(S0_inv_bl)) / 2 # trace of a product
-  }))
+  } else {
+
+    bl_ids <- unique(vec_fac_st)
+    n_bl <- length(list_S0_inv)
+
+    arg <- unlist(lapply(1:n_bl, function(bl) {
+
+      mu_theta_vb_bl <- mu_theta_vb[vec_fac_st == bl_ids[bl]]
+      m0_bl <- m0[vec_fac_st == bl_ids[bl]]
+      S0_inv_bl <- list_S0_inv[[bl]]
+      sig2_theta_vb_bl <- list_sig2_theta_vb[[bl]]
+
+      (vec_sum_log_det[bl] - # vec_sum_log_det[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
+         crossprod((mu_theta_vb_bl - m0_bl),
+                   S0_inv_bl %*% (mu_theta_vb_bl - m0_bl)) -
+         sum(S0_inv_bl * sig2_theta_vb_bl) + ncol(S0_inv_bl)) / 2 # trace of a product
+    }))
+  }
 
   sum(arg)
 

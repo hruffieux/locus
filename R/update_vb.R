@@ -206,14 +206,17 @@ update_log_1_min_om_vb <- function(b, d, digam_sum, rs_gam) digamma(b - rs_gam +
 
 update_mu_rho_vb_ <- function(W, mu_theta_vb, n0, sig2_rho_vb, T0_inv) {
 
-  as.vector(sig2_rho_vb %*% (colSums(W) + T0_inv %*% n0 - sum(mu_theta_vb)))
-
+  # as.vector(sig2_rho_vb %*% (colSums(W) + T0_inv %*% n0 - sum(mu_theta_vb)))
+  # sig2_rho_vb and T0_inv is stored as a scalar which represents the value on the diagonal of the corresponding diagonal matrix
+  as.vector(sig2_rho_vb * (colSums(W) + T0_inv * n0 - sum(mu_theta_vb)))
 }
 
 
 update_sig2_rho_vb_ <- function(p, T0_inv) {
 
-  as.matrix(solve(T0_inv + diag(p, nrow(T0_inv))))
+  # sig2_rho_vb and T0_inv are stored as scalars which represent the value on the diagonal of the corresponding diagonal matrix
+  1 / (T0_inv + p)
+  # as.matrix(solve(T0_inv + diag(p, nrow(T0_inv))))
 
 }
 
@@ -306,23 +309,40 @@ update_log_tau_vb_ <- function(eta_vb, kappa_vb) digamma(eta_vb) - log(kappa_vb)
 ## theta's updates ##
 #####################
 
-update_mu_theta_vb_ <- function(W, m0, list_S0_inv, list_sig2_theta_vb, vec_fac_st, mu_rho_vb = 0) {
+update_mu_theta_vb_ <- function(W, m0, S0_inv, sig2_theta_vb, vec_fac_st, mu_rho_vb = 0) {
 
-  bl_ids <- unique(vec_fac_st)
-  n_bl <- length(bl_ids)
+  if (is.null(vec_fac_st)) {
 
-  mu_theta_vb <- unlist(lapply(1:n_bl, function(bl) {
-    list_sig2_theta_vb[[bl]] %*% (rowSums(W[vec_fac_st == bl_ids[bl], , drop = FALSE]) +
-                                    list_S0_inv[[bl]] %*% m0[vec_fac_st == bl_ids[bl]] -
-                                    sum(mu_rho_vb))
-  }))
+    # S0_inv and sig2_rho_vb are stored as scalars which represent the values on the diagonal of the corresponding diagonal matrix
+    mu_theta_vb <- sig2_theta_vb * (rowSums(W) + S0_inv * m0 - sum(mu_rho_vb))
+
+  } else {
+
+    bl_ids <- unique(vec_fac_st)
+    n_bl <- length(bl_ids)
+
+    mu_theta_vb <- unlist(lapply(1:n_bl, function(bl) {
+      sig2_theta_vb[[bl]] %*% (rowSums(W[vec_fac_st == bl_ids[bl], , drop = FALSE]) +
+                                 S0_inv[[bl]] %*% m0[vec_fac_st == bl_ids[bl]] -
+                                 sum(mu_rho_vb))
+    }))
+
+  }
 
 }
 
 
-update_sig2_theta_vb_ <- function(d, list_S0_inv) {
+update_sig2_theta_vb_ <- function(d, S0_inv) {
 
-  lapply(list_S0_inv, function(S0_inv) as.matrix(solve(S0_inv + diag(d, nrow(S0_inv)))))
+  if (is.list(S0_inv)) {
+
+    lapply(S0_inv, function(S0_inv) as.matrix(solve(S0_inv + diag(d, nrow(S0_inv)))))
+
+  } else {
+
+    1 / (S0_inv + d)
+
+  }
 
 }
 
