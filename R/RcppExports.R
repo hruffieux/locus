@@ -2,46 +2,46 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 coreBatch <- function(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb) {
-    invisible(.Call('locus_coreBatch', PACKAGE = 'locus', X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb))
+    invisible(.Call(locus_coreBatch, X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb))
 }
 
 coreZBatch <- function(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb) {
-    invisible(.Call('locus_coreZBatch', PACKAGE = 'locus', X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb))
+    invisible(.Call(locus_coreZBatch, X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb))
 }
 
 coreProbitBatch <- function(X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb) {
-    invisible(.Call('locus_coreProbitBatch', PACKAGE = 'locus', X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb))
+    invisible(.Call(locus_coreProbitBatch, X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb))
 }
 
 coreInfoLoop <- function(X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb) {
-    invisible(.Call('locus_coreInfoLoop', PACKAGE = 'locus', X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb))
+    invisible(.Call(locus_coreInfoLoop, X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb))
 }
 
 coreZInfoLoop <- function(X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb) {
-    invisible(.Call('locus_coreZInfoLoop', PACKAGE = 'locus', X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb))
+    invisible(.Call(locus_coreZInfoLoop, X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb))
 }
 
 coreLogitInfoLoop <- function(X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, psi_vb, sig2_beta_vb) {
-    invisible(.Call('locus_coreLogitInfoLoop', PACKAGE = 'locus', X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, psi_vb, sig2_beta_vb))
+    invisible(.Call(locus_coreLogitInfoLoop, X, Y, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, psi_vb, sig2_beta_vb))
 }
 
 coreProbitInfoLoop <- function(X, Wy, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb) {
-    invisible(.Call('locus_coreProbitInfoLoop', PACKAGE = 'locus', X, Wy, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb))
+    invisible(.Call(locus_coreProbitInfoLoop, X, Wy, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb))
 }
 
 coreLoop <- function(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb) {
-    invisible(.Call('locus_coreLoop', PACKAGE = 'locus', X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb))
+    invisible(.Call(locus_coreLoop, X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb))
 }
 
 coreZLoop <- function(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb) {
-    invisible(.Call('locus_coreZLoop', PACKAGE = 'locus', X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb))
+    invisible(.Call(locus_coreZLoop, X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, tau_vb))
 }
 
 coreLogitLoop <- function(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, psi_vb, sig2_beta_vb) {
-    invisible(.Call('locus_coreLogitLoop', PACKAGE = 'locus', X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, psi_vb, sig2_beta_vb))
+    invisible(.Call(locus_coreLogitLoop, X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, psi_vb, sig2_beta_vb))
 }
 
 coreProbitLoop <- function(X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb) {
-    invisible(.Call('locus_coreProbitLoop', PACKAGE = 'locus', X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb))
+    invisible(.Call(locus_coreProbitLoop, X, W, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb))
 }
 

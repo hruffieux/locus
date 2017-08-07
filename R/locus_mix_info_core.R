@@ -6,10 +6,9 @@
 # See help of `locus` function for details.
 #
 locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
-                                 mu_alpha_vb, mu_beta_vb, mu_c0_vb, mu_c_vb,
-                                 sig2_alpha_vb, sig2_beta_vb, tau_vb, tol,
-                                 maxit, verbose, batch = "y",
-                                 full_output = FALSE, debug = FALSE) {
+                                 mu_alpha_vb, mu_beta_vb, sig2_alpha_vb, 
+                                 sig2_beta_vb, tau_vb, tol, maxit, verbose, 
+                                 batch = "y", full_output = FALSE, debug = FALSE) {
 
   # Y must have its continuous variables centered,
   # and X, Z and V must have been standardized (except intercept in Z).
@@ -27,6 +26,9 @@ locus_mix_info_core_ <- function(Y, X, Z, V, ind_bin, list_hyper, gam_vb,
 
   with(list_hyper, { # list_init not used with the with() function to avoid
     # copy-on-write for large objects
+    
+    mu_c0_vb <- m0
+    mu_c_vb <- matrix(0, nrow = r, ncol = d)
 
     m2_alpha <- update_m2_alpha_(mu_alpha_vb, sig2_alpha_vb)
 

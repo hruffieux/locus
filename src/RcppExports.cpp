@@ -238,3 +238,23 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+
+static const R_CallMethodDef CallEntries[] = {
+    {"locus_coreBatch", (DL_FUNC) &locus_coreBatch, 12},
+    {"locus_coreZBatch", (DL_FUNC) &locus_coreZBatch, 13},
+    {"locus_coreProbitBatch", (DL_FUNC) &locus_coreProbitBatch, 11},
+    {"locus_coreInfoLoop", (DL_FUNC) &locus_coreInfoLoop, 12},
+    {"locus_coreZInfoLoop", (DL_FUNC) &locus_coreZInfoLoop, 13},
+    {"locus_coreLogitInfoLoop", (DL_FUNC) &locus_coreLogitInfoLoop, 12},
+    {"locus_coreProbitInfoLoop", (DL_FUNC) &locus_coreProbitInfoLoop, 11},
+    {"locus_coreLoop", (DL_FUNC) &locus_coreLoop, 12},
+    {"locus_coreZLoop", (DL_FUNC) &locus_coreZLoop, 13},
+    {"locus_coreLogitLoop", (DL_FUNC) &locus_coreLogitLoop, 12},
+    {"locus_coreProbitLoop", (DL_FUNC) &locus_coreProbitLoop, 11},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_locus(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
+}

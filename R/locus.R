@@ -405,8 +405,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
       } else if (nq) { # r non-null
 
         vb <- locus_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
-                               list_init$mu_beta_vb, list_init$mu_c0_vb,
-                               list_init$mu_c_vb, list_init$sig2_beta_vb,
+                               list_init$mu_beta_vb, list_init$sig2_beta_vb,
                                list_init$tau_vb, tol, maxit, verbose)
 
       } else if (nr) { # q non-null
@@ -420,7 +419,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
         vb <- locus_z_info_core_(Y, X, Z, V, list_hyper, list_init$gam_vb,
                                  list_init$mu_alpha_vb, list_init$mu_beta_vb,
-                                 list_init$mu_c0_vb, list_init$mu_c_vb,
                                  list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                                  list_init$tau_vb, tol, maxit, verbose)
       }
@@ -438,8 +436,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
         vb <- locus_logit_info_core_(Y, X, Z, V, list_hyper, list_init$chi_vb,
                                      list_init$gam_vb, list_init$mu_alpha_vb,
-                                     list_init$mu_beta_vb, list_init$mu_c0_vb,
-                                     list_init$mu_c_vb, list_init$sig2_alpha_vb,
+                                     list_init$mu_beta_vb, list_init$sig2_alpha_vb,
                                      list_init$sig2_beta_vb, tol, maxit,
                                      verbose)
       }
@@ -458,7 +455,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
         vb <- locus_probit_info_core_(Y, X, Z, V, list_hyper, list_init$gam_vb,
                                       list_init$mu_alpha_vb, list_init$mu_beta_vb,
-                                      list_init$mu_c0_vb, list_init$mu_c_vb,
                                       list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                                       tol, maxit, verbose)
       }
@@ -475,7 +471,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
         vb <- locus_mix_info_core_(Y, X, Z, V, ind_bin, list_hyper, list_init$gam_vb,
                                    list_init$mu_alpha_vb, list_init$mu_beta_vb,
-                                   list_init$mu_c0_vb, list_init$mu_c_vb,
                                    list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                                    list_init$tau_vb, tol, maxit, verbose)
       }
@@ -502,8 +497,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
       list_init$mu_beta_vb <- list_init$mu_beta_vb[pos_bl,, drop = FALSE]
       if (link == "logit")
         list_init$sig2_beta_vb <- list_init$sig2_beta_vb[pos_bl,, drop = FALSE]
-      if (!nr)
-        list_init$mu_c0_vb <- list_init$mu_c0_vb[pos_bl]
       list_init
     })
 
@@ -550,7 +543,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
           vb_bl <- locus_info_core_(Y, X_bl, V_bl, list_hyper_bl,
                                     list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
-                                    list_init_bl$mu_c0_vb, list_init_bl$mu_c_vb,
                                     list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
                                     tol, maxit, verbose = FALSE)
 
@@ -566,8 +558,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
           vb_bl <- locus_z_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
                                       list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
-                                      list_init_bl$mu_beta_vb, list_init_bl$mu_c0_vb,
-                                      list_init_bl$mu_c_vb, list_init_bl$sig2_alpha_vb,
+                                      list_init_bl$mu_beta_vb, list_init_bl$sig2_alpha_vb,
                                       list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
                                       tol, maxit, verbose = FALSE)
         }
@@ -589,7 +580,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
           vb_bl <- locus_logit_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
                                           list_init_bl$chi_vb, list_init_bl$gam_vb,
                                           list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
-                                          list_init_bl$mu_c0_vb, list_init_bl$mu_c_vb,
                                           list_init_bl$sig2_alpha_vb,
                                           list_init_bl$sig2_beta_vb, tol, maxit,
                                           verbose = FALSE)
@@ -610,8 +600,8 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
           vb_bl <- locus_probit_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
                                            list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
-                                           list_init_bl$mu_beta_vb, list_init_bl$mu_c0_vb,
-                                           list_init_bl$mu_c_vb, list_init_bl$sig2_alpha_vb,
+                                           list_init_bl$mu_beta_vb, 
+                                           list_init_bl$sig2_alpha_vb,
                                            list_init_bl$sig2_beta_vb, tol, maxit,
                                            verbose = FALSE)
         }
@@ -632,8 +622,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
           vb_bl <- locus_mix_info_core_(Y, X_bl, Z, V_bl, ind_bin, list_hyper_bl,
                                         list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
-                                        list_init_bl$mu_beta_vb, list_init_bl$mu_c0_vb,
-                                        list_init_bl$mu_c_vb, list_init_bl$sig2_alpha_vb,
+                                        list_init_bl$mu_beta_vb, list_init_bl$sig2_alpha_vb,
                                         list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
                                         tol, maxit, verbose = FALSE)
         }

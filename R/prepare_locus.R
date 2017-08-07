@@ -487,11 +487,6 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
 
       if (inherits(list_init, "init")) {
         r_init_match <- length(bool_rmvd_v)
-        # remove the entries corresponding to the removed constant predictors in X
-        # (if any)
-        list_init$mu_c0_vb <- list_init$mu_c0_vb[!bool_rmvd_x]
-        list_init$mu_c_vb <- list_init$mu_c_vb[!bool_rmvd_v,, drop = FALSE]
-
       } else {
         r_init_match <- r
       }

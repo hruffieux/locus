@@ -6,7 +6,7 @@
 \usage{
 set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, link = "identity",
   ind_bin = NULL, q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL,
-  r = NULL, mu_c0_vb = NULL, mu_c_vb = NULL)
+  r = NULL)
 }
 \arguments{
 \item{d}{Number of responses.}
@@ -60,15 +60,6 @@ Default is \code{NULL}, for \code{Z} \code{NULL}.}
 
 \item{r}{Number of variables representing external information on the
 candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.}
-
-\item{mu_c0_vb}{Vector of length p with initial values for the variational
-parameter linked to the proportion of responses associated with each
-candidate predictor. Default is \code{NULL}, for \code{V} \code{NULL}.}
-
-\item{mu_c_vb}{Matrix of size r x d with initial values for the variational
-parameter yielding regression coefficient estimates for the influence of
-external information on the candidate predictors on their selection.
-Default is \code{NULL}, for \code{V} \code{NULL}.}
 }
 \value{
 An object of class "\code{init}" preparing user initial values for
@@ -176,12 +167,9 @@ vb_g_z <- locus(Y = Y, X = X, p0_av = p0, Z = Z, link = "identity",
 
 # With external annotation variables
 #
-mu_c0_vb <- rnorm(p, mean = -1)
-mu_c_vb <- matrix(rnorm(r * d, mean = 0, sd = 0.01), nrow = r)
 
 list_init_g_v <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-                          link = "identity", r = r, mu_c0_vb = mu_c0_vb,
-                          mu_c_vb = mu_c_vb)
+                          link = "identity", r = r)
 
 vb_g_v <- locus(Y = Y, X = X, p0_av = p0,  V = V, link = "identity",
                 list_init = list_init_g_v)
