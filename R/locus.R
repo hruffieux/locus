@@ -329,7 +329,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   if (verbose) cat("... done. == \n\n")
 
   if (verbose) cat("== Preparing the parameter initialization ... \n\n")
-  list_init <- prepare_list_init_(list_init, Y, p, p_star, q, r, link, ind_bin,
+  list_init <- prepare_list_init_(list_init, Y, p, p_star, q, link, ind_bin,
                                   bool_rmvd_x, bool_rmvd_z, bool_rmvd_v,
                                   user_seed, verbose)
   if (verbose) cat("... done. == \n\n")
@@ -600,7 +600,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
           vb_bl <- locus_probit_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
                                            list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
-                                           list_init_bl$mu_beta_vb, 
+                                           list_init_bl$mu_beta_vb,
                                            list_init_bl$sig2_alpha_vb,
                                            list_init_bl$sig2_beta_vb, tol, maxit,
                                            verbose = FALSE)

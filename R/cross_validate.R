@@ -254,7 +254,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
         list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, r = NULL, link = link,
                                          ind_bin = ind_bin)
-        list_init_pg <- auto_set_init_(Y_tr, p, pg, q, r = NULL, user_seed,
+        list_init_pg <- auto_set_init_(Y_tr, p, pg, q, user_seed,
                                        link = link, ind_bin = ind_bin)
 
         nq <- is.null(q)

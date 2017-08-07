@@ -5,8 +5,7 @@
 \title{Gather initial variational parameters provided by the user.}
 \usage{
 set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, link = "identity",
-  ind_bin = NULL, q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL,
-  r = NULL)
+  ind_bin = NULL, q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL)
 }
 \arguments{
 \item{d}{Number of responses.}
@@ -57,9 +56,6 @@ for \code{link = "logit"} and for \code{link = "mix"} with initial values
 for the variational parameter yielding estimates of effect variances for
 covariate-response pairs. Vector of length q for \code{link = "probit"}.
 Default is \code{NULL}, for \code{Z} \code{NULL}.}
-
-\item{r}{Number of variables representing external information on the
-candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.}
 }
 \value{
 An object of class "\code{init}" preparing user initial values for
@@ -84,7 +80,7 @@ seed <- 123; set.seed(seed)
 
 ## Examples using small problem sizes:
 ##
-n <- 200; p <- 200; p0 <- 20; d <- 20; d0 <- 15; q <- 2; r <- 3
+n <- 200; p <- 200; p0 <- 20; d <- 20; d0 <- 15; q <- 2
 
 ## Candidate predictors (subject to selection)
 ##
@@ -120,10 +116,6 @@ Y <- cbind(Y_act, Y_inact)[, shuff_y_ind] + Z \%*\% alpha
 ## Binary responses
 ##
 Y_bin <- ifelse(Y > 0, 1, 0)
-## Informative annotation variables
-##
-V <- matrix(rnorm(p * r), nrow = p)
-V[bool_x_act, ] <- rnorm(p0 * r, mean = 2)
 
 ########################
 ## Infer associations ##
@@ -164,15 +156,6 @@ list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
 vb_g_z <- locus(Y = Y, X = X, p0_av = p0, Z = Z, link = "identity",
                 list_init = list_init_g_z)
-
-# With external annotation variables
-#
-
-list_init_g_v <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-                          link = "identity", r = r)
-
-vb_g_v <- locus(Y = Y, X = X, p0_av = p0,  V = V, link = "identity",
-                list_init = list_init_g_v)
 
 ## Binary responses
 ##
