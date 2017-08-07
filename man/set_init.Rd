@@ -6,8 +6,7 @@
 \usage{
 set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, link = "identity",
   ind_bin = NULL, q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL,
-  r = NULL, mu_c0_vb = NULL, mu_c_vb = NULL, sig2_inv_vb = NULL,
-  G = NULL)
+  sig2_inv_vb = NULL, G = NULL)
 }
 \arguments{
 \item{d}{Number of responses.}
@@ -59,18 +58,6 @@ for the variational parameter yielding estimates of effect variances for
 covariate-response pairs. Vector of length q for \code{link = "probit"}.
 Default is \code{NULL}, for \code{Z} \code{NULL}.}
 
-\item{r}{Number of variables representing external information on the
-candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.}
-
-\item{mu_c0_vb}{Vector of length p with initial values for the variational
-parameter linked to the proportion of responses associated with each
-candidate predictor. Default is \code{NULL}, for \code{V} \code{NULL}.}
-
-\item{mu_c_vb}{Matrix of size r x d with initial values for the variational
-parameter yielding regression coefficient estimates for the influence of
-external information on the candidate predictors on their selection.
-Default is \code{NULL}, for \code{V} \code{NULL}.}
-
 \item{sig2_inv_vb}{Initial parameters necessary when \code{G} is
 non-\code{NULL}. Its inverse square root corresponds to the typical size of
 non-zero effects. Must be \code{NULL} if \code{G} is \code{NULL}.}
@@ -102,7 +89,7 @@ seed <- 123; set.seed(seed)
 
 ## Examples using small problem sizes:
 ##
-n <- 200; p <- 200; p0 <- 20; d <- 20; d0 <- 15; q <- 2; r <- 3
+n <- 200; p <- 200; p0 <- 20; d <- 20; d0 <- 15; q <- 2
 
 ## Candidate predictors (subject to selection)
 ##
@@ -138,10 +125,6 @@ Y <- cbind(Y_act, Y_inact)[, shuff_y_ind] + Z \%*\% alpha
 ## Binary responses
 ##
 Y_bin <- ifelse(Y > 0, 1, 0)
-## Informative annotation variables
-##
-V <- matrix(rnorm(p * r), nrow = p)
-V[bool_x_act, ] <- rnorm(p0 * r, mean = 2)
 
 ########################
 ## Infer associations ##
@@ -182,18 +165,6 @@ list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
 vb_g_z <- locus(Y = Y, X = X, p0_av = p0, Z = Z, link = "identity",
                 list_init = list_init_g_z)
-
-# With external annotation variables
-#
-mu_c0_vb <- rnorm(p, mean = -1)
-mu_c_vb <- matrix(rnorm(r * d, mean = 0, sd = 0.01), nrow = r)
-
-list_init_g_v <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-                          link = "identity", r = r, mu_c0_vb = mu_c0_vb,
-                          mu_c_vb = mu_c_vb)
-
-vb_g_v <- locus(Y = Y, X = X, p0_av = p0,  V = V, link = "identity",
-                list_init = list_init_g_v)
 
 ## Binary responses
 ##

@@ -5,8 +5,8 @@
 # fixed covariates and external annotation variables.
 # See help of `locus` function for details.
 #
-locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
-                             mu_c_vb, sig2_beta_vb, tau_vb, tol, maxit, verbose,
+locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, 
+                             sig2_beta_vb, tau_vb, tol, maxit, verbose,
                              batch = "y", full_output = FALSE, debug = FALSE) {
 
   # Y must have been centered, and X, V standardized.
@@ -18,6 +18,9 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, mu_c0_vb,
 
   with(list_hyper, { # list_init not used with the with() function to avoid
     # copy-on-write for large objects
+
+    mu_c0_vb <- m0
+    mu_c_vb <- matrix(0, nrow = r, ncol = d)
 
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
     m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)

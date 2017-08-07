@@ -6,8 +6,8 @@
 # See help of `locus` function for details.
 #
 locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
-                                    mu_beta_vb, mu_c0_vb, mu_c_vb, sig2_alpha_vb,
-                                    sig2_beta_vb, tol, maxit, verbose, batch = "y",
+                                    mu_beta_vb, sig2_alpha_vb, sig2_beta_vb, 
+                                    tol, maxit, verbose, batch = "y",
                                     full_output = FALSE, debug = FALSE) {
 
 
@@ -21,6 +21,9 @@ locus_probit_info_core_ <- function(Y, X, Z, V, list_hyper, gam_vb, mu_alpha_vb,
 
   with(list_hyper, { # list_init not used with the with() function to avoid
     # copy-on-write for large objects
+    
+    mu_c0_vb <- m0
+    mu_c_vb <- matrix(0, nrow = r, ncol = d)
 
     m2_alpha <- update_m2_alpha_(mu_alpha_vb, sig2_alpha_vb, sweep = TRUE)
 
