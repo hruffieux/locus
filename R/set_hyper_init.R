@@ -384,43 +384,37 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_
 
   }
 
-
-  nr <- is.null(r)
-  ns <- !bool_struct
-
-  if (nr & ns) {
-
-    if (is.null(G)) {
-      a <- rep(1, p)
-      b <- d * (p - p_star) / p_star
-      if (length(b) == 1) b <- rep(b, p)
-    } else {
-      a <- rep(1, G)
-      b <- d * (G - p_star) / p_star
-      if (length(b) == 1) b <- rep(b, G)
-    }
-
-    # hyperparameters of beta distributions
-    check_positive_(a)
-    check_positive_(b)
-
-    m0 <- s02 <- s2 <- NULL
-
+  if (is.null(G)) {
+    a <- rep(1, p)
+    b <- d * (p - p_star) / p_star
+    if (length(b) == 1) b <- rep(b, p)
   } else {
+    a <- rep(1, G)
+    b <- d * (G - p_star) / p_star
+    if (length(b) == 1) b <- rep(b, G)
+  }
+
+  # hyperparameters of beta distributions
+  check_positive_(a)
+  check_positive_(b)
+
+  if (bool_struct | !is.null(r)) {
 
     # hyperparameters external info model
     s02 <- 0.1 # prior variance for the intercept, bernoulli-probit
-    if (!nr) s2 <- 1e-2 # prior variance for external info coefficients (effects likely to be concentrated around zero)
+    if (!is.null(r)) s2 <- 1e-2 # prior variance for external info coefficients (effects likely to be concentrated around zero)
     else s2 <- NULL
 
-    up <- 1e6 # we solve the equation below numerically as no closed form exists.
-    m0 <- - sapply(p_star, function(ps) uniroot(function(x)    # sparsity control, m0 = - m0_star
-      pnorm(x / sqrt(1 + d*s02)) * (pnorm(x))^(d-1) - (p - ps)/p,
-      interval = c(-up, up))$root)
-
-    if (length(m0) == 1) m0 <- rep(m0, p)
+    m0 <- - qnorm(b / (a + b)) * sqrt(1 + s02) # calibrate the sparsity level on that of the base model.
+                                               # we have pr(\gamma_st) = 1 - Phi( m0_star / sqrt(1 + s02))
+                                               # and set this to be equal to pr(\gamma_st) for the base model,
+                                               # i.e., a / (a + b), then solve for m0_star. m0 = - m_star
 
     a <- b <- NULL
+
+  } else {
+
+    m0 <- s02 <- s2 <- NULL
 
   }
 
@@ -501,15 +495,6 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_
 #'   for the variational parameter yielding estimates of effect variances for
 #'   covariate-response pairs. Vector of length q for \code{link = "probit"}.
 #'   Default is \code{NULL}, for \code{Z} \code{NULL}.
-#' @param r Number of variables representing external information on the
-#'   candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.
-#' @param mu_c0_vb Vector of length p with initial values for the variational
-#'   parameter linked to the proportion of responses associated with each
-#'   candidate predictor. Default is \code{NULL}, for \code{V} \code{NULL}.
-#' @param mu_c_vb Matrix of size r x d with initial values for the variational
-#'   parameter yielding regression coefficient estimates for the influence of
-#'   external information on the candidate predictors on their selection.
-#'   Default is \code{NULL}, for \code{V} \code{NULL}.
 #' @param G Number of candidate predictor groups when using the group selection
 #'   model from the \code{\link{locus}} function. Default is \code{NULL},
 #'   for no group selection.
@@ -530,7 +515,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_
 #'
 #' ## Examples using small problem sizes:
 #' ##
-#' n <- 200; p <- 200; p0 <- 20; d <- 20; d0 <- 15; q <- 2; r <- 3
+#' n <- 200; p <- 200; p0 <- 20; d <- 20; d0 <- 15; q <- 2
 #'
 #' ## Candidate predictors (subject to selection)
 #' ##
@@ -566,10 +551,6 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_
 #' ## Binary responses
 #' ##
 #' Y_bin <- ifelse(Y > 0, 1, 0)
-#' ## Informative annotation variables
-#' ##
-#' V <- matrix(rnorm(p * r), nrow = p)
-#' V[bool_x_act, ] <- rnorm(p0 * r, mean = 2)
 #'
 #' ########################
 #' ## Infer associations ##
@@ -610,18 +591,6 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_
 #'
 #' vb_g_z <- locus(Y = Y, X = X, p0_av = p0, Z = Z, link = "identity",
 #'                 list_init = list_init_g_z)
-#'
-#' # With external annotation variables
-#' #
-#' mu_c0_vb <- rnorm(p, mean = -1)
-#' mu_c_vb <- matrix(rnorm(r * d, mean = 0, sd = 0.01), nrow = r)
-#'
-#' list_init_g_v <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
-#'                           link = "identity", r = r, mu_c0_vb = mu_c0_vb,
-#'                           mu_c_vb = mu_c_vb)
-#'
-#' vb_g_v <- locus(Y = Y, X = X, p0_av = p0,  V = V, link = "identity",
-#'                 list_init = list_init_g_v)
 #'
 #' ## Binary responses
 #' ##
@@ -676,9 +645,8 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, bool_struct, vec_
 #'
 set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
                      link = "identity", ind_bin = NULL, q = NULL,
-                     mu_alpha_vb = NULL, sig2_alpha_vb = NULL, r = NULL,
-                     mu_c0_vb = NULL, mu_c_vb = NULL, sig2_inv_vb = NULL,
-                     G = NULL) {
+                     mu_alpha_vb = NULL, sig2_alpha_vb = NULL,
+                     sig2_inv_vb = NULL, G = NULL) {
 
   check_structure_(d, "vector", "numeric", 1)
   check_natural_(d)
@@ -689,16 +657,13 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
   check_structure_(q, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(q)) check_natural_(q)
 
-  check_structure_(r, "vector", "numeric", 1, null_ok = TRUE)
-  if (!is.null(r)) check_natural_(r)
-
   check_structure_(G, "vector", "numeric", 1, null_ok = TRUE)
   if (!is.null(G)) check_natural_(G)
 
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
-  if(!is.null(G) && (link != "identity" | !is.null(q) | !is.null(r)))
-    stop("Group selection (G non-NULL) implemented only for identity link, Z = NULL and V = NULL. Exit.")
+  if(!is.null(G) && (link != "identity" | !is.null(q)))
+    stop("Group selection (G non-NULL) implemented only for identity link, Z = NULL. Exit.")
 
   ind_bin <- prepare_ind_bin_(d, ind_bin, link)
 
@@ -791,32 +756,18 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
   }
 
-
-  if (!is.null(r)) {
-
-    check_structure_(mu_c0_vb, "vector", "double", p)
-    check_structure_(mu_c_vb, "matrix", "double", c(r, d))
-
-  } else if (!is.null(mu_c0_vb) | !is.null(mu_c_vb)) {
-
-    stop("Provided r = NULL, not consistent with mu_c0_vb or mu_c_vb being non-null.")
-
-  }
-
-
   d_init <- d
   G_init <- G
   p_init <- p
   q_init <- q
-  r_init <- r
   ind_bin_init <- ind_bin
 
   link_init <- link
 
-  list_init <- create_named_list_(d_init, G_init, p_init, q_init, r_init, link_init,
+  list_init <- create_named_list_(d_init, G_init, p_init, q_init, link_init,
                                   ind_bin_init, gam_vb, mu_beta_vb,
                                   sig2_beta_vb, sig2_inv_vb, tau_vb, mu_alpha_vb,
-                                  sig2_alpha_vb, mu_c0_vb, mu_c_vb)
+                                  sig2_alpha_vb)
 
   class(list_init) <- "init"
 
@@ -826,7 +777,7 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
 # Internal function setting default starting values when not provided by the user.
 #
-auto_set_init_ <- function(Y, G, p, p_star, q, r, user_seed, link, ind_bin) {
+auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, link, ind_bin) {
 
   d <- ncol(Y)
 
@@ -899,8 +850,6 @@ auto_set_init_ <- function(Y, G, p, p_star, q, r, user_seed, link, ind_bin) {
 
   }
 
-
-
   if (!is.null(q)) {
 
     mu_alpha_vb <- matrix(rnorm(q * d), nrow = q)
@@ -936,31 +885,18 @@ auto_set_init_ <- function(Y, G, p, p_star, q, r, user_seed, link, ind_bin) {
 
   }
 
-  if (!is.null(r)) {
-
-    mu_c0_vb <- rnorm(p)
-    mu_c_vb <- matrix(rnorm(r * d), nrow = r)
-
-  } else {
-
-    mu_c0_vb <- mu_c_vb <- NULL
-
-  }
-
-
   d_init <- d
   G_init <- G
   p_init <- p
   q_init <- q
-  r_init <- r
   ind_bin_init <- ind_bin
 
   link_init <- link
 
-  list_init <- create_named_list_(d_init, G_init, p_init, q_init, r_init,
+  list_init <- create_named_list_(d_init, G_init, p_init, q_init,
                                   link_init, ind_bin_init, gam_vb, mu_beta_vb,
                                   sig2_inv_vb, sig2_beta_vb, tau_vb, mu_alpha_vb,
-                                  sig2_alpha_vb, mu_c0_vb, mu_c_vb)
+                                  sig2_alpha_vb)
 
   class(list_init) <- "out_init"
 

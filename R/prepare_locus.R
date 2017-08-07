@@ -430,7 +430,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, link, ind_bin,
 # starting values before the application of the different `locus_*_core`
 # algorithms.
 #
-prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
+prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
                                vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
                                bool_rmvd_v, user_seed, verbose) {
 
@@ -450,7 +450,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
 
     if (verbose) cat(paste("list_init set automatically. \n", sep=""))
 
-    list_init <- auto_set_init_(Y, G, p, p_star, q, r, user_seed, link, ind_bin)
+    list_init <- auto_set_init_(Y, G, p, p_star, q, user_seed, link, ind_bin)
 
   } else {
 
@@ -554,29 +554,6 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, r, link, ind_bin,
       if (list_init$q_init != q_init_match)
         stop(paste("The dimensions of the provided initial parameters ",
                    "(list_init) are not consistent with that of Z.", sep=""))
-    }
-
-    if (!is.null(r)) {
-
-      if (inherits(list_init, "init")) {
-        r_init_match <- length(bool_rmvd_v)
-        # remove the entries corresponding to the removed constant predictors in X
-        # (if any)
-        list_init$mu_c0_vb <- list_init$mu_c0_vb[!bool_rmvd_x]
-        list_init$mu_c_vb <- list_init$mu_c_vb[!bool_rmvd_v,, drop = FALSE]
-
-      } else {
-        r_init_match <- r
-      }
-
-      if (list_init$r_init != r_init_match)
-        stop(paste("The dimensions of the provided initial parameters ",
-                   "(list_init) are not consistent with that of V.", sep=""))
-    } else {
-
-      if (!is.null(list_init$r_init))
-        stop(paste("The dimension (r) of the provided initial parameters ",
-                   "(list_init) is not consistent is V being NULL.\n", sep=""))
     }
 
   }

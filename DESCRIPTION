@@ -2,8 +2,8 @@ Package: locus
 Type: Package
 Title: Large-scale variational inference for combined selection of covariate and
     response variables in regression models
-Version: 0.7.1
-Date: 2017-06-24
+Version: 0.7.2
+Date: 2017-08-07
 Authors@R: c(
     person("Helene", "Ruffieux", email = "helene.ruffieux@epfl.ch",
             role = c("aut", "cre")),
