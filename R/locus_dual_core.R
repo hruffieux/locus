@@ -35,7 +35,7 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       S0_inv <- lapply(unique(vec_fac_st), function(bl) {
 
-        corX <- cor(X[, vec_fac_st == bl, drop = FALSE]  + matrix(rnorm(n*sum(vec_fac_st == bl)), nrow = n))
+        corX <- cor(X[, vec_fac_st == bl, drop = FALSE])
         corX <- as.matrix(Matrix::nearPD(corX, corr = TRUE, do2eigen = TRUE)$mat) # regularization in case of non-positive definiteness.
 
         as.matrix(solve(corX) / s02)
