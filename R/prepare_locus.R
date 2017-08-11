@@ -1036,7 +1036,12 @@ prepare_struct_ <- function(list_struct, n, q, r, bool_rmvd_x, link, list_cv, li
 
   vec_fac_st <- list_struct$vec_fac_st[!bool_rmvd_x] # some blocks may disappear here, but this is not a problem
 
-  create_named_list_(vec_fac_st)
+  # in case a block was removed due to the above because of bool_rmvd_x
+  n_gr <- sum(table(vec_fac_st) > 0)
+  if(list_struct$n_cpus > n_gr) n_cpus <- n_gr
+  else n_cpus <- list_struct$n_cpus
+
+  create_named_list_(n_cpus, vec_fac_st)
 
 }
 
@@ -1059,6 +1064,9 @@ prepare_struct_ <- function(list_struct, n, q, r, bool_rmvd_x, link, list_cv, li
 #' @param p Number of candidate predictors.
 #' @param pos_st Vector gathering the predictor block positions (first index of
 #'   each block). The predictors must be ordered by blocks.
+#' @param n_cpus Number of CPUs to be used. If large, one should ensure that
+#'   enough RAM will be available for parallel execution. Set to 1 for serial
+#'   execution.
 #' @param verbose If \code{TRUE}, messages are displayed when calling
 #'   \code{set_struct}.
 #'
@@ -1108,7 +1116,7 @@ prepare_struct_ <- function(list_struct, n, q, r, bool_rmvd_x, link, list_cv, li
 #'
 #' n_st <- 100
 #' pos_st <- seq(1, p, by = ceiling(p/n_st))
-#' list_struct <- set_struct(n, p, pos_st)
+#' list_struct <- set_struct(n, p, pos_st, n_cpus = 1)
 #'
 #' vb <- locus(Y = Y, X = X, p0_av = p0, link = "identity",
 #'    list_struct = list_struct, user_seed = seed)
@@ -1117,7 +1125,7 @@ prepare_struct_ <- function(list_struct, n, q, r, bool_rmvd_x, link, list_cv, li
 #'
 #' @export
 #'
-set_struct <- function(n, p, pos_st, verbose = TRUE) {
+set_struct <- function(n, p, pos_st, n_cpus, verbose = TRUE) {
 
   check_structure_(n, "vector", "numeric", 1)
   check_natural_(n)
@@ -1126,6 +1134,9 @@ set_struct <- function(n, p, pos_st, verbose = TRUE) {
   check_natural_(p)
 
   check_structure_(verbose, "vector", "logical", 1)
+
+  check_structure_(n_cpus, "vector", "numeric", 1)
+  check_natural_(n_cpus)
 
   check_structure_(pos_st, "vector", "numeric")
   check_natural_(pos_st)
@@ -1145,6 +1156,8 @@ set_struct <- function(n, p, pos_st, verbose = TRUE) {
 
   vec_fac_st <- as.factor(cumsum(seq_along(1:p) %in% pos_st))
 
+  n_gr <- length(unique(vec_fac_st))
+
   if (length(unique(vec_fac_st)) == p)
     stop(paste("All the blocks are of size one, no structured selection will be performed. ",
                "Set argument list_struct to NULL in the locus function.", sep = ""))
@@ -1159,12 +1172,34 @@ set_struct <- function(n, p, pos_st, verbose = TRUE) {
                "Corresponding empirical covariances may not be positive definite. ",
                "Regularization will be used but this may affect the quality of inference.", sep = ""))
 
-  if (verbose) print(paste("Number of blocks: ", length(unique(vec_fac_st)), sep = ""))
+
+  if (n_cpus > 1) {
+
+    n_cpus_avail <- parallel::detectCores()
+    if (n_cpus > n_cpus_avail) {
+      n_cpus <- n_cpus_avail
+      warning(paste("The number of CPUs specified exceeds the number of CPUs ",
+                    "available on the machine. The latter has been used instead.",
+                    sep=""))
+    }
+
+    if (n_cpus > n_gr){
+      message <- paste("The number of cpus in use is at most equal to the number of blocks.",
+                       "n_cpus is therefore set to ", n_gr, ". \n", sep ="")
+      if(verbose) cat(message)
+      else warning(message)
+      n_cpus <- n_gr
+    }
+
+    if (verbose) print(paste("Number of blocks: ", length(unique(vec_fac_st)),
+                             "\n Number of CPUs: ", n_cpus, sep = ""))
+
+  }
 
   n_struct <- n
   p_struct <- p
 
-  list_struct <- create_named_list_(n_struct, p_struct, vec_fac_st)
+  list_struct <- create_named_list_(n_struct, p_struct, n_cpus, vec_fac_st)
 
   class(list_struct) <- "struct"
 

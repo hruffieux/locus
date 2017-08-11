@@ -6,7 +6,7 @@
 # See help of `locus` function for details.
 #
 locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
-                             tau_vb, vec_fac_st, list_struct, tol, maxit, verbose,
+                             tau_vb, list_struct, tol, maxit, verbose,
                              batch = "y", full_output = FALSE, debug = TRUE) {
 
   # Y must have been centered, and X standardized.
@@ -24,24 +24,27 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
     if (is.null(list_struct)) {
 
+      vec_fac_st <- n_cpus <- 1
+
       S0_inv <- 1 / s02 # stands for a diagonal matrix of size p with this value on the (constant) diagonal
       sig2_theta_vb <- 1 / (d + S0_inv) # idem
 
       vec_sum_log_det_theta <- - p * (log(s02) + log(d + S0_inv))
 
-      vec_fac_st <- NULL
-
     } else {
 
-      S0_inv <- lapply(unique(vec_fac_st), function(bl) {
+      vec_fac_st <- list_struct$vec_fac_st
+      n_cpus <- list_struct$n_cpus
+
+      S0_inv <- parallel::mclapply(unique(vec_fac_st), function(bl) {
 
         corX <- cor(X[, vec_fac_st == bl, drop = FALSE])
         corX <- as.matrix(Matrix::nearPD(corX, corr = TRUE, do2eigen = TRUE)$mat) # regularization in case of non-positive definiteness.
 
         as.matrix(solve(corX) / s02)
-      })
+      }, mc.cores = n_cpus)
 
-      sig2_theta_vb <- update_sig2_theta_vb_(d, S0_inv)
+      sig2_theta_vb <- update_sig2_theta_vb_(d, S0_inv, n_cpus)
       vec_sum_log_det_theta <- log_det(S0_inv) + log_det(sig2_theta_vb) # vec_sum_log_det_theta[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
 
     }

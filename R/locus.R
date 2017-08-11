@@ -350,7 +350,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     }
 
-
     if (is.null(list_hyper) | is.null(list_init)) {
 
       if (is.null(list_groups)) p_tot <- p
@@ -378,6 +377,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   }
 
   if (verbose) cat("== Preparing the hyperparameters ... \n\n")
+
   list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, r, dual, link, ind_bin,
                                     vec_fac_gr, vec_fac_st, bool_rmvd_x, bool_rmvd_z,
                                     bool_rmvd_v, names_x, names_y, names_z, verbose)
@@ -504,14 +504,13 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
         # see core function below
         vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
                                list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                               list_init$tau_vb, vec_fac_st, list_struct,
-                               tol, maxit, verbose)
+                               list_init$tau_vb, list_struct, tol, maxit, verbose)
 
       } else { # list_struct non-null, and only predictor propensity control.
 
         vb <- locus_struct_core_(Y, X, list_hyper, list_init$gam_vb,
                                  list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                 list_init$tau_vb, vec_fac_st, tol, maxit, verbose)
+                                 list_init$tau_vb, list_struct, tol, maxit, verbose)
       }
 
     } else if (link == "logit"){

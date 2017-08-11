@@ -6,7 +6,7 @@
 # See help of `locus` function for details.
 #
 locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
-                               tau_vb, vec_fac_st, tol, maxit, verbose, batch = "y",
+                               tau_vb, list_struct, tol, maxit, verbose, batch = "y",
                                full_output = FALSE, debug = FALSE) {
 
   # Y must have been centered, and X standardized.
@@ -14,18 +14,20 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
   d <- ncol(Y)
   n <- nrow(Y)
   p <- ncol(X)
+  vec_fac_st <- list_struct$vec_fac_st
+  n_cpus <- list_struct$n_cpus
 
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects
 
     mu_theta_vb <- m0
 
-    list_S0_inv <- lapply(unique(vec_fac_st), function(bl) {
+    list_S0_inv <- parallel::mclapply(unique(vec_fac_st), function(bl) {
       corX <- cor(X[, vec_fac_st == bl, drop = FALSE])
       corX <- as.matrix(Matrix::nearPD(corX, corr = TRUE, do2eigen = TRUE)$mat) # regularization in case of non-positive definiteness.
-      as.matrix(solve(corX) / s02)})
+      as.matrix(solve(corX) / s02)}, mc.cores = n_cpus)
 
-    list_sig2_theta_vb <- update_sig2_theta_vb_(d, list_S0_inv)
+    list_sig2_theta_vb <- update_sig2_theta_vb_(d, list_S0_inv, n_cpus)
 
     vec_sum_log_det <- log_det(list_S0_inv) + log_det(list_sig2_theta_vb) # vec_sum_log_det[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
 

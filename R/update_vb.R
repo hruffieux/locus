@@ -332,11 +332,13 @@ update_mu_theta_vb_ <- function(W, m0, S0_inv, sig2_theta_vb, vec_fac_st, mu_rho
 }
 
 
-update_sig2_theta_vb_ <- function(d, S0_inv) {
+update_sig2_theta_vb_ <- function(d, S0_inv, n_cpus = 1) {
 
   if (is.list(S0_inv)) {
 
-    lapply(S0_inv, function(S0_inv) as.matrix(solve(S0_inv + diag(d, nrow(S0_inv)))))
+    parallel::mclapply(S0_inv, function(mat) {
+      as.matrix(solve(mat + diag(d, nrow(mat))))
+    }, mc.cores = n_cpus)
 
   } else {
 
