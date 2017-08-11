@@ -308,7 +308,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     p_star <- cross_validate_(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
-    vec_fac_gr <- NULL
+    vec_fac_gr <- vec_fac_st <- NULL
 
   } else {
 
@@ -340,6 +340,11 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
     if (!is.null(list_struct)) {
 
       list_struct <- prepare_struct_(list_struct, n, q, r, bool_rmvd_x, link, list_cv, list_groups)
+      vec_fac_st <- list_struct$vec_fac_st
+
+    } else {
+
+      vec_fac_st <- NULL
 
     }
 
@@ -371,7 +376,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
   if (verbose) cat("== Preparing the hyperparameters ... \n\n")
   list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, r, link, ind_bin,
-                                    vec_fac_gr, list_struct$vec_fac_st,
+                                    vec_fac_gr, vec_fac_st,
                                     bool_rmvd_x, bool_rmvd_z, bool_rmvd_v,
                                     names_x, names_y, names_z, verbose)
   if (verbose) cat("... done. == \n\n")
