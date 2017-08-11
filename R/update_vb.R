@@ -298,9 +298,11 @@ update_mu_theta_vb_ <- function(W, m0, list_S0_inv, list_sig2_theta_vb, vec_fac_
 }
 
 
-update_sig2_theta_vb_ <- function(d, list_S0_inv) {
+update_sig2_theta_vb_ <- function(d, list_S0_inv, n_cpus) {
 
-  lapply(list_S0_inv, function(S0_inv) as.matrix(solve(S0_inv + diag(d, nrow(S0_inv)))))
+  parallel::mclapply(list_S0_inv, function(S0_inv) {
+    as.matrix(solve(S0_inv + diag(d, nrow(S0_inv))))
+    }, mc.cores = n_cpus)
 
 }
 

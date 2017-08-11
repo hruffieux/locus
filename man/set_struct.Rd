@@ -5,7 +5,7 @@
 \title{Gather settings for application of the `locus` function with structured
 sparse prior.}
 \usage{
-set_struct(n, p, pos_st, verbose = TRUE)
+set_struct(n, p, pos_st, n_cpus, verbose = TRUE)
 }
 \arguments{
 \item{n}{Number of samples.}
@@ -14,6 +14,10 @@ set_struct(n, p, pos_st, verbose = TRUE)
 
 \item{pos_st}{Vector gathering the predictor block positions (first index of
 each block). The predictors must be ordered by blocks.}
+
+\item{n_cpus}{Number of CPUs to be used. If large, one should ensure that
+enough RAM will be available for parallel execution. Set to 1 for serial
+execution.}
 
 \item{verbose}{If \code{TRUE}, messages are displayed when calling
 \code{set_struct}.}
@@ -75,7 +79,7 @@ Y <- cbind(Y_act, Y_inact)[, shuff_y_ind]
 
 n_st <- 100
 pos_st <- seq(1, p, by = ceiling(p/n_st))
-list_struct <- set_struct(n, p, pos_st)
+list_struct <- set_struct(n, p, pos_st, n_cpus = 1)
 
 vb <- locus(Y = Y, X = X, p0_av = p0, link = "identity",
    list_struct = list_struct, user_seed = seed)
