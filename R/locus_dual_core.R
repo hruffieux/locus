@@ -7,7 +7,7 @@
 #
 locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
                              tau_vb, list_struct, tol, maxit, verbose,
-                             batch = "y", full_output = FALSE, debug = TRUE) {
+                             batch = "y", full_output = FALSE, debug = FALSE) {
 
   # Y must have been centered, and X standardized.
 
@@ -24,7 +24,8 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
     if (is.null(list_struct)) {
 
-      vec_fac_st <- n_cpus <- 1
+      vec_fac_st <- NULL
+      n_cpus <- 1
 
       S0_inv <- 1 / s02 # stands for a diagonal matrix of size p with this value on the (constant) diagonal
       sig2_theta_vb <- 1 / (d + S0_inv) # idem
