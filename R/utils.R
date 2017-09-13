@@ -164,6 +164,43 @@ inv_mills_ratio_ <- function(Y, U) {
 #
 # }
 
+
+# Functions for hyperparameter settings in dual_core (similarly to what is done in HESS)
+#
+E_Phi_X <- function(mu, s2, lower_tail = TRUE) {
+
+  pnorm(mu / sqrt(1 + s2), lower.tail = lower_tail)
+
+}
+
+E_Phi_X_2 <- function(mu, s2) {
+
+  pnorm(mu / sqrt(1 + s2)) -
+    2 * PowerTOST::OwensT(mu / sqrt(1 + s2), 1 / sqrt(1 + 2 * s2))
+
+}
+
+get_V_p_t <- function(n0_t, t02_t, p) {
+  p * (p - 1) * E_Phi_X_2(n0_t, t02_t) -
+    p^2 * E_Phi_X(n0_t, t02_t)^2 +
+    p * E_Phi_X(n0_t, t02_t)
+}
+
+
+get_n0_t <- function(E_p_t, t02_t, p) {
+
+  sqrt(1 + t02_t) * qnorm(1- E_p_t / p)
+
+}
+
+
+get_V_modul <- function(n0_t, s02_s) {
+
+  E_Phi_X_2(n0_t, s02_s) - E_Phi_X(n0_t, s02_s)^2
+
+}
+
+
 rm_constant_ <- function(mat, verbose) {
 
   bool_cst <- is.nan(colSums(mat))

@@ -13,7 +13,7 @@ Description: Variational inference for sparse multivariate regression models
     that allow combined selection of covariates and associated responses in
     high-dimensional set-ups (Helene Ruffieux, Anthony C. Davison, Jorg Hager,
     Irina Irincheeva, 2017, Biostatistics). This software has been used with
-    genetic data from molecular quantitative trait locus (QTL) problems with over 
+    genetic data from molecular quantitative trait locus (QTL) problems with over
     500K single nucleotide polymorphisms (SNPs), thousands of molecular expression
     levels and hundreds of individuals.
 Depends:
@@ -23,6 +23,7 @@ LazyData: TRUE
 Imports:
     Matrix (>= 1.2-2),
     parallel,
+    PowerTOST,
     Rcpp (>= 0.12.9),
     RcppEigen (>= 0.3.2.9.0)
 RoxygenNote: 6.0.1

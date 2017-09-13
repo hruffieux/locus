@@ -268,6 +268,45 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
     if (!is.null(m0))
       stop("Provided r = NULL and struct = FALSE, not consitent with m0 being non-null.")
 
+  } else if (dual){
+    
+    if (!is.null(m0))
+      stop("Provided dual = TRUE not consitent with m0 being non-null.")
+    
+    s2 <- NULL
+    
+    E_p_t <- 5
+    V_p_t <- 5
+    
+    dn <- 0
+    up <- 1e5
+    
+    t02 <- uniroot(function(x)
+      get_V_p_t(get_n0_t(E_p_t, x, p), x, p) - V_p_t,
+      interval = c(dn, up))$root
+    
+    # n0 sets the level of sparsity.
+    n0 <- - get_n0_t(E_p_t, t02, p)  # n0 = - n0_star
+    
+    V_modul <- 1e-5 # take a small variance for the modulation to avoid `all-response activation' artefact.
+    # if lots of pleiotropic SNPs (vec_prob_sh large), better to have it a bit larger (even if some artefact appears)
+    # because it make sense to borrow information across responses then, so theta_s should be allowed to vary more.
+    
+    s02 <- uniroot(function(x)
+      get_V_modul(n0, x) - V_modul,
+      interval = c(dn, up))$root
+    
+    # get m0 by recallibrating the p(gamma_st) so that it match that obtained
+    # when setting n0 and t02 (where we `ignored' the modulation parameter).
+    #
+    m0 <- - (sqrt(1 + s02 + t02) * n0 / sqrt(1 + t02) - n0) # m0 = - m0_star
+    
+    m0 <- rep(m0, p)
+    n0 <- rep(n0, d)
+    
+    if (!is.null(a) | !is.null(b))
+      stop("Provided r != NULL or struct = TRUE, not consitent with a and b being non-null.")
+    
   } else {
 
     check_structure_(m0, "vector", "double", c(1, p))
@@ -278,11 +317,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
     if (!nr) s2 <- 1e-2 # prior variance for external info coefficients (effects likely to be concentrated around zero)
     else s2 <- NULL
 
-    if (dual) {
-      t02 <- 0.1
-    } else {
-      t02 <- NULL
-    }
+    n0 <- t02 <- NULL
 
     if (!is.null(a) | !is.null(b))
       stop("Provided r != NULL or struct = TRUE, not consitent with a and b being non-null.")
@@ -410,22 +445,64 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, dual, struct, vec
   if (dual | !is.null(r) | struct) {
 
     # hyperparameters external info model
-    s02 <- 0.1 # prior variance for the intercept, bernoulli-probit
     if (!is.null(r)) s2 <- 1e-2 # prior variance for external info coefficients (effects likely to be concentrated around zero)
     else s2 <- NULL
 
-    if (dual) t02 <- 0.1
-    else t02 <- NULL
+    if (dual) {
 
-    m0 <- - qnorm(b / (a + b)) * sqrt(1 + s02) # calibrate the sparsity level on that of the base model.
-                                               # we have pr(\gamma_st) = 1 - Phi( m0_star / sqrt(1 + s02))
-                                               # and set this to be equal to pr(\gamma_st) for the base model,
-                                               # i.e., a / (a + b), then solve for m0_star. m0 = - m_star
+      # get n0 and t02 similarly as for a_omega_t and b_omega_t in HESS
+      # (specify expectation and variance of number of active predictors per response)
+      #
+      E_p_t <- 5
+      V_p_t <- 5
+
+      dn <- 0
+      up <- 1e5
+
+      t02 <- uniroot(function(x)
+        get_V_p_t(get_n0_t(E_p_t, x, p), x, p) - V_p_t,
+        interval = c(dn, up))$root
+
+      # n0 sets the level of sparsity.
+      n0 <- - get_n0_t(E_p_t, t02, p)  # n0 = - n0_star
+
+
+      # get s02 by setting the variance of the modulation effect
+      #
+      V_modul <- 1e-5 # take a small variance for the modulation to avoid `all-response activation' artefact.
+                      # if lots of pleiotropic SNPs (vec_prob_sh large), better to have it a bit larger (even if some artefact appears)
+                      # because it make sense to borrow information across responses then, so theta_s should be allowed to vary more.
+
+      s02 <- uniroot(function(x)
+        get_V_modul(n0, x) - V_modul,
+        interval = c(dn, up))$root
+
+      # get m0 by recallibrating the p(gamma_st) so that it match that obtained
+      # when setting n0 and t02 (where we `ignored' the modulation parameter).
+      #
+      m0 <- - (sqrt(1 + s02 + t02) * n0 / sqrt(1 + t02) - n0) # m0 = - m0_star
+
+      m0 <- rep(m0, p)
+      n0 <- rep(n0, d)
+
+    } else {
+
+      s02 <- 0.1 # prior variance for the intercept, bernoulli-probit
+      t02 <- NULL
+
+      m0 <- - qnorm(b / (a + b)) * sqrt(1 + s02) # calibrate the sparsity level on that of the base model.
+                                                 # we have pr(\gamma_st) = 1 - Phi( m0_star / sqrt(1 + s02))
+                                                 # and set this to be equal to pr(\gamma_st) for the base model,
+                                                 # i.e., a / (a + b), then solve for m0_star. m0 = - m_star
+
+      n0 <- NULL
+    }
+
     a <- b <- NULL
 
   } else {
 
-    m0 <- s02 <- s2 <- t02 <- NULL
+    m0 <- n0 <- s02 <- s2 <- t02 <- NULL
 
   }
 
@@ -451,7 +528,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, dual, struct, vec
 
   list_hyper <- create_named_list_(d_hyper, G_hyper, p_hyper, q_hyper, r_hyper,
                                    link_hyper, ind_bin_hyper, eta, kappa,
-                                   lambda, nu, a, b, phi, xi, m0, s02, s2, t02)
+                                   lambda, nu, a, b, phi, xi, m0, n0, s02, s2, t02)
 
   class(list_hyper) <- "out_hyper"
 
