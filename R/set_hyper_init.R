@@ -269,44 +269,51 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
       stop("Provided r = NULL and struct = FALSE, not consitent with m0 being non-null.")
 
   } else if (dual){
-    
+
     if (!is.null(m0))
       stop("Provided dual = TRUE not consitent with m0 being non-null.")
-    
+
     s2 <- NULL
-    
+
     E_p_t <- 5
     V_p_t <- 5
-    
+
     dn <- 0
     up <- 1e5
-    
-    t02 <- uniroot(function(x)
-      get_V_p_t(get_n0_t(E_p_t, x, p), x, p) - V_p_t,
-      interval = c(dn, up))$root
-    
-    # n0 sets the level of sparsity.
-    n0 <- - get_n0_t(E_p_t, t02, p)  # n0 = - n0_star
-    
-    V_modul <- 1e-5 # take a small variance for the modulation to avoid `all-response activation' artefact.
-    # if lots of pleiotropic SNPs (vec_prob_sh large), better to have it a bit larger (even if some artefact appears)
-    # because it make sense to borrow information across responses then, so theta_s should be allowed to vary more.
-    
-    s02 <- uniroot(function(x)
-      get_V_modul(n0, x) - V_modul,
-      interval = c(dn, up))$root
-    
-    # get m0 by recallibrating the p(gamma_st) so that it match that obtained
-    # when setting n0 and t02 (where we `ignored' the modulation parameter).
+
+    # Get n0 and t02 similarly as for a_omega_t and b_omega_t in HESS
+    # (specify expectation and variance of number of active predictors per response)
     #
-    m0 <- - (sqrt(1 + s02 + t02) * n0 / sqrt(1 + t02) - n0) # m0 = - m0_star
-    
+    # Look at : gam_st | theta_s = 0
+    #
+    t02 <- uniroot(function(x)
+      get_V_p_t(get_mu(E_p_t, x, p), x, p) - V_p_t,
+      interval = c(dn, up))$root
+
+
+    # n0 sets the level of sparsity.
+    n0 <- get_mu(E_p_t, t02, p)  # n0 = - n0_star
+
+    # Look at : gam_st
+    #
+    s02 <- 0.05 # take a small variance for the modulation to avoid `all-response activation' artefact.
+                # if lots of relevant predictors affect multiple responses,
+                # better to have it a bit larger (even if some artefact appears)
+                # because it make sense to borrow information across responses then,
+                # so theta_s should be allowed to vary more.
+
+    # adjust the mean of theta_s so that E_p_t = p * E(gam | theta = 0) = p * E(gam)
+    m0 <- get_mu(E_p_t, s02 + t02, p) - n0
+
+    m0 <- - m0
+    n0 <- - n0
+
     m0 <- rep(m0, p)
     n0 <- rep(n0, d)
-    
+
     if (!is.null(a) | !is.null(b))
       stop("Provided r != NULL or struct = TRUE, not consitent with a and b being non-null.")
-    
+
   } else {
 
     check_structure_(m0, "vector", "double", c(1, p))
@@ -450,37 +457,38 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, dual, struct, vec
 
     if (dual) {
 
-      # get n0 and t02 similarly as for a_omega_t and b_omega_t in HESS
-      # (specify expectation and variance of number of active predictors per response)
-      #
       E_p_t <- 5
       V_p_t <- 5
 
       dn <- 0
       up <- 1e5
 
+      # Get n0 and t02 similarly as for a_omega_t and b_omega_t in HESS
+      # (specify expectation and variance of number of active predictors per response)
+      #
+      # Look at : gam_st | theta_s = 0
+      #
       t02 <- uniroot(function(x)
-        get_V_p_t(get_n0_t(E_p_t, x, p), x, p) - V_p_t,
+        get_V_p_t(get_mu(E_p_t, x, p), x, p) - V_p_t,
         interval = c(dn, up))$root
+
 
       # n0 sets the level of sparsity.
-      n0 <- - get_n0_t(E_p_t, t02, p)  # n0 = - n0_star
+      n0 <- get_mu(E_p_t, t02, p)  # n0 = - n0_star
 
-
-      # get s02 by setting the variance of the modulation effect
+      # Look at : gam_st
       #
-      V_modul <- 1e-5 # take a small variance for the modulation to avoid `all-response activation' artefact.
-                      # if lots of pleiotropic SNPs (vec_prob_sh large), better to have it a bit larger (even if some artefact appears)
-                      # because it make sense to borrow information across responses then, so theta_s should be allowed to vary more.
+      s02 <- 0.05 # take a small variance for the modulation to avoid `all-response activation' artefact.
+                  # if lots of relevant predictors affect multiple responses,
+                  # better to have it a bit larger (even if some artefact appears)
+                  # because it make sense to borrow information across responses then,
+                  # so theta_s should be allowed to vary more.
 
-      s02 <- uniroot(function(x)
-        get_V_modul(n0, x) - V_modul,
-        interval = c(dn, up))$root
+      # adjust the mean of theta_s so that E_p_t = p * E(gam | theta = 0) = p * E(gam)
+      m0 <- get_mu(E_p_t, s02 + t02, p) - n0
 
-      # get m0 by recallibrating the p(gamma_st) so that it match that obtained
-      # when setting n0 and t02 (where we `ignored' the modulation parameter).
-      #
-      m0 <- - (sqrt(1 + s02 + t02) * n0 / sqrt(1 + t02) - n0) # m0 = - m0_star
+      m0 <- - m0
+      n0 <- - n0
 
       m0 <- rep(m0, p)
       n0 <- rep(n0, d)

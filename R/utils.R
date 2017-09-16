@@ -180,23 +180,16 @@ E_Phi_X_2 <- function(mu, s2) {
 
 }
 
-get_V_p_t <- function(n0_t, t02_t, p) {
-  p * (p - 1) * E_Phi_X_2(n0_t, t02_t) -
-    p^2 * E_Phi_X(n0_t, t02_t)^2 +
-    p * E_Phi_X(n0_t, t02_t)
+get_V_p_t <- function(mu, s2, p) {
+  p * (p - 1) * E_Phi_X_2(mu, s2) -
+    p^2 * E_Phi_X(mu, s2)^2 +
+    p * E_Phi_X(mu, s2)
 }
 
 
-get_n0_t <- function(E_p_t, t02_t, p) {
+get_mu <- function(E_p_t, s2, p) {
 
-  sqrt(1 + t02_t) * qnorm(1- E_p_t / p)
-
-}
-
-
-get_V_modul <- function(n0_t, s02_s) {
-
-  E_Phi_X_2(n0_t, s02_s) - E_Phi_X(n0_t, s02_s)^2
+  sqrt(1 + s2) * qnorm(1- E_p_t / p)
 
 }
 
