@@ -474,7 +474,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, dual, struct, vec
 
 
       # n0 sets the level of sparsity.
-      n0 <- get_mu(E_p_t, t02, p)  # n0 = - n0_star
+      n0 <- get_mu(E_p_t, t02, p)
 
       # Look at : gam_st
       #
@@ -487,8 +487,8 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, dual, struct, vec
       # adjust the mean of theta_s so that E_p_t = p * E(gam | theta = 0) = p * E(gam)
       m0 <- get_mu(E_p_t, s02 + t02, p) - n0
 
-      m0 <- - m0
-      n0 <- - n0
+      m0 <- - m0  # n0 = - n0_star
+      n0 <- - n0  # m0 = - m0_star
 
       m0 <- rep(m0, p)
       n0 <- rep(n0, d)

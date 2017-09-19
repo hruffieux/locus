@@ -22,7 +22,7 @@ License: GPL (>= 2) | file LICENSE
 LazyData: TRUE
 Imports:
     Matrix (>= 1.2-2),
-    parallel (>= 3.3.3),
+    parallel,
     PowerTOST (>= 1.4-6),
     Rcpp (>= 0.12.9),
     RcppEigen (>= 0.3.2.9.0)
