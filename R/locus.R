@@ -29,13 +29,16 @@
 #'   samples and d is the number of response variables.
 #' @param X Input matrix of dimension n x p, where p is the number of candidate
 #'   predictors. \code{X} cannot contain NAs. No intercept must be supplied.
-#' @param p0_av Prior average number of predictors (or groups of predictor if
-#'   \code{list_groups} is non-\code{NULL}) expected to be included in the
-#'   model. Must be \code{NULL} if \code{list_init} and \code{list_hyper}
-#'   are both non-\code{NULL} or if \code{list_cv} is non-\code{NULL}. Can also
+#' @param p0_av If \code{dual} is \code{FALSE} (default), prior average number
+#'   of predictors (or groups of predictors if \code{list_groups} is
+#'   non-\code{NULL}) expected to be included in the model.  Can also
 #'   be a vector of length p (resp. of length the number of groups) with entry s
 #'   corresponding to the prior probability that candidate predictor s (resp.
-#'   group s) is associated with at least one response.
+#'   group s) is associated with at least one response. If \code{dual} is
+#'   \code{TRUE}, vector of size 2 whose arguments are the expectation and the
+#'   variance of the number of active predictors per response.
+#'   Must be \code{NULL} if \code{list_init} and \code{list_hyper}
+#'   are both non-\code{NULL} or if \code{list_cv} is non-\code{NULL}.
 #' @param Z Covariate matrix of dimension n x q, where q is the number of
 #'   covariates. Variables in \code{Z} are not subject to selection. \code{NULL}
 #'   if no covariate. Factor covariates must be supplied after transformation to
@@ -355,10 +358,10 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
       if (is.null(list_groups)) p_tot <- p
       else p_tot <- length(unique(vec_fac_gr))
 
-      p_star <- convert_p0_av_(p0_av, p_tot, list_blocks, verbose)
+      p_star <- convert_p0_av_(p0_av, p_tot, list_blocks, dual, verbose)
 
       # remove the entries corresponding to the removed constant covariates in X (if any)
-      if (length(p_star) > 1) {
+      if (length(p_star) > 1 & !dual) {
         if (is.null(list_groups)) p_star <- p_star[!bool_rmvd_x]
         else p_star <- p_star[unique(vec_fac_gr)]
       }
@@ -390,8 +393,8 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
   if (verbose) cat("== Preparing the parameter initialization ... \n\n")
 
-  list_init <- prepare_list_init_(list_init, Y, p, p_star, q, link, ind_bin,
-                                  vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
+  list_init <- prepare_list_init_(list_init, Y, p, p_star, q, dual, link,
+                                  ind_bin, vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
                                   bool_rmvd_v, user_seed, verbose)
 
   if (verbose) cat("... done. == \n\n")

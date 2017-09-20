@@ -6,7 +6,8 @@
 \usage{
 set_hyper(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
   ind_bin = NULL, q = NULL, phi = NULL, xi = NULL, r = NULL,
-  m0 = NULL, G = NULL, dual = FALSE, struct = FALSE)
+  m0 = NULL, n0 = NULL, s02 = NULL, s2 = NULL, t02 = NULL, G = NULL,
+  dual = FALSE, struct = FALSE)
 }
 \arguments{
 \item{d}{Number of responses.}
@@ -73,11 +74,21 @@ repeated q times. Default is \code{NULL}, for \code{Z} \code{NULL}.}
 \item{r}{Number of variables representing external information on the
 candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.}
 
-\item{m0}{Vector of length 1 or p providing the values of hyperparameter
-\eqn{m0} related to the proportion of responses associated with each
-candidate predictor. If of length 1, the provided value is repeated p
-times. Default is \code{NULL}, for both \code{V} and \code{list_struct}
+\item{m0}{Vector of length 1 or p. Hyperparameter when \code{V},
+\code{list_struct} or \code{dual} is non-\code{NULL}. Default is
 \code{NULL}.}
+
+\item{n0}{Vector of length 1 or d. Hyperparameter when \code{dual} is
+non-\code{NULL}. Default is \code{NULL}.}
+
+\item{s02}{Variance hyperparameter when \code{V}, \code{list_struct} or
+\code{dual} is non-\code{NULL} non-\code{NULL}. Default is \code{NULL}.}
+
+\item{s2}{Variance hyperparameter when \code{V} is non-\code{NULL}
+non-\code{NULL}. Default is \code{NULL}.}
+
+\item{t02}{Variance hyperparameter when \code{dual} is non-\code{NULL}
+non-\code{NULL}. Default is \code{NULL}.}
 
 \item{G}{Number of candidate predictor groups when using the group selection
 model from the \code{\link{locus}} function. Default is \code{NULL},
@@ -191,7 +202,8 @@ vb_g_z <- locus(Y = Y, X = X, p0_av = p0, Z = Z, link = "identity",
 #
 list_hyper_g_v <- set_hyper(d, p, lambda = 1, nu = 1, a = NULL, b = NULL,
                             eta = 1, kappa = apply(Y, 2, var),
-                            link = "identity", r = r, m0 = 0)
+                            link = "identity", r = r, m0 = 0, s02 = 0.1,
+                            s2 = 0.001)
 
 vb_g_v <- locus(Y = Y, X = X, p0_av = p0,  V = V, link = "identity",
                 list_hyper = list_hyper_g_v, user_seed = seed)

@@ -186,68 +186,80 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verb
 # Internal function implementing sanity checks and needed preprocessing for
 # argument p0_av before the application of the different `locus_*_core` algorithms.
 #
-convert_p0_av_ <- function(p0_av, p, list_blocks, verbose, eps = .Machine$double.eps^0.5) {
+convert_p0_av_ <- function(p0_av, p, list_blocks, dual, verbose, eps = .Machine$double.eps^0.5) {
 
-  check_structure_(p0_av, "vector", "numeric", c(1, p))
+  if (dual) {
 
-  if (length(p0_av) == 1) {
-
-    if (verbose) cat(paste("Provided p0_av = ", p0_av, " interpreted as ",
-                           "the prior number of predictors associated with at ",
-                           "least one response. \n\n", sep = ""))
-
-    if (p0_av / p < eps)
-      stop(paste("p0_av = ", p0_av, ": \n",
-                 "invalid provided value of p0_av.\n",
-                 "The prior sparsity level, p0_av / p, must be larger than ",
-                 "zero. \n",
-                 "Please increase p0_av.",
-                 sep = ""))
-
-    if (p0_av / p > 0.95)
-      stop(paste("p0_av = ", p0_av, ": \n",
-                 "invalid provided value of p0_av.\n",
-                 "Induces a non-sparse formulation. Please decrease p0_av.",
-                 sep = ""))
-
-    if (p0_av > ceiling(4 * p / 5))
-      warning(paste("Prior model size p0_av = ", p0_av, ": \n",
-                    "p0_av / p is large, so multiplicity control may be weak. ",
-                    "You may want to consider a smaller p0_av.", sep=""))
+    check_structure_(p0_av, "vector", "numeric", 2)
+    check_positive_(p0_av) # first term = expected number of predictors per response
+                           # second term = variance of this number
 
     p_star <- p0_av
 
   } else {
 
-    if (verbose) cat(paste("The sth entry of the provided p0_av ",
-                           "interpreted as the prior probability that ",
-                           "predictor s is associated with at least one ",
-                           "response. \n\n",
-                           sep = ""))
+    check_structure_(p0_av, "vector", "numeric", c(1, p))
 
-    if (any(p0_av < eps) | any(p0_av > 1 - eps))
-      stop(paste("Invalid provided vector of p0_av.\n",
-                 "All entries must lie between 0 and 1 (strictly).",
-                 sep = ""))
+    if (length(p0_av) == 1) {
 
-    if (median(p0_av) > 1 / 2)
-      warning(paste("The number of predictors with large prior inclusion ",
-                    "probability is large, so multiplicity control may be weak. \n",
-                    "You may want to decrease the values of several ",
-                    "entries of p0_av.",
-                    sep=""))
+      if (verbose) cat(paste("Provided p0_av = ", p0_av, " interpreted as ",
+                             "the prior number of predictors associated with at ",
+                             "least one response. \n\n", sep = ""))
 
-    p_star <- p0_av * p
+      if (p0_av / p < eps)
+        stop(paste("p0_av = ", p0_av, ": \n",
+                   "invalid provided value of p0_av.\n",
+                   "The prior sparsity level, p0_av / p, must be larger than ",
+                   "zero. \n",
+                   "Please increase p0_av.",
+                   sep = ""))
 
-  }
+      if (p0_av / p > 0.95)
+        stop(paste("p0_av = ", p0_av, ": \n",
+                   "invalid provided value of p0_av.\n",
+                   "Induces a non-sparse formulation. Please decrease p0_av.",
+                   sep = ""))
 
-  # the sparsity level needs to be adapted when block-wise inference is used
-  # otherwise the selected models may be too small (empirical considerations here)
-  if (!is.null(list_blocks)) {
-    p_star <- sapply(p_star, function(p_star_j) min(p_star_j * list_blocks$n_bl, 0.975 * p))
+      if (p0_av > ceiling(4 * p / 5))
+        warning(paste("Prior model size p0_av = ", p0_av, ": \n",
+                      "p0_av / p is large, so multiplicity control may be weak. ",
+                      "You may want to consider a smaller p0_av.", sep=""))
 
-    if (verbose) cat(paste("The sparsity level is adapted for block-wise inference ",
-                           "to ensure only sufficiently large models are selected.\n\n", sep = ""))
+      p_star <- p0_av
+
+    } else {
+
+      if (verbose) cat(paste("The sth entry of the provided p0_av ",
+                             "interpreted as the prior probability that ",
+                             "predictor s is associated with at least one ",
+                             "response. \n\n",
+                             sep = ""))
+
+      if (any(p0_av < eps) | any(p0_av > 1 - eps))
+        stop(paste("Invalid provided vector of p0_av.\n",
+                   "All entries must lie between 0 and 1 (strictly).",
+                   sep = ""))
+
+      if (median(p0_av) > 1 / 2)
+        warning(paste("The number of predictors with large prior inclusion ",
+                      "probability is large, so multiplicity control may be weak. \n",
+                      "You may want to decrease the values of several ",
+                      "entries of p0_av.",
+                      sep=""))
+
+      p_star <- p0_av * p
+
+    }
+
+    # the sparsity level needs to be adapted when block-wise inference is used
+    # otherwise the selected models may be too small (empirical considerations here)
+    if (!is.null(list_blocks)) {
+      p_star <- sapply(p_star, function(p_star_j) min(p_star_j * list_blocks$n_bl, 0.975 * p))
+
+      if (verbose) cat(paste("The sparsity level is adapted for block-wise inference ",
+                             "to ensure only sufficiently large models are selected.\n\n", sep = ""))
+    }
+
   }
 
   p_star
@@ -277,7 +289,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, dual, link, ind_
     if (verbose) cat("list_hyper set automatically. \n")
 
     struct <- !ns
-    list_hyper <- auto_set_hyper_(Y, p, p_star, q, r, link, ind_bin, dual, struct, vec_fac_gr)
+    list_hyper <- auto_set_hyper_(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec_fac_gr)
 
   } else {
 
@@ -431,7 +443,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, dual, link, ind_
 # starting values before the application of the different `locus_*_core`
 # algorithms.
 #
-prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
+prepare_list_init_ <- function(list_init, Y, p, p_star, q,  dual, link, ind_bin,
                                vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
                                bool_rmvd_v, user_seed, verbose) {
 
@@ -451,7 +463,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
 
     if (verbose) cat(paste("list_init set automatically. \n", sep=""))
 
-    list_init <- auto_set_init_(Y, G, p, p_star, q, user_seed, link, ind_bin)
+    list_init <- auto_set_init_(Y, G, p, p_star, q, user_seed, dual, link, ind_bin)
 
   } else {
 

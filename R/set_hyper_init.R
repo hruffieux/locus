@@ -61,11 +61,17 @@
 #'   repeated q times. Default is \code{NULL}, for \code{Z} \code{NULL}.
 #' @param r Number of variables representing external information on the
 #'   candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.
-#' @param m0 Vector of length 1 or p providing the values of hyperparameter
-#'   \eqn{m0} related to the proportion of responses associated with each
-#'   candidate predictor. If of length 1, the provided value is repeated p
-#'   times. Default is \code{NULL}, for both \code{V} and \code{list_struct}
+#' @param m0 Vector of length 1 or p. Hyperparameter when \code{V},
+#'   \code{list_struct} or \code{dual} is non-\code{NULL}. Default is
 #'   \code{NULL}.
+#' @param n0 Vector of length 1 or d. Hyperparameter when \code{dual} is
+#'    non-\code{NULL}. Default is \code{NULL}.
+#' @param s02 Variance hyperparameter when \code{V}, \code{list_struct} or
+#'    \code{dual} is non-\code{NULL} non-\code{NULL}. Default is \code{NULL}.
+#' @param s2 Variance hyperparameter when \code{V} is non-\code{NULL}
+#'   non-\code{NULL}. Default is \code{NULL}.
+#' @param t02 Variance hyperparameter when \code{dual} is non-\code{NULL}
+#'   non-\code{NULL}. Default is \code{NULL}.
 #' @param G Number of candidate predictor groups when using the group selection
 #'   model from the \code{\link{locus}} function. Default is \code{NULL},
 #'   for no group selection.
@@ -166,7 +172,8 @@
 #' #
 #' list_hyper_g_v <- set_hyper(d, p, lambda = 1, nu = 1, a = NULL, b = NULL,
 #'                             eta = 1, kappa = apply(Y, 2, var),
-#'                             link = "identity", r = r, m0 = 0)
+#'                             link = "identity", r = r, m0 = 0, s02 = 0.1,
+#'                             s2 = 0.001)
 #'
 #' vb_g_v <- locus(Y = Y, X = X, p0_av = p0,  V = V, link = "identity",
 #'                 list_hyper = list_hyper_g_v, user_seed = seed)
@@ -207,7 +214,8 @@
 #'
 set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
                       ind_bin = NULL, q = NULL, phi = NULL, xi = NULL,
-                      r = NULL, m0 = NULL, G = NULL, dual = FALSE, struct = FALSE) {
+                      r = NULL, m0 = NULL, n0 = NULL, s02 = NULL, s2 = NULL,
+                      t02 = NULL, G = NULL, dual = FALSE, struct = FALSE) {
 
   check_structure_(d, "vector", "numeric", 1)
   check_natural_(d)
@@ -228,8 +236,8 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
-  if (!is.null(G) && (link != "identity" | !is.null(q) | !is.null(r) | struct))
-    stop("Group selection (G non-NULL) implemented only for identity link, Z = NULL, V = NULL and list_struct = NULL. Exit.")
+  if (!is.null(G) && (link != "identity" | !is.null(q) | !is.null(r) | struct | dual))
+    stop("Group selection (G non-NULL) implemented only for identity link, Z = NULL, V = NULL, list_struct = NULL and dual = FALSE. Exit.")
 
   if (struct && (link != "identity" | !is.null(q) | !is.null(r)))
     stop("Structured sparse priors (list_struct non-NULL) enabled only for identity link, Z = NULL and V = NULL. Exit.")
@@ -240,6 +248,9 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
   ns <- !struct
 
   if (!dual & nr & ns) {
+
+    if (!is.null(m0) | !is.null(n0) | !is.null(s02) | !is.null(s2)| !is.null(t02))
+      stop("Provided r = NULL, dual = FALSE and struct = FALSE, not consitent with m0, n0, s02, s2 or t02 being non-null.")
 
     if (is.null(G)) {
 
@@ -262,74 +273,39 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
     check_positive_(a)
     check_positive_(b)
 
-
-    s02 <- s2 <- t02 <- NULL
-
-    if (!is.null(m0))
-      stop("Provided r = NULL and struct = FALSE, not consitent with m0 being non-null.")
-
   } else if (dual){
 
-    if (!is.null(m0))
-      stop("Provided dual = TRUE not consitent with m0 being non-null.")
-
-    s2 <- NULL
-
-    E_p_t <- 5
-    V_p_t <- 5
-
-    dn <- 0
-    up <- 1e5
-
-    # Get n0 and t02 similarly as for a_omega_t and b_omega_t in HESS
-    # (specify expectation and variance of number of active predictors per response)
-    #
-    # Look at : gam_st | theta_s = 0
-    #
-    t02 <- uniroot(function(x)
-      get_V_p_t(get_mu(E_p_t, x, p), x, p) - V_p_t,
-      interval = c(dn, up))$root
-
-
-    # n0 sets the level of sparsity.
-    n0 <- get_mu(E_p_t, t02, p)  # n0 = - n0_star
-
-    # Look at : gam_st
-    #
-    s02 <- 0.05 # take a small variance for the modulation to avoid `all-response activation' artefact.
-                # if lots of relevant predictors affect multiple responses,
-                # better to have it a bit larger (even if some artefact appears)
-                # because it make sense to borrow information across responses then,
-                # so theta_s should be allowed to vary more.
-
-    # adjust the mean of theta_s so that E_p_t = p * E(gam | theta = 0) = p * E(gam)
-    m0 <- get_mu(E_p_t, s02 + t02, p) - n0
-
-    m0 <- - m0
-    n0 <- - n0
-
-    m0 <- rep(m0, p)
-    n0 <- rep(n0, d)
-
-    if (!is.null(a) | !is.null(b))
-      stop("Provided r != NULL or struct = TRUE, not consitent with a and b being non-null.")
-
-  } else {
+    if (!is.null(a) | !is.null(b) | !is.null(s2))
+      stop("Provided dual = TRUE not consitent with a, b or s2 being non-null.")
 
     check_structure_(m0, "vector", "double", c(1, p))
     if (length(m0) == 1) m0 <- rep(m0, p)
 
-    # prior info
-    s02 <- 0.1 # prior variance for the intercept, bernoulli-probit
-    if (!nr) s2 <- 1e-2 # prior variance for external info coefficients (effects likely to be concentrated around zero)
-    else s2 <- NULL
+    check_structure_(n0, "vector", "double", c(1, d))
+    if (length(n0) == 1) n0 <- rep(n0, d)
 
-    n0 <- t02 <- NULL
+    check_structure_(s02, "vector", "double", 1)
+    check_positive_(s02)
 
-    if (!is.null(a) | !is.null(b))
-      stop("Provided r != NULL or struct = TRUE, not consitent with a and b being non-null.")
+    check_structure_(t02, "vector", "double", 1)
+    check_positive_(t02)
+
+  } else {
+
+    if (!is.null(a) | !is.null(b) | !is.null(t02))
+      stop("Provided r != NULL or struct = TRUE, not consitent with a, b or t02 being non-null.")
+
+    check_structure_(m0, "vector", "double", c(1, p))
+    if (length(m0) == 1) m0 <- rep(m0, p)
+
+    check_structure_(s02, "vector", "double", 1)
+    check_positive_(s02)
+
+    check_structure_(s2, "vector", "double", 1)
+    check_positive_(s2)
 
   }
+
 
   check_structure_(lambda, "vector", "double", 1)
   check_positive_(lambda)
@@ -384,7 +360,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 
   list_hyper <- create_named_list_(d_hyper, G_hyper, p_hyper, q_hyper, r_hyper,
                                    link_hyper, ind_bin_hyper, eta, kappa,
-                                   lambda, nu, a, b, phi, xi, m0, s02, s2, t02)
+                                   lambda, nu, a, b, phi, xi, m0, n0, s02, s2, t02)
 
   class(list_hyper) <- "hyper"
 
@@ -396,7 +372,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 # Internal function setting default model hyperparameters when not provided by
 # the user.
 #
-auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, dual, struct, vec_fac_gr) {
+auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec_fac_gr) {
 
   d <- ncol(Y)
 
@@ -435,19 +411,22 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, dual, struct, vec
 
   }
 
-  if (is.null(G)) {
-    a <- rep(1, p)
-    b <- d * (p - p_star) / p_star
-    if (length(b) == 1) b <- rep(b, p)
-  } else {
-    a <- rep(1, G)
-    b <- d * (G - p_star) / p_star
-    if (length(b) == 1) b <- rep(b, G)
+  if (!dual) {
+    if (is.null(G)) {
+      a <- rep(1, p)
+      b <- d * (p - p_star) / p_star
+      if (length(b) == 1) b <- rep(b, p)
+    } else {
+      a <- rep(1, G)
+      b <- d * (G - p_star) / p_star
+      if (length(b) == 1) b <- rep(b, G)
+    }
+
+    # hyperparameters of beta distributions
+    check_positive_(a)
+    check_positive_(b)
   }
 
-  # hyperparameters of beta distributions
-  check_positive_(a)
-  check_positive_(b)
 
   if (dual | !is.null(r) | struct) {
 
@@ -457,8 +436,8 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, dual, struct, vec
 
     if (dual) {
 
-      E_p_t <- 5
-      V_p_t <- 5
+      E_p_t <- p_star[1]
+      V_p_t <- p_star[2]
 
       dn <- 0
       up <- 1e5
@@ -493,6 +472,9 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, dual, struct, vec
       m0 <- rep(m0, p)
       n0 <- rep(n0, d)
 
+      check_positive_(s02)
+      check_positive_(t02)
+
     } else {
 
       s02 <- 0.1 # prior variance for the intercept, bernoulli-probit
@@ -504,6 +486,8 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, link, ind_bin, dual, struct, vec
                                                  # i.e., a / (a + b), then solve for m0_star. m0 = - m_star
 
       n0 <- NULL
+
+      check_positive_(s02)
     }
 
     a <- b <- NULL
@@ -873,33 +857,81 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
 # Internal function setting default starting values when not provided by the user.
 #
-auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, link, ind_bin) {
+auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, dual, link, ind_bin) {
+
+  # Initialisation not modified for dual = TRUE (should not matter, but maybe change this)
 
   d <- ncol(Y)
 
   if (!is.null(user_seed)) set.seed(user_seed)
 
-  shape1_gam <- 1
 
-  if (is.null(G)) {
+  if (dual) {
 
-    shape2_gam <- d * (p - p_star) / p_star
+    E_p_t <- p_star[1]
+    V_p_t <- p_star[2]
 
-    if (length(p_star) > 1)
-      shape1_gam <- rep(shape1_gam, p)
+    dn <- 0
+    up <- 1e5
 
-    gam_vb <- matrix(rbeta(p * d, shape1 = shape1_gam, shape2 = shape2_gam),
-                     nrow = p)
+    # Get n0 and t02 similarly as for a_omega_t and b_omega_t in HESS
+    # (specify expectation and variance of number of active predictors per response)
+    #
+    # Look at : gam_st | theta_s = 0
+    #
+    t02 <- uniroot(function(x)
+      get_V_p_t(get_mu(E_p_t, x, p), x, p) - V_p_t,
+      interval = c(dn, up))$root
+
+
+    # n0 sets the level of sparsity.
+    n0 <- get_mu(E_p_t, t02, p)
+
+    # Look at : gam_st
+    #
+    s02 <- 0.05 # take a small variance for the modulation to avoid `all-response activation' artefact.
+    # if lots of relevant predictors affect multiple responses,
+    # better to have it a bit larger (even if some artefact appears)
+    # because it make sense to borrow information across responses then,
+    # so theta_s should be allowed to vary more.
+
+    # adjust the mean of theta_s so that E_p_t = p * E(gam | theta = 0) = p * E(gam)
+    m0 <- get_mu(E_p_t, s02 + t02, p) - n0
+
+    m0 <- - m0  # n0 = - n0_star
+    n0 <- - n0  # m0 = - m0_star
+
+    check_positive_(s02)
+    check_positive_(t02)
+
+    gam_vb <- matrix(pnorm(rnorm(p * d, mean = m0 + n0, sd = s02 + t02)), # Phi(theta + chi), and not 1 - Phi(theta + chi)
+                     nrow = p)                                            # as reparametrisation theta* = - theta, chi* = - chi
 
   } else {
 
-    shape2_gam <- d * (G - p_star) / p_star
+    shape1_gam <- 1
 
-    if (length(p_star) > 1)
-      shape1_gam <- rep(shape1_gam, G)
+    if (is.null(G)) {
 
-    gam_vb <- matrix(rbeta(G * d, shape1 = shape1_gam, shape2 = shape2_gam),
-                     nrow = G)
+      shape2_gam <- d * (p - p_star) / p_star
+
+      if (length(p_star) > 1)
+        shape1_gam <- rep(shape1_gam, p)
+
+      gam_vb <- matrix(rbeta(p * d, shape1 = shape1_gam, shape2 = shape2_gam),
+                       nrow = p)
+
+    } else {
+
+      shape2_gam <- d * (G - p_star) / p_star
+
+      if (length(p_star) > 1)
+        shape1_gam <- rep(shape1_gam, G)
+
+      gam_vb <- matrix(rbeta(G * d, shape1 = shape1_gam, shape2 = shape2_gam),
+                       nrow = G)
+
+    }
 
   }
 
