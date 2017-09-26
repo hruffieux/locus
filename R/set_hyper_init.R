@@ -469,9 +469,14 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
       #
       # Look at : gam_st | theta_s = 0
       #
-      t02 <- uniroot(function(x)
+      tryCatch(t02 <- uniroot(function(x)
         get_V_p_t(get_mu(E_p_t, x, p), x, p) - V_p_t,
-        interval = c(dn, up))$root
+        interval = c(dn, up))$root,
+        error = function(e) {
+          stop(paste0("No hyperparameter values matching the expectation and variance ",
+                      "of the number of active predictors per responses supplied in p0_av.",
+                      "Please change p0_av."))
+        })
 
       # n0 sets the level of sparsity.
       n0 <- get_mu(E_p_t, t02, p)
@@ -906,9 +911,14 @@ auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, dual, link, ind_bin) {
     #
     # Look at : gam_st | theta_s = 0
     #
-    t02 <- uniroot(function(x)
+    tryCatch(t02 <- uniroot(function(x)
       get_V_p_t(get_mu(E_p_t, x, p), x, p) - V_p_t,
-      interval = c(dn, up))$root
+      interval = c(dn, up))$root,
+      error = function(e) {
+        stop(paste0("No hyperparameter values matching the expectation and variance ",
+                    "of the number of active predictors per responses supplied in p0_av.",
+                    "Please change p0_av."))
+      })
 
 
     # n0 sets the level of sparsity.
