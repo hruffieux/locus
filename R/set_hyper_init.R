@@ -275,8 +275,24 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 
   } else if (dual){
 
-    if (!is.null(a) | !is.null(b) | !is.null(s2))
-      stop("Provided dual = TRUE not consitent with a, b or s2 being non-null.")
+    if (nr) {
+
+      if (!is.null(a) | !is.null(b) | !is.null(s2))
+        stop("Provided dual = TRUE not consitent with a, b or s2 being non-null.")
+
+    } else {
+
+      check_structure_(a, "vector", "double", c(1, r))
+      if (length(a) == 1) a <- rep(a, r)
+
+      check_structure_(b, "vector", "double", c(1, r))
+      if (length(b) == 1) b <- rep(b, r)
+
+      check_structure_(s2, "vector", "double", 1)
+      check_positive_(s2)
+
+    }
+
 
     check_structure_(m0, "vector", "double", c(1, p))
     if (length(m0) == 1) m0 <- rep(m0, p)
@@ -431,15 +447,21 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
   if (dual | !is.null(r) | struct) {
 
     # hyperparameters external info model
-    if (!is.null(r)) s2 <- 1e-2 # prior variance for external info coefficients (effects likely to be concentrated around zero)
-    else s2 <- NULL
+    if (!is.null(r)){
+      if (dual)
+        s2 <- 1e-3 # prior variance for external info coefficients (effects likely to be concentrated around zero)
+      else
+        s2 <- 1e-2
+    } else {
+      s2 <- NULL
+    }
 
     if (dual) {
 
       E_p_t <- p_star[1]
       V_p_t <- p_star[2]
 
-      dn <- 0
+      dn <- 1e-6
       up <- 1e5
 
       # Get n0 and t02 similarly as for a_omega_t and b_omega_t in HESS
@@ -450,7 +472,6 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
       t02 <- uniroot(function(x)
         get_V_p_t(get_mu(E_p_t, x, p), x, p) - V_p_t,
         interval = c(dn, up))$root
-
 
       # n0 sets the level of sparsity.
       n0 <- get_mu(E_p_t, t02, p)
@@ -475,6 +496,12 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
       check_positive_(s02)
       check_positive_(t02)
 
+      if (!is.null(r)) {
+        a <- b <- rep(1 / 2, r) # Jeffery prior for the annotations # /! not the same a and b as above!
+      } else {
+        a <- b <- NULL
+      }
+
     } else {
 
       s02 <- 0.1 # prior variance for the intercept, bernoulli-probit
@@ -485,12 +512,12 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
                                                  # and set this to be equal to pr(\gamma_st) for the base model,
                                                  # i.e., a / (a + b), then solve for m0_star. m0 = - m_star
 
-      n0 <- NULL
+      a <- b <- n0 <- NULL
 
       check_positive_(s02)
     }
 
-    a <- b <- NULL
+
 
   } else {
 
@@ -871,7 +898,7 @@ auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, dual, link, ind_bin) {
     E_p_t <- p_star[1]
     V_p_t <- p_star[2]
 
-    dn <- 0
+    dn <- 1e-6
     up <- 1e5
 
     # Get n0 and t02 similarly as for a_omega_t and b_omega_t in HESS

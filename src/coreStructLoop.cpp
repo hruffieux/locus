@@ -53,7 +53,7 @@ void coreStructLoop(const MapMat X,
 
 
 
-// for locus_struct_core function
+// for locus_dual_core function
 // [[Rcpp::export]]
 void coreDualLoop(const MapMat X,
                   const MapMat Y,
@@ -91,3 +91,41 @@ void coreDualLoop(const MapMat X,
   }
 
 }
+
+
+// for locus_struct_core function
+// [[Rcpp::export]]
+void coreDualInfoLoop(const MapMat V,
+                  const MapMat W,
+                  MapArr1D zeta_vb,
+                  const MapArr1D log_om_vb,
+                  const MapArr1D log_1_min_om_vb,
+                  const double s2,
+                  MapVec m1_c,
+                  MapMat mat_v_mu,
+                  MapArr1D mu_c_vb,
+                  const double sig2_c_vb,
+                  const MapArr1D shuffled_ind) {
+
+  const double c = (log(s2) - log(sig2_c_vb))/ 2;
+
+  for (int i = 0; i < V.cols(); ++i) {
+
+    int j = shuffled_ind[i];
+
+    mat_v_mu.colwise() -=  V.col(j) * m1_c(j);
+
+    mu_c_vb(j) = sig2_c_vb * ((W - mat_v_mu).transpose() * V.col(j)).sum();
+
+    zeta_vb(j) = 1 / (1 + exp(log_1_min_om_vb(j) - log_om_vb(j) -
+      mu_c_vb(j) * mu_c_vb(j) / (2 * sig2_c_vb) + c));
+
+    m1_c(j) = mu_c_vb(j) * zeta_vb(j);
+
+    mat_v_mu.colwise() +=  V.col(j) * m1_c(j);
+
+  }
+
+}
+
+

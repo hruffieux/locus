@@ -385,9 +385,9 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                     vec_fac_gr, vec_fac_st, bool_rmvd_x, bool_rmvd_z,
                                     bool_rmvd_v, names_x, names_y, names_z, verbose)
 
-  if(dual && (link != "identity" | !is.null(q) | !is.null(r)))
+  if(dual && (link != "identity" | !is.null(q)))
     stop(paste("Dual propensity control (p0_av is a list) enabled only for ",
-               "identity link, Z = NULL, V = NULL. Exit.", sep = ""))
+               "identity link, Z = NULL. Exit.", sep = ""))
 
   if (verbose) cat("... done. == \n\n")
 
@@ -423,7 +423,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
       }
 
-    } else{
+    } else {
 
       Z <- cbind(rep(1, n), Z)
 
@@ -503,11 +503,20 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
       } else if (dual) {
 
-        # list_struct can be non-null for injected  predictor correlation structure,
-        # see core function below
-        vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
-                               list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                               list_init$tau_vb, list_struct, tol, maxit, verbose)
+        if (nq & nr) {
+          # list_struct can be non-null for injected  predictor correlation structure,
+          # see core function below
+          vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
+                                 list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                 list_init$tau_vb, list_struct, tol, maxit, verbose)
+        } else if (nq) {
+
+          vb <- locus_dual_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
+                                      list_init$mu_beta_vb,
+                                      list_init$sig2_beta_vb, list_init$tau_vb,
+                                      list_struct, tol, maxit, verbose)
+
+        }
 
       } else { # list_struct non-null, and only predictor propensity control.
 

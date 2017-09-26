@@ -18,53 +18,34 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects
 
+
+    # Parameter initialization here for the top level only
+    #
     mu_theta_vb <- m0
     mu_rho_vb <- n0
 
-    if (is.null(list_struct)) {
 
-      vec_fac_st <- NULL
-      n_cpus <- 1
-
-      S0_inv <- 1 / s02 # stands for a diagonal matrix of size p with this value on the (constant) diagonal
-      sig2_theta_vb <- 1 / (d + S0_inv) # idem
-
-      vec_sum_log_det_theta <- - p * (log(s02) + log(d + S0_inv))
-
-    } else {
-
-      vec_fac_st <- list_struct$vec_fac_st
-      n_cpus <- list_struct$n_cpus
-
-      S0_inv <- parallel::mclapply(unique(vec_fac_st), function(bl) {
-
-        corX <- cor(X[, vec_fac_st == bl, drop = FALSE])
-        corX <- as.matrix(Matrix::nearPD(corX, corr = TRUE, do2eigen = TRUE)$mat) # regularization in case of non-positive definiteness.
-
-        as.matrix(solve(corX) / s02)
-      }, mc.cores = n_cpus)
-
-      sig2_theta_vb <- update_sig2_theta_vb_(d, S0_inv, n_cpus)
-      vec_sum_log_det_theta <- log_det(S0_inv) + log_det(sig2_theta_vb) # vec_sum_log_det_theta[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
-
-    }
-
-    # Not used.
-    # corY <- cor(Y + matrix(rnorm(n*d), nrow = n))
-    # corY <- as.matrix(Matrix::nearPD(corY, corr = TRUE, do2eigen = TRUE)$mat)
-
-    # corY <- diag(1, d)
-    # T0_inv <- as.matrix(solve(corY) / t02)
-    # rm(corY)
+    # Covariate-specific parameters: objects derived from s02, list_struct (possible block-wise in parallel)
     #
-    # sig2_rho_vb <- update_sig2_rho_vb_(p, T0_inv)
-    # vec_sum_log_det_rho <- log_det(T0_inv) + log_det(sig2_rho_vb) # vec_sum_log_det_rho[bl] = log(det(T0_inv)) + log(det(sig2_rho_vb))
+    obj_theta_vb <- update_sig2_theta_vb_(d, p, list_struct, s02, X)
 
-    T0_inv <- 1 / t02 # stands for a diagonal matrix of size d with this value on the (constant) diagonal
-    sig2_rho_vb <- 1 / (p + T0_inv) # idem
+    S0_inv <- obj_theta_vb$S0_inv
+    sig2_theta_vb <- obj_theta_vb$sig2_theta_vb
+    vec_sum_log_det_theta <- obj_theta_vb$ vec_sum_log_det_theta
+
+    vec_fac_st <- obj_theta_vb$vec_fac_st
+
+
+    # Response-specific parameters: objects derived from t02
+    #
+    T0_inv <- 1 / t02
+    sig2_rho_vb <- update_sig2_c0_vb_(p, t02) # stands for a diagonal matrix of size d with this value on the (constant) diagonal
 
     vec_sum_log_det_rho <- - d * (log(t02) + log(p + T0_inv))
 
+
+    # Stored/precomputed objects
+    #
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
     m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
@@ -122,8 +103,8 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
                              sig2_beta_vb, tau_vb, shuffled_ind)
 
       } else if (batch == "0"){ # no batch, used only internally
-        # schemes "x" of "x-y" are not batch concave
-        # hence not implemented as they may diverge
+                                # schemes "x" of "x-y" are not batch concave
+                                # hence not implemented as they may diverge
 
         for (k in sample(1:d)) {
 

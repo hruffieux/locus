@@ -290,6 +290,26 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// coreDualInfoLoop
+void coreDualInfoLoop(const MapMat V, const MapMat W, MapArr1D zeta_vb, const MapArr1D log_om_vb, const MapArr1D log_1_min_om_vb, const double s2, MapVec m1_c, MapMat mat_v_mu, MapArr1D mu_c_vb, const double sig2_c_vb, const MapArr1D shuffled_ind);
+RcppExport SEXP locus_coreDualInfoLoop(SEXP VSEXP, SEXP WSEXP, SEXP zeta_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP s2SEXP, SEXP m1_cSEXP, SEXP mat_v_muSEXP, SEXP mu_c_vbSEXP, SEXP sig2_c_vbSEXP, SEXP shuffled_indSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const MapMat >::type V(VSEXP);
+    Rcpp::traits::input_parameter< const MapMat >::type W(WSEXP);
+    Rcpp::traits::input_parameter< MapArr1D >::type zeta_vb(zeta_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_om_vb(log_om_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type log_1_min_om_vb(log_1_min_om_vbSEXP);
+    Rcpp::traits::input_parameter< const double >::type s2(s2SEXP);
+    Rcpp::traits::input_parameter< MapVec >::type m1_c(m1_cSEXP);
+    Rcpp::traits::input_parameter< MapMat >::type mat_v_mu(mat_v_muSEXP);
+    Rcpp::traits::input_parameter< MapArr1D >::type mu_c_vb(mu_c_vbSEXP);
+    Rcpp::traits::input_parameter< const double >::type sig2_c_vb(sig2_c_vbSEXP);
+    Rcpp::traits::input_parameter< const MapArr1D >::type shuffled_ind(shuffled_indSEXP);
+    coreDualInfoLoop(V, W, zeta_vb, log_om_vb, log_1_min_om_vb, s2, m1_c, mat_v_mu, mu_c_vb, sig2_c_vb, shuffled_ind);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"locus_coreBatch", (DL_FUNC) &locus_coreBatch, 12},
@@ -305,6 +325,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"locus_coreProbitLoop", (DL_FUNC) &locus_coreProbitLoop, 12},
     {"locus_coreStructLoop", (DL_FUNC) &locus_coreStructLoop, 13},
     {"locus_coreDualLoop", (DL_FUNC) &locus_coreDualLoop, 13},
+    {"locus_coreDualInfoLoop", (DL_FUNC) &locus_coreDualInfoLoop, 11},
     {NULL, NULL, 0}
 };
 

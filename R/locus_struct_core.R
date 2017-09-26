@@ -20,17 +20,24 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects
 
+    # Parameter initialization here for the top level only
+    #
     mu_theta_vb <- m0
 
-    list_S0_inv <- parallel::mclapply(unique(vec_fac_st), function(bl) {
-      corX <- cor(X[, vec_fac_st == bl, drop = FALSE])
-      corX <- as.matrix(Matrix::nearPD(corX, corr = TRUE, do2eigen = TRUE)$mat) # regularization in case of non-positive definiteness.
-      as.matrix(solve(corX) / s02)}, mc.cores = n_cpus)
 
-    list_sig2_theta_vb <- update_sig2_theta_vb_(d, list_S0_inv, n_cpus)
+    # Covariate-specific parameters: objects derived from s02, list_struct (possible block-wise in parallel)
+    #
+    obj_theta_vb <- update_sig2_theta_vb_(d, p, list_struct, s02, X)
 
-    vec_sum_log_det <- log_det(list_S0_inv) + log_det(list_sig2_theta_vb) # vec_sum_log_det[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
+    list_S0_inv <- obj_theta_vb$S0_inv
+    list_sig2_theta_vb <- obj_theta_vb$sig2_theta_vb
+    vec_sum_log_det <- obj_theta_vb$ vec_sum_log_det_theta
 
+    vec_fac_st <- obj_theta_vb$vec_fac_st
+
+
+    # Stored/precomputed objects
+    #
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
     m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 

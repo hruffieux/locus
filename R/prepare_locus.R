@@ -288,8 +288,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, dual, link, ind_
 
     if (verbose) cat("list_hyper set automatically. \n")
 
-    struct <- !ns
-    list_hyper <- auto_set_hyper_(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec_fac_gr)
+    list_hyper <- auto_set_hyper_(Y, p, p_star, q, r, dual, link, ind_bin, !ns, vec_fac_gr)
 
   } else {
 
@@ -340,7 +339,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, dual, link, ind_
     }
 
     nr <- is.null(r)
-    if (nr & ns) {
+    if (nr & ns & !dual) {
 
       if (!is.null(list_hyper$r_hyper))
         stop(paste("The dimension (r) of the provided hyperparameters ",
@@ -368,15 +367,26 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, dual, link, ind_
         }
       }
 
-    } else if (ns) { # r non-NULL
+    } else if (!nr) { # r non-NULL
 
       if (inherits(list_hyper, "hyper")) {
         # remove the entries corresponding to the removed constant predictors in X
         # (if any)
-        r_hyper_match <- length(bool_rmvd_v)
+
         list_hyper$m0 <- list_hyper$m0[!bool_rmvd_x]
+
+        r_hyper_match <- length(bool_rmvd_v)
+
+        if (dual) {
+          # a and b are the hyperparmater for the annotations here.
+          list_hyper$a <- list_hyper$a[!bool_rmvd_v]
+          list_hyper$b <- list_hyper$b[!bool_rmvd_v]
+        }
+
       } else {
-        r_hyper_match <- r
+
+        if (!nr)
+          r_hyper_match <- r
       }
 
       if (list_hyper$r_hyper != r_hyper_match)
@@ -386,7 +396,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, dual, link, ind_
       if (!is.null(names(list_hyper$m0)) && names(list_hyper$m0) != names_x)
         stop("Provided names for the entries of m0 do not match the colnames of X.")
 
-    } else { # list_struct non-NULL
+    } else { # list_struct non-NULL or dual non-NULL
 
       list_hyper$m0 <- list_hyper$m0[!bool_rmvd_x]
 
@@ -1204,7 +1214,7 @@ set_struct <- function(n, p, pos_st, n_cpus, verbose = TRUE) {
     }
 
     if (verbose) print(paste("Number of blocks: ", length(unique(vec_fac_st)),
-                             "\n Number of CPUs: ", n_cpus, sep = ""))
+                             ", number of CPUs: ", n_cpus, sep = ""))
 
   }
 

@@ -5,9 +5,9 @@
 # fixed covariates and external annotation variables.
 # See help of `locus` function for details.
 #
-locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb, 
+locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
                              sig2_beta_vb, tau_vb, tol, maxit, verbose,
-                             batch = "y", full_output = FALSE, debug = FALSE) {
+                             batch = "y", full_output = FALSE, debug = TRUE) {
 
   # Y must have been centered, and X, V standardized.
 
@@ -195,9 +195,12 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
       rownames(mu_c_vb) <- names_v
       colnames(mu_c_vb) <- names_y
 
+      rownames(mat_v_mu) <- names_x
+      colnames(mat_v_mu) <- names_y
+
       diff_lb <- abs(lb_opt - lb_old)
 
-      create_named_list_(gam_vb, mu_c0_vb, mu_c_vb, converged, it, lb_opt, diff_lb)
+      create_named_list_(gam_vb, mat_v_mu, mu_c0_vb, mu_c_vb, converged, it, lb_opt, diff_lb)
 
     }
   })

@@ -18,5 +18,5 @@
 #' @useDynLib locus, .registration = TRUE
 #' @import RcppEigen
 #' @importFrom Rcpp evalCpp
-#' @importFrom stats dnorm median pnorm qnorm rbeta rbinom rgamma rnorm setNames uniroot var
+#' @importFrom stats cor dnorm median pnorm qnorm rbeta rbinom rgamma rnorm setNames uniroot var
 NULL
