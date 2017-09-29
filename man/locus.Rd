@@ -118,13 +118,28 @@ An object of class "\code{vb}" containing the following variational
                  Entry s represents the control of the proportion of
                  responses associated with candidate predictor s which is not
                  due to external annotations. \code{NULL} if \code{V} is
-                 \code{NULL}.}
- \item{mu_c_vb}{Matrix of dimension r x d. Entry (l, k) contains the effect
-                of annotation l for response k on the probabilities of
-                associations. \code{NULL} if \code{V} is \code{NULL}.}
+                 \code{NULL} or if \code{dual} is \code{TRUE}.}
+ \item{mu_c_vb}{If \code{dual} is \code{FALSE}, matrix of dimension r x d,
+                where entry (l, k) contains the effect of annotation l for
+                response k on the probabilities of associations. If
+                \code{dual} is \code{TRUE}, vector of size r, where entry l
+                contains the overall effect of annotation l on the
+                probabilities of associations.\code{NULL} if \code{V} is
+                \code{NULL}.}
+ \item{mu_rho_vb}{Vector of length d containing the posterior mean of rho.
+                  Entry t controls the proportion of predictors associated
+                  with response t. \code{NULL} if \code{dual} is
+                  \code{FALSE}.}
+ \item{mu_theta_vb}{Vector of length p containing the posterior mean of
+                    theta. Entry s corresponds to the propensity of candidate
+                    predictor s to be included in the model. \code{NULL} if
+                    \code{dual} is \code{FALSE}.}
  \item{om_vb}{Vector of length p containing the posterior mean of omega.
               Entry s controls the proportion of responses associated with
               candidate predictor s. NULL if \code{V} is non-\code{NULL}.}
+ \item{zeta_vb}{Posterior inclusion probability vector of size r for the
+                annotation variables. \code{NULL} if \code{V} is \code{NULL}
+                or if \code{dual} is \code{FALSE}.}
  \item{converged}{A boolean indicating whether the algorithm has converged
                   before reaching \code{maxit} iterations.}
  \item{it}{Final number of iterations.}
