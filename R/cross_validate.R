@@ -315,7 +315,8 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
             vb_tr <- locus_core_(Y_tr, X_tr, list_hyper_pg,
                                  list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
                                  list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
-                                 tol_cv, maxit_cv, verbose = FALSE, full_output = TRUE)
+                                 tol_cv, maxit_cv, anneal = NULL,
+                                 verbose = FALSE, full_output = TRUE)
 
             lb_vec[ind_pg] <- with(vb_tr, {
 

@@ -90,15 +90,15 @@ update_m2_beta_ <- function(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = FALSE) {
 }
 
 
-update_sig2_beta_vb_ <- function(n, sig2_inv_vb, tau_vb = NULL) {
+update_sig2_beta_vb_ <- function(n, sig2_inv_vb, tau_vb = NULL, c = 1) {
 
   if(is.null(tau_vb)) {
 
-    1 / (n - 1 + sig2_inv_vb)
+    1 / (c * (n - 1 + sig2_inv_vb))
 
   } else {
 
-    1 / ((n - 1 + sig2_inv_vb) * tau_vb)
+    1 / (c * (n - 1 + sig2_inv_vb) * tau_vb)
 
   }
 }
@@ -202,16 +202,16 @@ update_psi_logit_vb_ <- function(chi_vb) {
 ## omega's updates ##
 #####################
 
-a_vb <- update_a_vb <- function(a, rs_gam) a + rs_gam
+a_vb <- update_a_vb <- function(a, rs_gam, c = 1) c * (a + rs_gam) - c + 1
 
 
-b_vb <- update_b_vb <- function(b, d, rs_gam) b - rs_gam + d
+b_vb <- update_b_vb <- function(b, d, rs_gam, c = 1) c * (b - rs_gam + d) - c + 1
 
 
-update_log_om_vb <- function(a, digam_sum, rs_gam) digamma(a + rs_gam) - digam_sum
+update_log_om_vb <- function(a, digam_sum, rs_gam, c = 1) digamma(c * (a + rs_gam) - c + 1) - digam_sum
 
 
-update_log_1_min_om_vb <- function(b, d, digam_sum, rs_gam) digamma(b - rs_gam + d) - digam_sum
+update_log_1_min_om_vb <- function(b, d, digam_sum, rs_gam, c = 1) digamma(c * (b - rs_gam + d) - c + 1) - digam_sum
 
 
 #####################
@@ -246,13 +246,13 @@ update_sig2_rho_vb_ <- function(p, T0_inv) {
 ## sigma's updates ##
 #####################
 
-update_lambda_vb_ <- function(lambda, sum_gam) lambda + sum_gam / 2
+update_lambda_vb_ <- function(lambda, sum_gam, c = 1) c * (lambda + sum_gam / 2) - c + 1
 
 
 update_g_lambda_vb_ <- function(lambda, g_sizes, rs_gam) lambda + sum(g_sizes * rs_gam) / 2
 
 
-update_nu_vb_ <- function(nu, m2_beta, tau_vb) as.numeric(nu + crossprod(tau_vb, colSums(m2_beta)) / 2)
+update_nu_vb_ <- function(nu, m2_beta, tau_vb, c = 1) c * as.numeric(nu + crossprod(tau_vb, colSums(m2_beta)) / 2)
 
 
 update_g_nu_vb_ <- function(nu, list_m1_btb, tau_vb) nu + sum(tau_vb * Reduce(`+`, list_m1_btb))/2
@@ -268,7 +268,7 @@ update_log_sig2_inv_vb_ <- function(lambda_vb, nu_vb) digamma(lambda_vb) - log(n
 ## tau's updates ##
 ###################
 
-update_eta_vb_ <- function(n, eta, gam_vb) eta + n / 2 + colSums(gam_vb) / 2
+update_eta_vb_ <- function(n, eta, gam_vb, c = 1) c * (eta + n / 2 + colSums(gam_vb) / 2) - c + 1
 
 
 update_g_eta_vb_ <- function(n, eta, g_sizes, gam_vb) eta + n / 2 + as.numeric(crossprod(gam_vb, g_sizes)) / 2
@@ -277,13 +277,13 @@ update_g_eta_vb_ <- function(n, eta, g_sizes, gam_vb) eta + n / 2 + as.numeric(c
 update_eta_z_vb_ <- function(n, q, eta, gam_vb) eta + n / 2 + colSums(gam_vb) / 2 + q / 2
 
 
-update_kappa_vb_ <- function(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb) {
+update_kappa_vb_ <- function(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb, c = 1) {
 
   n <- nrow(Y)
 
-  kappa + (colSums(Y^2) - 2 * colSums(Y * mat_x_m1)  +
-             (n - 1 + sig2_inv_vb) * colSums(m2_beta) +
-             colSums(mat_x_m1^2) - (n - 1) * colSums(m1_beta^2))/ 2
+  c * (kappa + (colSums(Y^2) - 2 * colSums(Y * mat_x_m1)  +
+                  (n - 1 + sig2_inv_vb) * colSums(m2_beta) +
+                  colSums(mat_x_m1^2) - (n - 1) * colSums(m1_beta^2))/ 2)
 
 }
 

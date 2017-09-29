@@ -104,6 +104,48 @@ create_named_list_ <- function(...) {
 }
 
 
+
+get_annealing_ladder_ <- function(anneal, verbose) {
+
+  # ladder set following:
+  # Importance Tempering, Robert B. Gramacy & Richard J. Samworth, pp.9-10
+
+  k_m <- 1 / anneal[2]
+  m <- anneal[3]
+
+  if(anneal[1] == 0) {
+
+    type <- "geometric"
+
+    delta_k <- k_m^(1 / (1 - m)) - 1
+
+    ladder <- (1 + delta_k)^(1 - m:1)
+
+  } else if (anneal[1] == 1) { # harmonic spacing
+
+    type <- "harmonic"
+
+    delta_k <- ( 1 / k_m - 1) / (m - 1)
+
+    ladder <- 1 / (1 + delta_k * (m:1 - 1))
+
+  } else { # linear spacing
+
+    type <- "linear"
+
+    delta_k <- (1 - k_m) / (m - 1)
+
+    ladder <- k_m + delta_k * (1:m - 1)
+  }
+
+  if (verbose)
+    cat(paste0("** Annealing with ", type," spacing ** \n\n"))
+
+  ladder
+
+}
+
+
 log_one_plus_exp_ <- function(x) { # computes log(1 + exp(x)) avoiding
   # numerical overflow
   m <- x

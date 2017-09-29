@@ -267,6 +267,34 @@ convert_p0_av_ <- function(p0_av, p, list_blocks, dual, verbose, eps = .Machine$
 
 
 
+check_annealing_ <- function(anneal, link, Z, V, list_groups, list_struct, dual) {
+
+  check_structure_(anneal, "vector", "numeric", 3, null_ok = TRUE)
+
+  if (!is.null(anneal)) {
+
+    if (link != "identity" | !is.null(Z) | !is.null(V) | !is.null(list_groups) | !is.null(list_struct) | dual)
+      stop(paste0("Annealing procedure not yet implemented when link is different ",
+                 "from identity, Z, V, list_groups or list_struct is non-NULL, ",
+                 "or when dual is TRUE. Exit."))
+
+    check_natural_(anneal)
+
+    stopifnot(anneal[1] %in% 1:3)
+
+    if (anneal[2] < 1.5)
+      stop(paste0("Initial temperature very small. May not be large enough ",
+                  "for a successful exploration. Please increase it."))
+
+    if (anneal[3] > 500)
+      stop(paste0("Temperature ladder size very large. This may be unnecessarily ",
+                  "computationally demanding. Please decrease it."))
+
+  }
+
+}
+
+
 # Internal function implementing sanity checks and needed preprocessing for the
 # model hyperparameters before the application of the different `locus_*_core`
 # algorithms.

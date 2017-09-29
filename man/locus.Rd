@@ -8,7 +8,7 @@ locus(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL, list_cv = NULL,
   list_blocks = NULL, list_groups = NULL, list_struct = NULL,
   dual = FALSE, user_seed = NULL, tol = 0.001, maxit = 1000,
-  save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
+  anneal = NULL, save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of
@@ -92,6 +92,12 @@ seed set.}
 \item{tol}{Tolerance for the stopping criterion.}
 
 \item{maxit}{Maximum number of iterations allowed.}
+
+\item{anneal}{Parameters for annealing scheme. Must be a vector whose first
+entry is sets the type of latter: 1 = geometric spacing, 2 = harmonic
+spacing or 3 = linear spacing, the second entry is the initial temperature,
+and the third entry is the ladder size. If \code{NULL} (default), no
+annealing is performed.}
 
 \item{save_hyper}{If \code{TRUE}, the hyperparameters used for the model are
 saved as output.}

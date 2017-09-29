@@ -90,6 +90,11 @@
 #'   seed set.
 #' @param tol Tolerance for the stopping criterion.
 #' @param maxit Maximum number of iterations allowed.
+#' @param anneal Parameters for annealing scheme. Must be a vector whose first
+#'   entry is sets the type of latter: 1 = geometric spacing, 2 = harmonic
+#'   spacing or 3 = linear spacing, the second entry is the initial temperature,
+#'   and the third entry is the ladder size. If \code{NULL} (default), no
+#'   annealing is performed.
 #' @param save_hyper If \code{TRUE}, the hyperparameters used for the model are
 #'   saved as output.
 #' @param save_init If \code{TRUE}, the initial variational parameters used for
@@ -274,10 +279,13 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, list_groups = NULL,
                   list_struct = NULL, dual = FALSE, user_seed = NULL,
-                  tol = 1e-3, maxit = 1000, save_hyper = FALSE,
+                  tol = 1e-3, maxit = 1000, anneal = NULL, save_hyper = FALSE,
                   save_init = FALSE, verbose = TRUE) { ##
 
   if (verbose) cat("== Preparing the data ... \n")
+
+  check_annealing_(anneal, link, Z, V, list_groups, list_struct, dual)
+
   dat <- prepare_data_(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verbose)
 
   bool_rmvd_x <- dat$bool_rmvd_x
@@ -486,7 +494,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
           vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
                             list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                            list_init$tau_vb, tol, maxit, verbose)
+                            list_init$tau_vb, tol, maxit, anneal, verbose)
 
         } else if (nq) { # r non-null
 
@@ -654,7 +662,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
           vb_bl <- locus_core_(Y, X_bl, list_hyper_bl,
                                list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
                                list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                               tol, maxit, verbose = FALSE)
+                               tol, maxit, anneal, verbose = FALSE)
 
         } else if (nq) { # r non-null
 
