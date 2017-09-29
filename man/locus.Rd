@@ -7,8 +7,8 @@
 locus(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL, list_cv = NULL,
   list_blocks = NULL, list_groups = NULL, list_struct = NULL,
-  user_seed = NULL, tol = 0.001, maxit = 1000, save_hyper = FALSE,
-  save_init = FALSE, verbose = TRUE)
+  dual = FALSE, user_seed = NULL, tol = 0.001, maxit = 1000,
+  save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of
@@ -17,13 +17,16 @@ samples and d is the number of response variables.}
 \item{X}{Input matrix of dimension n x p, where p is the number of candidate
 predictors. \code{X} cannot contain NAs. No intercept must be supplied.}
 
-\item{p0_av}{Prior average number of predictors (or groups of predictor if
-\code{list_groups} is non-\code{NULL}) expected to be included in the
-model. Must be \code{NULL} if \code{list_init} and \code{list_hyper}
-are both non-\code{NULL} or if \code{list_cv} is non-\code{NULL}. Can also
+\item{p0_av}{If \code{dual} is \code{FALSE} (default), prior average number
+of predictors (or groups of predictors if \code{list_groups} is
+non-\code{NULL}) expected to be included in the model.  Can also
 be a vector of length p (resp. of length the number of groups) with entry s
 corresponding to the prior probability that candidate predictor s (resp.
-group s) is associated with at least one response.}
+group s) is associated with at least one response. If \code{dual} is
+\code{TRUE}, vector of size 2 whose arguments are the expectation and the
+variance of the number of active predictors per response.
+Must be \code{NULL} if \code{list_init} and \code{list_hyper}
+are both non-\code{NULL} or if \code{list_cv} is non-\code{NULL}.}
 
 \item{Z}{Covariate matrix of dimension n x q, where q is the number of
 covariates. Variables in \code{Z} are not subject to selection. \code{NULL}
@@ -76,6 +79,10 @@ structure sparsity priors. Must be filled using the
 \code{\link{set_struct}} function or must be \code{NULL} for structured
 selection.}
 
+\item{dual}{If \code{TRUE}, dual propensity control (by candidate predictors
+and by responses). Functionality under development and with limited
+associated functionalities. Default is \code{FALSE}.}
+
 \item{user_seed}{Seed set for reproducible default choices of hyperparameters
 (if \code{list_hyper} is \code{NULL}) and initial variational parameters
 (if \code{list_init} is \code{NULL}). Also used at the cross-validation
@@ -111,13 +118,28 @@ An object of class "\code{vb}" containing the following variational
                  Entry s represents the control of the proportion of
                  responses associated with candidate predictor s which is not
                  due to external annotations. \code{NULL} if \code{V} is
-                 \code{NULL}.}
- \item{mu_c_vb}{Matrix of dimension r x d. Entry (l, k) contains the effect
-                of annotation l for response k on the probabilities of
-                associations. \code{NULL} if \code{V} is \code{NULL}.}
+                 \code{NULL} or if \code{dual} is \code{TRUE}.}
+ \item{mu_c_vb}{If \code{dual} is \code{FALSE}, matrix of dimension r x d,
+                where entry (l, k) contains the effect of annotation l for
+                response k on the probabilities of associations. If
+                \code{dual} is \code{TRUE}, vector of size r, where entry l
+                contains the overall effect of annotation l on the
+                probabilities of associations.\code{NULL} if \code{V} is
+                \code{NULL}.}
+ \item{mu_rho_vb}{Vector of length d containing the posterior mean of rho.
+                  Entry t controls the proportion of predictors associated
+                  with response t. \code{NULL} if \code{dual} is
+                  \code{FALSE}.}
+ \item{mu_theta_vb}{Vector of length p containing the posterior mean of
+                    theta. Entry s corresponds to the propensity of candidate
+                    predictor s to be included in the model. \code{NULL} if
+                    \code{dual} is \code{FALSE}.}
  \item{om_vb}{Vector of length p containing the posterior mean of omega.
               Entry s controls the proportion of responses associated with
               candidate predictor s. NULL if \code{V} is non-\code{NULL}.}
+ \item{zeta_vb}{Posterior inclusion probability vector of size r for the
+                annotation variables. \code{NULL} if \code{V} is \code{NULL}
+                or if \code{dual} is \code{FALSE}.}
  \item{converged}{A boolean indicating whether the algorithm has converged
                   before reaching \code{maxit} iterations.}
  \item{it}{Final number of iterations.}

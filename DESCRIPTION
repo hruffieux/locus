@@ -3,7 +3,7 @@ Type: Package
 Title: Large-scale variational inference for combined selection of covariate and
     response variables in regression models
 Version: 0.7.2
-Date: 2017-08-07
+Date: 2017-09-16
 Authors@R: c(
     person("Helene", "Ruffieux", email = "helene.ruffieux@epfl.ch",
             role = c("aut", "cre")),
@@ -13,7 +13,7 @@ Description: Variational inference for sparse multivariate regression models
     that allow combined selection of covariates and associated responses in
     high-dimensional set-ups (Helene Ruffieux, Anthony C. Davison, Jorg Hager,
     Irina Irincheeva, 2017, Biostatistics). This software has been used with
-    genetic data from molecular quantitative trait locus (QTL) problems with over 
+    genetic data from molecular quantitative trait locus (QTL) problems with over
     500K single nucleotide polymorphisms (SNPs), thousands of molecular expression
     levels and hundreds of individuals.
 Depends:
@@ -23,6 +23,7 @@ LazyData: TRUE
 Imports:
     Matrix (>= 1.2-2),
     parallel,
+    PowerTOST (>= 1.4-6),
     Rcpp (>= 0.12.9),
     RcppEigen (>= 0.3.2.9.0)
 RoxygenNote: 6.0.1

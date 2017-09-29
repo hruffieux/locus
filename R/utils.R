@@ -121,10 +121,15 @@ log_sigmoid_ <- function(chi) {
 
 log_det <- function(list_mat) {
 
-  sapply(list_mat, function(mat) {
-    log_det <- determinant(mat, logarithm = TRUE)
+  if (is.list(list_mat)) {
+    sapply(list_mat, function(mat) {
+      log_det <- determinant(mat, logarithm = TRUE)
+      log_det$modulus * log_det$sign
+    })
+  } else {
+    log_det <- determinant(list_mat, logarithm = TRUE)
     log_det$modulus * log_det$sign
-  })
+  }
 
 }
 
@@ -158,6 +163,36 @@ inv_mills_ratio_ <- function(Y, U) {
 #   U * inv_mills_ratio_(Y, U) / 2
 #
 # }
+
+
+# Functions for hyperparameter settings in dual_core (similarly to what is done in HESS)
+#
+E_Phi_X <- function(mu, s2, lower_tail = TRUE) {
+
+  pnorm(mu / sqrt(1 + s2), lower.tail = lower_tail)
+
+}
+
+E_Phi_X_2 <- function(mu, s2) {
+
+  pnorm(mu / sqrt(1 + s2)) -
+    2 * PowerTOST::OwensT(mu / sqrt(1 + s2), 1 / sqrt(1 + 2 * s2))
+
+}
+
+get_V_p_t <- function(mu, s2, p) {
+  p * (p - 1) * E_Phi_X_2(mu, s2) -
+    p^2 * E_Phi_X(mu, s2)^2 +
+    p * E_Phi_X(mu, s2)
+}
+
+
+get_mu <- function(E_p_t, s2, p) {
+
+  sqrt(1 + s2) * qnorm(1- E_p_t / p)
+
+}
+
 
 rm_constant_ <- function(mat, verbose) {
 

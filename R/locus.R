@@ -29,13 +29,16 @@
 #'   samples and d is the number of response variables.
 #' @param X Input matrix of dimension n x p, where p is the number of candidate
 #'   predictors. \code{X} cannot contain NAs. No intercept must be supplied.
-#' @param p0_av Prior average number of predictors (or groups of predictor if
-#'   \code{list_groups} is non-\code{NULL}) expected to be included in the
-#'   model. Must be \code{NULL} if \code{list_init} and \code{list_hyper}
-#'   are both non-\code{NULL} or if \code{list_cv} is non-\code{NULL}. Can also
+#' @param p0_av If \code{dual} is \code{FALSE} (default), prior average number
+#'   of predictors (or groups of predictors if \code{list_groups} is
+#'   non-\code{NULL}) expected to be included in the model.  Can also
 #'   be a vector of length p (resp. of length the number of groups) with entry s
 #'   corresponding to the prior probability that candidate predictor s (resp.
-#'   group s) is associated with at least one response.
+#'   group s) is associated with at least one response. If \code{dual} is
+#'   \code{TRUE}, vector of size 2 whose arguments are the expectation and the
+#'   variance of the number of active predictors per response.
+#'   Must be \code{NULL} if \code{list_init} and \code{list_hyper}
+#'   are both non-\code{NULL} or if \code{list_cv} is non-\code{NULL}.
 #' @param Z Covariate matrix of dimension n x q, where q is the number of
 #'   covariates. Variables in \code{Z} are not subject to selection. \code{NULL}
 #'   if no covariate. Factor covariates must be supplied after transformation to
@@ -77,6 +80,9 @@
 #'   structure sparsity priors. Must be filled using the
 #'   \code{\link{set_struct}} function or must be \code{NULL} for structured
 #'   selection.
+#' @param dual If \code{TRUE}, dual propensity control (by candidate predictors
+#'   and by responses). Functionality under development and with limited
+#'   associated functionalities. Default is \code{FALSE}.
 #' @param user_seed Seed set for reproducible default choices of hyperparameters
 #'   (if \code{list_hyper} is \code{NULL}) and initial variational parameters
 #'   (if \code{list_init} is \code{NULL}). Also used at the cross-validation
@@ -106,13 +112,28 @@
 #'                  Entry s represents the control of the proportion of
 #'                  responses associated with candidate predictor s which is not
 #'                  due to external annotations. \code{NULL} if \code{V} is
-#'                  \code{NULL}.}
-#'  \item{mu_c_vb}{Matrix of dimension r x d. Entry (l, k) contains the effect
-#'                 of annotation l for response k on the probabilities of
-#'                 associations. \code{NULL} if \code{V} is \code{NULL}.}
+#'                  \code{NULL} or if \code{dual} is \code{TRUE}.}
+#'  \item{mu_c_vb}{If \code{dual} is \code{FALSE}, matrix of dimension r x d,
+#'                 where entry (l, k) contains the effect of annotation l for
+#'                 response k on the probabilities of associations. If
+#'                 \code{dual} is \code{TRUE}, vector of size r, where entry l
+#'                 contains the overall effect of annotation l on the
+#'                 probabilities of associations.\code{NULL} if \code{V} is
+#'                 \code{NULL}.}
+#'  \item{mu_rho_vb}{Vector of length d containing the posterior mean of rho.
+#'                   Entry t controls the proportion of predictors associated
+#'                   with response t. \code{NULL} if \code{dual} is
+#'                   \code{FALSE}.}
+#'  \item{mu_theta_vb}{Vector of length p containing the posterior mean of
+#'                     theta. Entry s corresponds to the propensity of candidate
+#'                     predictor s to be included in the model. \code{NULL} if
+#'                     \code{dual} is \code{FALSE}.}
 #'  \item{om_vb}{Vector of length p containing the posterior mean of omega.
 #'               Entry s controls the proportion of responses associated with
 #'               candidate predictor s. NULL if \code{V} is non-\code{NULL}.}
+#'  \item{zeta_vb}{Posterior inclusion probability vector of size r for the
+#'                 annotation variables. \code{NULL} if \code{V} is \code{NULL}
+#'                 or if \code{dual} is \code{FALSE}.}
 #'  \item{converged}{A boolean indicating whether the algorithm has converged
 #'                   before reaching \code{maxit} iterations.}
 #'  \item{it}{Final number of iterations.}
@@ -252,9 +273,9 @@
 locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, list_groups = NULL,
-                  list_struct = NULL, user_seed = NULL, tol = 1e-3,
-                  maxit = 1000, save_hyper = FALSE, save_init = FALSE,
-                  verbose = TRUE) { ##
+                  list_struct = NULL, dual = FALSE, user_seed = NULL,
+                  tol = 1e-3, maxit = 1000, save_hyper = FALSE,
+                  save_init = FALSE, verbose = TRUE) { ##
 
   if (verbose) cat("== Preparing the data ... \n")
   dat <- prepare_data_(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verbose)
@@ -294,9 +315,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
   if (verbose) cat("... done. == \n\n")
 
-
-
-  if (!is.null(list_cv) & is.null(list_blocks) & is.null(list_groups) & is.null(list_struct)) { ## TODO: allow cross-validation when list_blocks is used.
+  if (!is.null(list_cv) & is.null(list_blocks) & is.null(list_groups) & is.null(list_struct) & !dual) { ## TODO: allow cross-validation when list_blocks is used.
 
     if (verbose) {
       cat("=============================== \n")
@@ -314,7 +333,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     if (!is.null(list_blocks)) {
 
-      list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, list_cv, list_groups, list_struct)
+      list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, dual, list_cv, list_groups, list_struct)
 
       n_bl <- list_blocks$n_bl
       n_cpus <- list_blocks$n_cpus
@@ -325,7 +344,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     if (!is.null(list_groups)) {
 
-      list_groups <- prepare_groups_(list_groups, X, q, r, bool_rmvd_x, link, list_cv)
+      list_groups <- prepare_groups_(list_groups, X, q, r, bool_rmvd_x, dual, link, list_cv)
 
       X <- list_groups$X
       vec_fac_gr <- list_groups$vec_fac_gr
@@ -340,6 +359,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
     if (!is.null(list_struct)) {
 
       list_struct <- prepare_struct_(list_struct, n, q, r, bool_rmvd_x, link, list_cv, list_groups)
+
       vec_fac_st <- list_struct$vec_fac_st
 
     } else {
@@ -348,15 +368,16 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
     }
 
+
     if (is.null(list_hyper) | is.null(list_init)) {
 
       if (is.null(list_groups)) p_tot <- p
       else p_tot <- length(unique(vec_fac_gr))
 
-      p_star <- convert_p0_av_(p0_av, p_tot, list_blocks, verbose)
+      p_star <- convert_p0_av_(p0_av, p_tot, list_blocks, dual, verbose)
 
       # remove the entries corresponding to the removed constant covariates in X (if any)
-      if (length(p_star) > 1) {
+      if (length(p_star) > 1 & !dual) {
         if (is.null(list_groups)) p_star <- p_star[!bool_rmvd_x]
         else p_star <- p_star[unique(vec_fac_gr)]
       }
@@ -375,16 +396,21 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   }
 
   if (verbose) cat("== Preparing the hyperparameters ... \n\n")
-  list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, r, link, ind_bin,
-                                    vec_fac_gr, vec_fac_st,
-                                    bool_rmvd_x, bool_rmvd_z, bool_rmvd_v,
-                                    names_x, names_y, names_z, verbose)
+
+  list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, r, dual, link, ind_bin,
+                                    vec_fac_gr, vec_fac_st, bool_rmvd_x, bool_rmvd_z,
+                                    bool_rmvd_v, names_x, names_y, names_z, verbose)
+
+  if(dual && (link != "identity" | !is.null(q)))
+    stop(paste("Dual propensity control (p0_av is a list) enabled only for ",
+               "identity link, Z = NULL. Exit.", sep = ""))
+
   if (verbose) cat("... done. == \n\n")
 
   if (verbose) cat("== Preparing the parameter initialization ... \n\n")
 
-  list_init <- prepare_list_init_(list_init, Y, p, p_star, q, link, ind_bin,
-                                  vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
+  list_init <- prepare_list_init_(list_init, Y, p, p_star, q, dual, link,
+                                  ind_bin, vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
                                   bool_rmvd_v, user_seed, verbose)
 
   if (verbose) cat("... done. == \n\n")
@@ -413,7 +439,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
       }
 
-    } else{
+    } else {
 
       Z <- cbind(rep(1, n), Z)
 
@@ -454,8 +480,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
       ng  <- is.null(list_groups)
       ns <- is.null(list_struct)
 
-
-      if (ng & ns){
+      if (!dual & ng & ns){
 
         if (nq & nr) {
 
@@ -484,7 +509,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                    list_init$tau_vb, tol, maxit, verbose)
         }
 
-      } else if (ns){ # list_group non-null
+      } else if (!ng){
 
         # X is a list (transformed in prepare_data)
         # mu_beta_vb is a list (transformed in prepare_init)
@@ -492,12 +517,28 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                 list_init$mu_beta_vb, list_init$sig2_inv_vb,
                                 list_init$tau_vb, tol, maxit, verbose)
 
-      } else if (ng) { # list_struct non-null
+      } else if (dual) {
+
+        if (nq & nr) {
+          # list_struct can be non-null for injected  predictor correlation structure,
+          # see core function below
+          vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
+                                 list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                 list_init$tau_vb, list_struct, tol, maxit, verbose)
+        } else if (nq) {
+
+          vb <- locus_dual_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
+                                      list_init$mu_beta_vb,
+                                      list_init$sig2_beta_vb, list_init$tau_vb,
+                                      list_struct, tol, maxit, verbose)
+
+        }
+
+      } else { # list_struct non-null, and only predictor propensity control.
 
         vb <- locus_struct_core_(Y, X, list_hyper, list_init$gam_vb,
                                  list_init$mu_beta_vb, list_init$sig2_beta_vb,
                                  list_init$tau_vb, list_struct, tol, maxit, verbose)
-
       }
 
     } else if (link == "logit"){

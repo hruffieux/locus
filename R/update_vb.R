@@ -144,7 +144,7 @@ update_g_m1_btXtXb_ <- function(list_X, gam_vb, list_mu_beta_vb, list_sig2_beta_
   lapply(1:G, function(g) {
     gam_vb[g, ]^2 * colSums((list_X[[g]] %*% list_mu_beta_vb[[g]])^2) +
       gam_vb[g, ] * (sum(crossprod(list_X[[g]]) * list_sig2_beta_star[[g]]) / tau_vb +
-      sapply(1:d, function(k) (1-gam_vb[g, k]) * sum(crossprod(list_X[[g]]) * tcrossprod(list_mu_beta_vb[[g]][, k])))) # tr(AB^T) = sum_ij A_ij B_ij
+                       sapply(1:d, function(k) (1-gam_vb[g, k]) * sum(crossprod(list_X[[g]]) * tcrossprod(list_mu_beta_vb[[g]][, k])))) # tr(AB^T) = sum_ij A_ij B_ij
   })
 }
 
@@ -159,10 +159,43 @@ update_mu_c0_vb_ <- function(W, mat_v_mu, m0, s02, sig2_c0_vb) sig2_c0_vb * (row
 update_sig2_c0_vb_ <- function(d, s02) 1 / (d + (1/s02))
 
 
-update_sig2_c_vb_ <- function(p, s2) 1 / (p - 1 + (1/s2))
+update_sig2_c_vb_ <- function(p, s2, d = 1) 1 / (d * (p - 1) + (1/s2))
 
 
-update_mat_v_mu_ <- function(V, mu_c0_vb, mu_c_vb) sweep(V %*% mu_c_vb, 1, mu_c0_vb, `+`)
+update_mat_v_mu_ <- function(V, mu_0_s, mat_c, mu_0_t = NULL, resp_spec = FALSE) { # !dual : mu_0_s = mu_c0_vb, mat_c = mu_c_vb
+                                                                                   # dual : mu_0_s = mu_theta_vb, mu_0_t = mu_rho_vb, mat_c = zeta * mu_c_vb
+
+  if (is.null(mu_0_t)) {
+    sweep(V %*% mat_c, 1, mu_0_s, `+`)
+  } else {
+
+    if (resp_spec) {
+      sweep(sweep(V %*% mat_c, 1, mu_0_s, `+`), 2, mu_0_t, `+`)
+    } else {
+      d <- length(mu_0_t)
+      sweep(tcrossprod(mu_0_s + V %*% mat_c, rep(1, d)), 2, mu_0_t, `+`)
+    }
+
+  }
+
+}
+
+###################
+## chi's updates ##
+###################
+
+update_chi_vb_ <- function(X, Z, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sig2_alpha_vb) {
+
+  sqrt(X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 + Z^2 %*% sig2_alpha_vb +
+         mat_z_mu^2 + 2 * mat_x_m1 * mat_z_mu)
+}
+
+
+update_psi_logit_vb_ <- function(chi_vb) {
+
+  exp(log(exp(log_sigmoid_(chi_vb)) - 1 / 2) - log(2 * chi_vb))
+
+}
 
 
 #####################
@@ -181,20 +214,30 @@ update_log_om_vb <- function(a, digam_sum, rs_gam) digamma(a + rs_gam) - digam_s
 update_log_1_min_om_vb <- function(b, d, digam_sum, rs_gam) digamma(b - rs_gam + d) - digam_sum
 
 
-###################
-## chi's updates ##
-###################
+#####################
+## rho's updates ##
+#####################
 
-update_chi_vb_ <- function(X, Z, m1_beta, m2_beta, mat_x_m1, mat_z_mu, sig2_alpha_vb) {
 
-  sqrt(X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 + Z^2 %*% sig2_alpha_vb +
-         mat_z_mu^2 + 2 * mat_x_m1 * mat_z_mu)
+update_mu_rho_vb_ <- function(W, mat_add, n0, sig2_rho_vb, T0_inv, is_mat = FALSE) {
+
+
+  if (is_mat) {
+    as.vector(sig2_rho_vb * (colSums(W) + T0_inv * n0 - colSums(mat_add))) # mat_add <- sweep(mat_v_mu, 1, mu_rho_vb, `-`)
+  } else {
+    # as.vector(sig2_rho_vb %*% (colSums(W) + T0_inv %*% n0 - sum(mu_theta_vb)))
+    # sig2_rho_vb and T0_inv is stored as a scalar which represents the value on the diagonal of the corresponding diagonal matrix
+    as.vector(sig2_rho_vb * (colSums(W) + T0_inv * n0 - sum(mat_add))) # mat_add = mu_theta_vb
+  }
+
 }
 
 
-update_psi_logit_vb_ <- function(chi_vb) {
+update_sig2_rho_vb_ <- function(p, T0_inv) {
 
-  exp(log(exp(log_sigmoid_(chi_vb)) - 1 / 2) - log(2 * chi_vb))
+  # sig2_rho_vb and T0_inv are stored as scalars which represent the value on the diagonal of the corresponding diagonal matrix
+  1 / (T0_inv + p)
+  # as.matrix(solve(T0_inv + diag(p, nrow(T0_inv))))
 
 }
 
@@ -287,24 +330,97 @@ update_log_tau_vb_ <- function(eta_vb, kappa_vb) digamma(eta_vb) - log(kappa_vb)
 ## theta's updates ##
 #####################
 
-update_mu_theta_vb_ <- function(W, m0, list_S0_inv, list_sig2_theta_vb, vec_fac_st) {
+update_mu_theta_vb_ <- function(W, m0, S0_inv, sig2_theta_vb, vec_fac_st,
+                                mat_add = 0, is_mat = FALSE) {
 
-  bl_ids <- unique(vec_fac_st)
-  n_bl <- length(bl_ids)
+  if (is.null(vec_fac_st)) {
 
-  unlist(lapply(1:n_bl, function(bl)
-    list_sig2_theta_vb[[bl]] %*% (rowSums(W[vec_fac_st == bl_ids[bl], , drop = FALSE]) + list_S0_inv[[bl]] %*% m0[vec_fac_st == bl_ids[bl]])))
+    # S0_inv and sig2_rho_vb are stored as scalars which represent the values on the diagonal of the corresponding diagonal matrix
+
+    if (is_mat) {
+
+      mu_theta_vb <- sig2_theta_vb * (rowSums(W) + S0_inv * m0 - rowSums(mat_add)) # mat_add = sweep(mat_v_mu, 1, mu_theta_vb, `-`)
+
+    } else {
+
+      mu_theta_vb <- sig2_theta_vb * (rowSums(W) + S0_inv * m0 - sum(mat_add)) # mat_add = mu_rho_vb
+
+    }
+
+
+
+  } else {
+
+    bl_ids <- unique(vec_fac_st)
+    n_bl <- length(bl_ids)
+
+    if (is_mat) {
+
+      mu_theta_vb <- unlist(lapply(1:n_bl, function(bl) {
+        sig2_theta_vb[[bl]] %*% (rowSums(W[vec_fac_st == bl_ids[bl], , drop = FALSE]) +
+                                   S0_inv[[bl]] %*% m0[vec_fac_st == bl_ids[bl]] -
+                                   rowSums(mat_add[vec_fac_st == bl_ids[bl], , drop = FALSE]))  # mat_add = sweep(mat_v_mu, 1, mu_theta_vb, `-`)
+      }))
+    } else {
+
+      mu_theta_vb <- unlist(lapply(1:n_bl, function(bl) {
+        sig2_theta_vb[[bl]] %*% (rowSums(W[vec_fac_st == bl_ids[bl], , drop = FALSE]) +
+                                   S0_inv[[bl]] %*% m0[vec_fac_st == bl_ids[bl]] -
+                                   sum(mat_add)) # mat_add = mu_rho_vb
+      }))
+    }
+
+  }
 
 }
 
 
-update_sig2_theta_vb_ <- function(d, list_S0_inv, n_cpus) {
+update_sig2_theta_vb_ <- function(d, p, list_struct, s02, X = NULL) {
 
-  parallel::mclapply(list_S0_inv, function(S0_inv) {
-    as.matrix(solve(S0_inv + diag(d, nrow(S0_inv))))
+  if (is.null(list_struct)) {
+
+    vec_fac_st <- NULL
+
+    S0_inv <- 1 / s02 # stands for a diagonal matrix of size p with this value on the (constant) diagonal
+    sig2_theta_vb <- update_sig2_c0_vb_(d, s02) # idem
+
+    vec_sum_log_det_theta <- - p * (log(s02) + log(d + S0_inv))
+
+  } else {
+
+    if (is.null(X))
+      stop("X must be passed to the update_sig2_theta_function.")
+
+    vec_fac_st <- list_struct$vec_fac_st
+    n_cpus <- list_struct$n_cpus
+
+    S0_inv <- parallel::mclapply(unique(vec_fac_st), function(bl) {
+
+      corX <- cor(X[, vec_fac_st == bl, drop = FALSE])
+      corX <- as.matrix(Matrix::nearPD(corX, corr = TRUE, do2eigen = TRUE)$mat) # regularization in case of non-positive definiteness.
+
+      as.matrix(solve(corX) / s02)
     }, mc.cores = n_cpus)
 
+    if (is.list(S0_inv)) {
+
+      sig2_theta_vb <- parallel::mclapply(S0_inv, function(mat) {
+        as.matrix(solve(mat + diag(d, nrow(mat))))
+      }, mc.cores = n_cpus)
+
+    } else {
+
+      sig2_theta_vb <- 1 / (S0_inv + d)
+
+    }
+
+    vec_sum_log_det_theta <- log_det(S0_inv) + log_det(sig2_theta_vb) # vec_sum_log_det_theta[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
+
+  }
+
+  create_named_list_(S0_inv, sig2_theta_vb, vec_sum_log_det_theta, vec_fac_st)
 }
+
 
 
 #################
