@@ -273,10 +273,9 @@ check_annealing_ <- function(anneal, link, Z, V, list_groups, list_struct, dual)
 
   if (!is.null(anneal)) {
 
-    if (link != "identity" | !is.null(Z) | !is.null(V) | !is.null(list_groups) | !is.null(list_struct) | dual)
+    if (link != "identity" | !is.null(Z) | !is.null(V) | !is.null(list_groups) | !is.null(list_struct))
       stop(paste0("Annealing procedure not yet implemented when link is different ",
-                 "from identity, Z, V, list_groups or list_struct is non-NULL, ",
-                 "or when dual is TRUE. Exit."))
+                 "from identity, Z, V, list_groups or list_struct is non-NULL. Exit."))
 
     check_natural_(anneal)
 

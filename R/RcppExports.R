@@ -29,7 +29,7 @@ coreProbitInfoLoop <- function(X, Wy, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_ma
     invisible(.Call(locus_coreProbitInfoLoop, X, Wy, gam_vb, log_Phi_mat_v_mu, log_1_min_Phi_mat_v_mu, log_sig2_inv_vb, m1_beta, mat_x_m1, mat_z_mu, mu_beta_vb, sig2_beta_vb, shuffled_ind))
 }
 
-coreLoop <- function(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb, shuffled_ind, c) {
+coreLoop <- function(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb, shuffled_ind, c = 1) {
     invisible(.Call(locus_coreLoop, X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb, shuffled_ind, c))
 }
 
@@ -49,8 +49,8 @@ coreStructLoop <- function(X, Y, gam_vb, log_Phi_mu_theta_vb, log_1_min_Phi_mu_t
     invisible(.Call(locus_coreStructLoop, X, Y, gam_vb, log_Phi_mu_theta_vb, log_1_min_Phi_mu_theta_vb, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb, shuffled_ind))
 }
 
-coreDualLoop <- function(X, Y, gam_vb, log_Phi_mu_theta_plus_rho, log_1_min_Phi_mu_theta_plus_rho, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb, shuffled_ind) {
-    invisible(.Call(locus_coreDualLoop, X, Y, gam_vb, log_Phi_mu_theta_plus_rho, log_1_min_Phi_mu_theta_plus_rho, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb, shuffled_ind))
+coreDualLoop <- function(X, Y, gam_vb, log_Phi_mu_theta_plus_rho, log_1_min_Phi_mu_theta_plus_rho, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb, shuffled_ind, c = 1) {
+    invisible(.Call(locus_coreDualLoop, X, Y, gam_vb, log_Phi_mu_theta_plus_rho, log_1_min_Phi_mu_theta_plus_rho, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb, shuffled_ind, c))
 }
 
 coreDualInfoLoop <- function(V, W, zeta_vb, log_om_vb, log_1_min_om_vb, s2, m1_c, mat_v_mu, mu_c_vb, sig2_c_vb, shuffled_ind) {

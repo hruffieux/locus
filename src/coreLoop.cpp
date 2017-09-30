@@ -30,7 +30,7 @@ void coreLoop(const MapMat X,
               const MapArr1D sig2_beta_vb,
               const MapArr1D tau_vb,
               const MapArr1D shuffled_ind,
-              const double c) {
+              const double c = 1) {
 
   const Arr1D cst = - (log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb)) / 2;
 

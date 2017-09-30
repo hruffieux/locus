@@ -156,7 +156,7 @@ update_g_m1_btXtXb_ <- function(list_X, gam_vb, list_mu_beta_vb, list_sig2_beta_
 update_mu_c0_vb_ <- function(W, mat_v_mu, m0, s02, sig2_c0_vb) sig2_c0_vb * (rowSums(W - mat_v_mu) + m0 / s02)
 
 
-update_sig2_c0_vb_ <- function(d, s02) 1 / (d + (1/s02))
+update_sig2_c0_vb_ <- function(d, s02, c = 1) 1 / (c * (d + (1/s02)))
 
 
 update_sig2_c_vb_ <- function(p, s2, d = 1) 1 / (d * (p - 1) + (1/s2))
@@ -219,15 +219,15 @@ update_log_1_min_om_vb <- function(b, d, digam_sum, rs_gam, c = 1) digamma(c * (
 #####################
 
 
-update_mu_rho_vb_ <- function(W, mat_add, n0, sig2_rho_vb, T0_inv, is_mat = FALSE) {
+update_mu_rho_vb_ <- function(W, mat_add, n0, sig2_rho_vb, T0_inv, is_mat = FALSE, c = c) {
 
 
   if (is_mat) {
-    as.vector(sig2_rho_vb * (colSums(W) + T0_inv * n0 - colSums(mat_add))) # mat_add <- sweep(mat_v_mu, 1, mu_rho_vb, `-`)
+    as.vector(c * sig2_rho_vb * (colSums(W) + T0_inv * n0 - colSums(mat_add))) # mat_add <- sweep(mat_v_mu, 1, mu_rho_vb, `-`)
   } else {
     # as.vector(sig2_rho_vb %*% (colSums(W) + T0_inv %*% n0 - sum(mu_theta_vb)))
     # sig2_rho_vb and T0_inv is stored as a scalar which represents the value on the diagonal of the corresponding diagonal matrix
-    as.vector(sig2_rho_vb * (colSums(W) + T0_inv * n0 - sum(mat_add))) # mat_add = mu_theta_vb
+    as.vector(c * sig2_rho_vb * (colSums(W) + T0_inv * n0 - sum(mat_add))) # mat_add = mu_theta_vb
   }
 
 }
@@ -331,7 +331,7 @@ update_log_tau_vb_ <- function(eta_vb, kappa_vb) digamma(eta_vb) - log(kappa_vb)
 #####################
 
 update_mu_theta_vb_ <- function(W, m0, S0_inv, sig2_theta_vb, vec_fac_st,
-                                mat_add = 0, is_mat = FALSE) {
+                                mat_add = 0, is_mat = FALSE, c = 1) {
 
   if (is.null(vec_fac_st)) {
 
@@ -339,17 +339,19 @@ update_mu_theta_vb_ <- function(W, m0, S0_inv, sig2_theta_vb, vec_fac_st,
 
     if (is_mat) {
 
-      mu_theta_vb <- sig2_theta_vb * (rowSums(W) + S0_inv * m0 - rowSums(mat_add)) # mat_add = sweep(mat_v_mu, 1, mu_theta_vb, `-`)
+      mu_theta_vb <- c * sig2_theta_vb * (rowSums(W) + S0_inv * m0 - rowSums(mat_add)) # mat_add = sweep(mat_v_mu, 1, mu_theta_vb, `-`)
 
     } else {
 
-      mu_theta_vb <- sig2_theta_vb * (rowSums(W) + S0_inv * m0 - sum(mat_add)) # mat_add = mu_rho_vb
+      mu_theta_vb <- c * sig2_theta_vb * (rowSums(W) + S0_inv * m0 - sum(mat_add)) # mat_add = mu_rho_vb
 
     }
 
 
-
   } else {
+
+    if (c != 1)
+      stop("Annealing not implemented when Sigma_0 is not the identity matrix.")
 
     bl_ids <- unique(vec_fac_st)
     n_bl <- length(bl_ids)
@@ -375,18 +377,21 @@ update_mu_theta_vb_ <- function(W, m0, S0_inv, sig2_theta_vb, vec_fac_st,
 }
 
 
-update_sig2_theta_vb_ <- function(d, p, list_struct, s02, X = NULL) {
+update_sig2_theta_vb_ <- function(d, p, list_struct, s02, X = NULL, c = 1) {
 
   if (is.null(list_struct)) {
 
     vec_fac_st <- NULL
 
     S0_inv <- 1 / s02 # stands for a diagonal matrix of size p with this value on the (constant) diagonal
-    sig2_theta_vb <- update_sig2_c0_vb_(d, s02) # idem
+    sig2_theta_vb <- update_sig2_c0_vb_(d, s02, c = c) # idem
 
     vec_sum_log_det_theta <- - p * (log(s02) + log(d + S0_inv))
 
   } else {
+
+    if (c != 1)
+      stop("Annealing not implemented when Sigma_0 is not the identity matrix.")
 
     if (is.null(X))
       stop("X must be passed to the update_sig2_theta_function.")
@@ -427,10 +432,12 @@ update_sig2_theta_vb_ <- function(d, p, list_struct, s02, X = NULL) {
 ## W's updates ##
 #################
 
-update_W_info_ <- function(gam_vb, mat_v_mu) {
+update_W_info_ <- function(gam_vb, mat_v_mu, c = 1) {
 
-  gam_vb * (inv_mills_ratio_(1, mat_v_mu) - inv_mills_ratio_(0, mat_v_mu)) +
-    mat_v_mu + inv_mills_ratio_(0, mat_v_mu)
+  sqrt_c <- sqrt(c)
+
+  (gam_vb * (inv_mills_ratio_(1, sqrt_c * mat_v_mu) - inv_mills_ratio_(0, sqrt_c * mat_v_mu)) +
+     inv_mills_ratio_(0, sqrt_c * mat_v_mu)) / sqrt_c + mat_v_mu
 
 }
 

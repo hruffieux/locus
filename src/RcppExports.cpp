@@ -270,8 +270,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // coreDualLoop
-void coreDualLoop(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr2D log_Phi_mu_theta_plus_rho, const MapArr2D log_1_min_Phi_mu_theta_plus_rho, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat m1_beta, MapMat mat_x_m1, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb, const MapArr1D shuffled_ind);
-RcppExport SEXP locus_coreDualLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_Phi_mu_theta_plus_rhoSEXP, SEXP log_1_min_Phi_mu_theta_plus_rhoSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP, SEXP shuffled_indSEXP) {
+void coreDualLoop(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr2D log_Phi_mu_theta_plus_rho, const MapArr2D log_1_min_Phi_mu_theta_plus_rho, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat m1_beta, MapMat mat_x_m1, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb, const MapArr1D shuffled_ind, const double c);
+RcppExport SEXP locus_coreDualLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_Phi_mu_theta_plus_rhoSEXP, SEXP log_1_min_Phi_mu_theta_plus_rhoSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP, SEXP shuffled_indSEXP, SEXP cSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
@@ -287,7 +287,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const MapArr1D >::type sig2_beta_vb(sig2_beta_vbSEXP);
     Rcpp::traits::input_parameter< const MapArr1D >::type tau_vb(tau_vbSEXP);
     Rcpp::traits::input_parameter< const MapArr1D >::type shuffled_ind(shuffled_indSEXP);
-    coreDualLoop(X, Y, gam_vb, log_Phi_mu_theta_plus_rho, log_1_min_Phi_mu_theta_plus_rho, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb, shuffled_ind);
+    Rcpp::traits::input_parameter< const double >::type c(cSEXP);
+    coreDualLoop(X, Y, gam_vb, log_Phi_mu_theta_plus_rho, log_1_min_Phi_mu_theta_plus_rho, log_sig2_inv_vb, log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb, shuffled_ind, c);
     return R_NilValue;
 END_RCPP
 }
@@ -325,7 +326,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"locus_coreLogitLoop", (DL_FUNC) &locus_coreLogitLoop, 13},
     {"locus_coreProbitLoop", (DL_FUNC) &locus_coreProbitLoop, 12},
     {"locus_coreStructLoop", (DL_FUNC) &locus_coreStructLoop, 13},
-    {"locus_coreDualLoop", (DL_FUNC) &locus_coreDualLoop, 13},
+    {"locus_coreDualLoop", (DL_FUNC) &locus_coreDualLoop, 14},
     {"locus_coreDualInfoLoop", (DL_FUNC) &locus_coreDualInfoLoop, 11},
     {NULL, NULL, 0}
 };
