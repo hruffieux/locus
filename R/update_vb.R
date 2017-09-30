@@ -153,13 +153,13 @@ update_g_m1_btXtXb_ <- function(list_X, gam_vb, list_mu_beta_vb, list_sig2_beta_
 ## c0 and c's updates ##
 ########################
 
-update_mu_c0_vb_ <- function(W, mat_v_mu, m0, s02, sig2_c0_vb) sig2_c0_vb * (rowSums(W - mat_v_mu) + m0 / s02)
+update_mu_c0_vb_ <- function(W, mat_v_mu, m0, s02, sig2_c0_vb, c = 1) c * sig2_c0_vb * (rowSums(W - mat_v_mu) + m0 / s02)
 
 
 update_sig2_c0_vb_ <- function(d, s02, c = 1) 1 / (c * (d + (1/s02)))
 
 
-update_sig2_c_vb_ <- function(p, s2, d = 1) 1 / (d * (p - 1) + (1/s2))
+update_sig2_c_vb_ <- function(p, s2, d = 1, c = 1) 1 / (c * (d * (p - 1) + (1/s2)))
 
 
 update_mat_v_mu_ <- function(V, mu_0_s, mat_c, mu_0_t = NULL, resp_spec = FALSE) { # !dual : mu_0_s = mu_c0_vb, mat_c = mu_c_vb

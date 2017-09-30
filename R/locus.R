@@ -500,7 +500,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
           vb <- locus_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
                                  list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                 list_init$tau_vb, tol, maxit, verbose)
+                                 list_init$tau_vb, tol, maxit, anneal, verbose)
 
         } else if (nr) { # q non-null
 
@@ -539,7 +539,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
           vb <- locus_dual_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
                                       list_init$mu_beta_vb,
                                       list_init$sig2_beta_vb, list_init$tau_vb,
-                                      list_struct, tol, maxit, verbose)
+                                      list_struct, tol, maxit, anneal, verbose)
 
         }
 

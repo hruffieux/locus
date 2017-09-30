@@ -29,9 +29,10 @@ void coreInfoLoop(const MapMat X,
                   MapArr2D mu_beta_vb,
                   const MapArr1D sig2_beta_vb,
                   const MapArr1D tau_vb,
-                  const MapArr1D shuffled_ind) {
+                  const MapArr1D shuffled_ind,
+                  const double c = 1) {
 
-  const Arr1D c = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
+  const Arr1D cst = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
   for (int i = 0; i < X.cols(); ++i) {
 
@@ -39,11 +40,11 @@ void coreInfoLoop(const MapMat X,
 
     mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
 
-    mu_beta_vb.row(j) = sig2_beta_vb * tau_vb *
+    mu_beta_vb.row(j) = c * sig2_beta_vb * tau_vb *
       ((Y - mat_x_m1).transpose() * X.col(j)).array();
 
-    gam_vb.row(j) = exp(-logOnePlusExp(log_1_min_Phi_mat_v_mu.row(j) - log_Phi_mat_v_mu.row(j) -
-      mu_beta_vb.row(j).square() / (2 * sig2_beta_vb.transpose()) + c.transpose()));
+    gam_vb.row(j) = exp(-logOnePlusExp(c * (log_1_min_Phi_mat_v_mu.row(j) - log_Phi_mat_v_mu.row(j) -
+      mu_beta_vb.row(j).square() / (2 * sig2_beta_vb.transpose()) + cst.transpose())));
 
     m1_beta.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
 
@@ -71,7 +72,7 @@ void coreZInfoLoop(const MapMat X,
                    const MapArr1D tau_vb,
                    const MapArr1D shuffled_ind) {
 
-  const Arr1D c = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
+  const Arr1D cst = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
   for (int i = 0; i < X.cols(); ++i) {
 
@@ -83,7 +84,7 @@ void coreZInfoLoop(const MapMat X,
       ((Y - mat_x_m1 - mat_z_mu).transpose() * X.col(j)).array();
 
     gam_vb.row(j) = exp(-logOnePlusExp(log_1_min_Phi_mat_v_mu.row(j) - log_Phi_mat_v_mu.row(j) -
-      mu_beta_vb.row(j).square() / (2 * sig2_beta_vb.transpose()) + c.transpose()));
+      mu_beta_vb.row(j).square() / (2 * sig2_beta_vb.transpose()) + cst.transpose()));
 
     m1_beta.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
 
@@ -147,7 +148,7 @@ void coreProbitInfoLoop(const MapMat X,
                         const double sig2_beta_vb,
                         const MapArr1D shuffled_ind) {
 
-  const double c = -(log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
+  const double cst = -(log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
   for (int i = 0; i < X.cols(); ++i) {
 
@@ -158,7 +159,7 @@ void coreProbitInfoLoop(const MapMat X,
     mu_beta_vb.row(j) = sig2_beta_vb * ((Wy - mat_x_m1 - mat_z_mu).transpose() * X.col(j)).array();
 
     gam_vb.row(j) = exp(-logOnePlusExp(log_1_min_Phi_mat_v_mu.row(j) - log_Phi_mat_v_mu.row(j) -
-      mu_beta_vb.row(j).square() / (2 * sig2_beta_vb) + c));
+      mu_beta_vb.row(j).square() / (2 * sig2_beta_vb) + cst));
 
     m1_beta.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
 

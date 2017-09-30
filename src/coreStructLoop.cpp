@@ -106,7 +106,8 @@ void coreDualInfoLoop(const MapMat V,
                   MapMat mat_v_mu,
                   MapArr1D mu_c_vb,
                   const double sig2_c_vb,
-                  const MapArr1D shuffled_ind) {
+                  const MapArr1D shuffled_ind,
+                  const double c = 1) {
 
   const double cst = (log(s2) - log(sig2_c_vb))/ 2;
 
@@ -116,10 +117,10 @@ void coreDualInfoLoop(const MapMat V,
 
     mat_v_mu.colwise() -=  V.col(j) * m1_c(j);
 
-    mu_c_vb(j) = sig2_c_vb * ((W - mat_v_mu).transpose() * V.col(j)).sum();
+    mu_c_vb(j) = c * sig2_c_vb * ((W - mat_v_mu).transpose() * V.col(j)).sum();
 
-    zeta_vb(j) = 1 / (1 + exp(log_1_min_om_vb(j) - log_om_vb(j) -
-      mu_c_vb(j) * mu_c_vb(j) / (2 * sig2_c_vb) + cst));
+    zeta_vb(j) = 1 / (1 + exp(c * (log_1_min_om_vb(j) - log_om_vb(j) -
+      mu_c_vb(j) * mu_c_vb(j) / (2 * sig2_c_vb) + cst)));
 
     m1_c(j) = mu_c_vb(j) * zeta_vb(j);
 
