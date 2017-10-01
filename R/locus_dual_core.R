@@ -150,9 +150,9 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       W <- update_W_info_(gam_vb, sweep(tcrossprod(mu_theta_vb, rep(1, d)), 2, mu_rho_vb, `+`), c = c) # we use info_ so that the second argument is a matrix
 
-      mu_theta_vb <- update_mu_theta_vb_(W, m0, S0_inv, sig2_theta_vb, vec_fac_st, mu_rho_vb, c = c)
+      mu_theta_vb <- update_mu_theta_vb_(W, m0, S0_inv, sig2_theta_vb, vec_fac_st, mu_rho_vb, is_mat = FALSE, c = c)
 
-      mu_rho_vb <- update_mu_rho_vb_(W, mu_theta_vb, n0, sig2_rho_vb, T0_inv, c = c) # update_mu_rho_vb_(W, mu_theta_vb, sig2_rho_vb)
+      mu_rho_vb <- update_mu_rho_vb_(W, mu_theta_vb, n0, sig2_rho_vb, T0_inv, is_mat = FALSE, c = c) # update_mu_rho_vb_(W, mu_theta_vb, sig2_rho_vb)
 
       if (annealing) {
 

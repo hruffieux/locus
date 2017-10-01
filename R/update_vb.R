@@ -219,7 +219,7 @@ update_log_1_min_om_vb <- function(b, d, digam_sum, rs_gam, c = 1) digamma(c * (
 #####################
 
 
-update_mu_rho_vb_ <- function(W, mat_add, n0, sig2_rho_vb, T0_inv, is_mat = FALSE, c = c) {
+update_mu_rho_vb_ <- function(W, mat_add, n0, sig2_rho_vb, T0_inv, is_mat = FALSE, c = 1) {
 
 
   if (is_mat) {
