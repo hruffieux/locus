@@ -483,11 +483,13 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
 
       # Look at : gam_st
       #
-      s02 <- 0.05 # take a small variance for the modulation to avoid `all-response activation' artefact.
-                  # if lots of relevant predictors affect multiple responses,
-                  # better to have it a bit larger (even if some artefact appears)
-                  # because it make sense to borrow information across responses then,
-                  # so theta_s should be allowed to vary more.
+      s02 <- 1 / d # take a small variance for the modulation to avoid `all-response activation' artefact.
+                   # we noticed *empirically* that the artefact tends to strenghten with the number of responses
+                   # probably because it gets triggered by pleiotropic effects.
+                   # side note: if lots of relevant predictors affect multiple responses,
+                   # better to have it a bit larger (even if some artefact appears)
+                   # because it make sense to borrow information across responses then,
+                   # so theta_s should be allowed to vary more.
 
       # adjust the mean of theta_s so that E_p_t = p * E(gam | theta = 0) = p * E(gam)
       m0 <- get_mu(E_p_t, s02 + t02, p) - n0
@@ -926,11 +928,13 @@ auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, dual, link, ind_bin) {
 
     # Look at : gam_st
     #
-    s02 <- 0.05 # take a small variance for the modulation to avoid `all-response activation' artefact.
-    # if lots of relevant predictors affect multiple responses,
-    # better to have it a bit larger (even if some artefact appears)
-    # because it make sense to borrow information across responses then,
-    # so theta_s should be allowed to vary more.
+    s02 <- 1 / d # take a small variance for the modulation to avoid `all-response activation' artefact.
+                 # we noticed *empirically* that the artefact tends to strenghten with the number of responses
+                 # probably because it gets triggered by pleiotropic effects.
+                 # side note: if lots of relevant predictors affect multiple responses,
+                 # better to have it a bit larger (even if some artefact appears)
+                 # because it make sense to borrow information across responses then,
+                 # so theta_s should be allowed to vary more.
 
     # adjust the mean of theta_s so that E_p_t = p * E(gam | theta = 0) = p * E(gam)
     m0 <- get_mu(E_p_t, s02 + t02, p) - n0
