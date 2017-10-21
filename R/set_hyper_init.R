@@ -483,7 +483,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
 
       # Look at : gam_st
       #
-      s02 <- 1 / d # take a small variance for the modulation to avoid `all-response activation' artefact.
+      s02 <- 1e-4 # 1 / d # take a small variance for the modulation to avoid `all-response activation' artefact.
                    # we noticed *empirically* that the artefact tends to strenghten with the number of responses
                    # probably because it gets triggered by pleiotropic effects.
                    # side note: if lots of relevant predictors affect multiple responses,
@@ -928,7 +928,7 @@ auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, dual, link, ind_bin) {
 
     # Look at : gam_st
     #
-    s02 <- 1 / d # take a small variance for the modulation to avoid `all-response activation' artefact.
+    s02 <- 1e-4 # 1 / d # take a small variance for the modulation to avoid `all-response activation' artefact.
                  # we noticed *empirically* that the artefact tends to strenghten with the number of responses
                  # probably because it gets triggered by pleiotropic effects.
                  # side note: if lots of relevant predictors affect multiple responses,
