@@ -73,6 +73,25 @@ e_g_beta_gamma_ <- function(gam_vb, g_sizes, log_om_vb, log_1_min_om_vb,
 
 }
 
+e_dual_g_beta_gamma_ <- function(gam_vb, g_sizes, log_Phi_mat, log_1_min_Phi_mat,
+                                 log_sig2_inv_vb, log_tau_vb, list_m1_btb,
+                                 list_sig2_beta_star, sig2_inv_vb, tau_vb, vec_log_det) {
+  
+  eps <- .Machine$double.eps # to control the argument of the log when gamma is very small
+  
+  G <- length(list_m1_btb)
+  
+  sum(unlist(lapply(1:G, function(g) {
+    
+    sum(g_sizes[g] / 2 * gam_vb[g, ] * (log_sig2_inv_vb + log_tau_vb) -
+          list_m1_btb[[g]] * tau_vb * sig2_inv_vb / 2 +
+          gam_vb[g, ] * log_Phi_mat[g, ] + (1 - gam_vb[g, ]) * log_1_min_Phi_mat[g, ] +
+          1 / 2 * gam_vb[g, ] * (vec_log_det[g] - g_sizes[g] * (log(tau_vb) - 1)) -
+          gam_vb[g, ] * log(gam_vb[g, ] + eps) - (1 - gam_vb[g, ]) * log(1 - gam_vb[g, ] + eps))
+  })))
+  
+}
+
 
 e_beta_gamma_bin_ <- function(gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
                               m2_beta, sig2_beta_vb, sig2_inv_vb) {

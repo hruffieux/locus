@@ -483,7 +483,11 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
       m0 <- - m0  # m0 = - m0_star
       n0 <- - n0  # n0 = - n0_star
 
-      m0 <- rep(m0, p)
+      if (is.null(G)) {
+        m0 <- rep(m0, p)
+      } else {
+        m0 <- rep(m0, G)
+      }
       n0 <- rep(n0, d)
 
       check_positive_(s02)
@@ -928,9 +932,13 @@ auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, dual, link, ind_bin) {
     check_positive_(s02)
     check_positive_(t02)
 
-    gam_vb <- matrix(pnorm(rnorm(p * d, mean = m0 + n0, sd = s02 + t02)), # Phi(theta + chi), and not 1 - Phi(theta + chi)
-                     nrow = p)                                            # as reparametrisation theta* = - theta, chi* = - chi
-
+    if (is.null(G)) {
+      gam_vb <- matrix(pnorm(rnorm(p * d, mean = m0 + n0, sd = s02 + t02)), # Phi(theta + chi), and not 1 - Phi(theta + chi)
+                       nrow = p)                                            # as reparametrisation theta* = - theta, chi* = - chi
+    } else {
+      gam_vb <- matrix(pnorm(rnorm(G * d, mean = m0 + n0, sd = s02 + t02)), 
+                       nrow = G)     
+    }
   } else {
 
     shape1_gam <- 1

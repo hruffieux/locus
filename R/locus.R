@@ -523,7 +523,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                    list_init$tau_vb, tol, maxit, verbose)
         }
 
-      } else if (!ng){
+      } else if (!ng & !dual){
 
         # X is a list (transformed in prepare_data)
         # mu_beta_vb is a list (transformed in prepare_init)
@@ -533,7 +533,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
       } else if (dual) {
 
-        if (nq & nr) {
+        if (nq & nr & ng) {
           # list_struct can be non-null for injected  predictor correlation structure,
           # see core function below
 
@@ -542,13 +542,18 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                  list_init$tau_vb, list_struct, tol, maxit,
                                  anneal, verbose)
           
-        } else if (nq) {
+        } else if (nq & ng) {
           
           vb <- locus_dual_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
                                       list_init$mu_beta_vb,
                                       list_init$sig2_beta_vb, list_init$tau_vb,
                                       list_struct, tol, maxit, anneal, verbose)
 
+        } else if (nq) {
+          
+          vb <- locus_dual_group_core_(Y, X, list_hyper, list_init$gam_vb,
+                                       list_init$mu_beta_vb, list_init$sig2_inv_vb,
+                                       list_init$tau_vb, tol, maxit, verbose)
         }
 
       } else { # list_struct non-null, and only predictor propensity control.

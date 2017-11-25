@@ -17,6 +17,6 @@ hundreds of molecular expression levels and hundreds of samples.
 }
 \section{locus functions}{
  set_hyper, set_init, generate_null, locus,
-  set_blocks, set_cv.
+  set_blocks, set_cv, set_groups, set_struct.
 }
 

@@ -897,10 +897,6 @@ prepare_groups_ <- function(list_groups, X, q, r, bool_rmvd_x, dual, link, list_
                "for group selection. ***",
                sep=""))
 
-  if (dual)
-    stop(paste("dual must be FALSE if list_groups is provided (group-wise ",
-               "inference not yet implemented for the corresponding model).",sep = ""))
-
   if (!is.null(list_cv))
     stop(paste("list_cv must be NULL if non NULL ",
                "list_groups is provided (cross-validation not yet implemented). \n",sep = ""))
