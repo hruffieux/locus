@@ -31,7 +31,7 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
 
     list_S0_inv <- obj_theta_vb$S0_inv
     list_sig2_theta_vb <- obj_theta_vb$sig2_theta_vb
-    vec_sum_log_det <- obj_theta_vb$ vec_sum_log_det_theta
+    vec_sum_log_det <- obj_theta_vb$vec_sum_log_det_theta
 
     vec_fac_st <- obj_theta_vb$vec_fac_st
 

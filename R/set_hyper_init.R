@@ -388,7 +388,7 @@ set_hyper <- function(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
 # Internal function setting default model hyperparameters when not provided by
 # the user.
 #
-auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec_fac_gr) {
+auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec_fac_gr, s02) {
 
   d <- ncol(Y)
 
@@ -446,16 +446,6 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
 
   if (dual | !is.null(r) | struct) {
 
-    # hyperparameters external info model
-    if (!is.null(r)){
-      if (dual)
-        s2 <- 1e-3 # prior variance for external info coefficients (effects likely to be concentrated around zero)
-      else
-        s2 <- 1e-2
-    } else {
-      s2 <- NULL
-    }
-
     if (dual) {
 
       E_p_t <- p_star[1]
@@ -483,17 +473,15 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
 
       # Look at : gam_st
       #
-      s02 <- 0.05 # take a small variance for the modulation to avoid `all-response activation' artefact.
+      s02 <- s02  # take a small variance for the modulation to avoid `all-response activation' artefact.
                   # if lots of relevant predictors affect multiple responses,
                   # better to have it a bit larger (even if some artefact appears)
-                  # because it make sense to borrow information across responses then,
-                  # so theta_s should be allowed to vary more.
 
       # adjust the mean of theta_s so that E_p_t = p * E(gam | theta = 0) = p * E(gam)
       m0 <- get_mu(E_p_t, s02 + t02, p) - n0
 
-      m0 <- - m0  # n0 = - n0_star
-      n0 <- - n0  # m0 = - m0_star
+      m0 <- - m0  # m0 = - m0_star
+      n0 <- - n0  # n0 = - n0_star
 
       m0 <- rep(m0, p)
       n0 <- rep(n0, d)
@@ -502,7 +490,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
       check_positive_(t02)
 
       if (!is.null(r)) {
-        a <- b <- rep(1 / 2, r) # Jeffery prior for the annotations # /! not the same a and b as above!
+        a <- b <- rep(1 / 2, r) # Jeffrey prior for the annotations # /! not the same a and b as above!
       } else {
         a <- b <- NULL
       }
@@ -522,7 +510,12 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
       check_positive_(s02)
     }
 
-
+    # hyperparameters external info model
+    if (!is.null(r)){
+      s2 <- 1e-2
+    } else {
+      s2 <- NULL
+    }
 
   } else {
 
@@ -924,13 +917,7 @@ auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, dual, link, ind_bin) {
     # n0 sets the level of sparsity.
     n0 <- get_mu(E_p_t, t02, p)
 
-    # Look at : gam_st
-    #
-    s02 <- 0.05 # take a small variance for the modulation to avoid `all-response activation' artefact.
-    # if lots of relevant predictors affect multiple responses,
-    # better to have it a bit larger (even if some artefact appears)
-    # because it make sense to borrow information across responses then,
-    # so theta_s should be allowed to vary more.
+    s02 <- 1e-4 
 
     # adjust the mean of theta_s so that E_p_t = p * E(gam | theta = 0) = p * E(gam)
     m0 <- get_mu(E_p_t, s02 + t02, p) - n0

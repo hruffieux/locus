@@ -113,7 +113,7 @@ get_annealing_ladder_ <- function(anneal, verbose) {
   k_m <- 1 / anneal[2]
   m <- anneal[3]
 
-  if(anneal[1] == 0) {
+  if(anneal[1] == 1) {
 
     type <- "geometric"
 
@@ -121,7 +121,7 @@ get_annealing_ladder_ <- function(anneal, verbose) {
 
     ladder <- (1 + delta_k)^(1 - m:1)
 
-  } else if (anneal[1] == 1) { # harmonic spacing
+  } else if (anneal[1] == 2) { # harmonic spacing
 
     type <- "harmonic"
 
@@ -147,7 +147,7 @@ get_annealing_ladder_ <- function(anneal, verbose) {
 
 
 log_one_plus_exp_ <- function(x) { # computes log(1 + exp(x)) avoiding
-  # numerical overflow
+                                   # numerical overflow
   m <- x
   m[x < 0] <- 0
 
@@ -196,6 +196,19 @@ inv_mills_ratio_ <- function(Y, U) {
   m
 
 }
+
+
+log_sum_exp_ <- function(x) {
+  # Computes log(sum(exp(x))
+
+  if ( max(abs(x)) > max(x) )
+    offset <- min(x)
+  else
+    offset <- max(x)
+  log(sum(exp(x - offset))) + offset
+
+}
+
 
 # entropy_ <- function(Y, U) {
 #

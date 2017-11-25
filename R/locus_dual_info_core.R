@@ -17,6 +17,7 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
   p <- ncol(X)
   r <- ncol(V)
 
+
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects
 
@@ -33,11 +34,11 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
 
     eps <- .Machine$double.eps^0.5
 
-    # Parameter initialization here for the top level only
+    # Parameter initialization here for the top level only  (not = m0 and n0 for random initialization)
     #
-    mu_theta_vb <- m0
-    mu_rho_vb <- n0
-    mu_c_vb <- rep(0, r)
+    mu_theta_vb <- rnorm(p, mean = m0, sd = abs(m0) / 5) # m0
+    mu_rho_vb <- rnorm(d, mean = n0, sd = abs(n0) / 5) # n0
+    mu_c_vb <- rnorm(r, sd = 0.1) # rep(0, r)
 
     zeta_vb <- rbeta(r, shape1 = a, shape2 = b)
 
@@ -48,7 +49,7 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
 
     S0_inv <- obj_theta_vb$S0_inv
     sig2_theta_vb <- obj_theta_vb$sig2_theta_vb
-    vec_sum_log_det_theta <- obj_theta_vb$ vec_sum_log_det_theta
+    vec_sum_log_det_theta <- obj_theta_vb$vec_sum_log_det_theta
 
     vec_fac_st <- obj_theta_vb$vec_fac_st
 
@@ -63,7 +64,6 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
     # External information effects
     #
     sig2_c_vb <- update_sig2_c_vb_(p, s2, d, c = c)
-
 
     # Stored/precomputed objects
     #
@@ -106,7 +106,6 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
 
       log_tau_vb <- update_log_tau_vb_(eta_vb, kappa_vb)
       log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
-
 
       # different possible batch-coordinate ascent schemes:
 
@@ -155,7 +154,6 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
 
       }
 
-
       m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
       W <- update_W_info_(gam_vb, mat_v_mu, c = c) # we use info_ so that the second argument is a matrix
@@ -168,6 +166,7 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
 
       mu_rho_vb <- update_mu_rho_vb_(W, mat_v_mu, n0, sig2_rho_vb, T0_inv, is_mat = TRUE, c = c)
       mat_v_mu <- sweep(mat_v_mu, 2, mu_rho_vb, `+`)
+
 
       if (batch == "y") { # optimal scheme
 
@@ -284,7 +283,6 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
 
       names(mu_theta_vb) <- names_x
       names(mu_rho_vb) <- names_y
-      names(zeta_vb) <- names_v
 
       names(zeta_vb) <- names_v
       names(mu_c_vb) <- names_v

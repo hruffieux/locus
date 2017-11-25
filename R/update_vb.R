@@ -180,6 +180,7 @@ update_mat_v_mu_ <- function(V, mu_0_s, mat_c, mu_0_t = NULL, resp_spec = FALSE)
 
 }
 
+
 ###################
 ## chi's updates ##
 ###################
@@ -384,7 +385,7 @@ update_sig2_theta_vb_ <- function(d, p, list_struct, s02, X = NULL, c = 1) {
     vec_fac_st <- NULL
 
     S0_inv <- 1 / s02 # stands for a diagonal matrix of size p with this value on the (constant) diagonal
-    sig2_theta_vb <- update_sig2_c0_vb_(d, s02, c = c) # idem
+    sig2_theta_vb <- as.numeric(update_sig2_c0_vb_(d, s02, c = c)) # idem
 
     vec_sum_log_det_theta <- - p * (log(s02) + log(d + S0_inv))
 

@@ -277,18 +277,19 @@ check_annealing_ <- function(anneal, link, Z, V, list_groups, list_struct, dual)
       stop(paste0("Annealing procedure not yet implemented when link is different ",
                  "from identity, Z, V, list_groups or list_struct is non-NULL. Exit."))
 
-    check_natural_(anneal)
+    check_natural_(anneal[c(1, 3)])
+    check_positive_(anneal[2])
 
     stopifnot(anneal[1] %in% 1:3)
 
     if (anneal[2] < 1.5)
       stop(paste0("Initial temperature very small. May not be large enough ",
-                  "for a successful exploration. Please increase it."))
+                  "for a successful exploration. Please increase it or select no annealing."))
 
-    if (anneal[3] > 500)
+    if (anneal[3] > 1000)
       stop(paste0("Temperature ladder size very large. This may be unnecessarily ",
                   "computationally demanding. Please decrease it."))
-
+    
   }
 
 }
@@ -300,7 +301,7 @@ check_annealing_ <- function(anneal, link, Z, V, list_groups, list_struct, dual)
 #
 prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, dual, link, ind_bin,
                                 vec_fac_gr, vec_fac_st, bool_rmvd_x, bool_rmvd_z,
-                                bool_rmvd_v, names_x, names_y, names_z, verbose) {
+                                bool_rmvd_v, names_x, names_y, names_z, verbose, s02) {
 
   d <- ncol(Y)
   if (!is.null(vec_fac_gr)) {
@@ -315,7 +316,7 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, r, dual, link, ind_
 
     if (verbose) cat("list_hyper set automatically. \n")
 
-    list_hyper <- auto_set_hyper_(Y, p, p_star, q, r, dual, link, ind_bin, !ns, vec_fac_gr)
+    list_hyper <- auto_set_hyper_(Y, p, p_star, q, r, dual, link, ind_bin, !ns, vec_fac_gr, s02)
 
   } else {
 

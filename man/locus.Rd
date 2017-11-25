@@ -8,7 +8,8 @@ locus(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL, list_cv = NULL,
   list_blocks = NULL, list_groups = NULL, list_struct = NULL,
   dual = FALSE, user_seed = NULL, tol = 0.001, maxit = 1000,
-  anneal = NULL, save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
+  anneal = NULL, save_hyper = FALSE, save_init = FALSE, verbose = TRUE,
+  s02 = 0.01)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of
@@ -94,7 +95,7 @@ seed set.}
 \item{maxit}{Maximum number of iterations allowed.}
 
 \item{anneal}{Parameters for annealing scheme. Must be a vector whose first
-entry is sets the type of latter: 1 = geometric spacing, 2 = harmonic
+entry is sets the type of ladder: 1 = geometric spacing, 2 = harmonic
 spacing or 3 = linear spacing, the second entry is the initial temperature,
 and the third entry is the ladder size. If \code{NULL} (default), no
 annealing is performed.}
@@ -106,6 +107,11 @@ saved as output.}
 the inference are saved as output.}
 
 \item{verbose}{If \code{TRUE}, messages are displayed during execution.}
+
+\item{s02}{Variance hyperparameter informing the proportion of active 
+responses per active predictor (degree of pleiotropy in a genetic context). 
+Used only if \code{dual} is \code{TRUE} or \code{V} or \code{list_struct} 
+is non-\code{NULL}.}
 }
 \value{
 An object of class "\code{vb}" containing the following variational
@@ -174,6 +180,7 @@ An object of class "\code{vb}" containing the following variational
                      labels are gathered after removal of constant and
                      collinear predictors, whose indices are stored in
                      \code{rmvd_cst_x} and \code{rmvd_coll_x}).}
+ \item{...}{Other specific outputs are possible depending on the model used.}
 }
 \description{
 Variational approximation procedure fitting sparse multivariate regression

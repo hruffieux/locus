@@ -91,7 +91,7 @@
 #' @param tol Tolerance for the stopping criterion.
 #' @param maxit Maximum number of iterations allowed.
 #' @param anneal Parameters for annealing scheme. Must be a vector whose first
-#'   entry is sets the type of latter: 1 = geometric spacing, 2 = harmonic
+#'   entry is sets the type of ladder: 1 = geometric spacing, 2 = harmonic
 #'   spacing or 3 = linear spacing, the second entry is the initial temperature,
 #'   and the third entry is the ladder size. If \code{NULL} (default), no
 #'   annealing is performed.
@@ -100,6 +100,10 @@
 #' @param save_init If \code{TRUE}, the initial variational parameters used for
 #'   the inference are saved as output.
 #' @param verbose If \code{TRUE}, messages are displayed during execution.
+#' @param s02 Variance hyperparameter informing the proportion of active 
+#'   responses per active predictor (degree of pleiotropy in a genetic context). 
+#'   Used only if \code{dual} is \code{TRUE} or \code{V} or \code{list_struct} 
+#'   is non-\code{NULL}.
 #'
 #' @return An object of class "\code{vb}" containing the following variational
 #'   estimates and settings:
@@ -167,6 +171,8 @@
 #'                      labels are gathered after removal of constant and
 #'                      collinear predictors, whose indices are stored in
 #'                      \code{rmvd_cst_x} and \code{rmvd_coll_x}).}
+#'  \item{...}{Other specific outputs are possible depending on the model used.}
+#'  
 #' @examples
 #' seed <- 123; set.seed(seed)
 #'
@@ -280,7 +286,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                   list_cv = NULL, list_blocks = NULL, list_groups = NULL,
                   list_struct = NULL, dual = FALSE, user_seed = NULL,
                   tol = 1e-3, maxit = 1000, anneal = NULL, save_hyper = FALSE,
-                  save_init = FALSE, verbose = TRUE) { ##
+                  save_init = FALSE, verbose = TRUE, s02 = 1e-2) {
 
   if (verbose) cat("== Preparing the data ... \n")
 
@@ -407,7 +413,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
 
   list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, r, dual, link, ind_bin,
                                     vec_fac_gr, vec_fac_st, bool_rmvd_x, bool_rmvd_z,
-                                    bool_rmvd_v, names_x, names_y, names_z, verbose)
+                                    bool_rmvd_v, names_x, names_y, names_z, verbose, s02)
 
   if(dual && (link != "identity" | !is.null(q)))
     stop(paste("Dual propensity control (p0_av is a list) enabled only for ",
@@ -530,12 +536,14 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
         if (nq & nr) {
           # list_struct can be non-null for injected  predictor correlation structure,
           # see core function below
+
           vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
                                  list_init$mu_beta_vb, list_init$sig2_beta_vb,
                                  list_init$tau_vb, list_struct, tol, maxit,
                                  anneal, verbose)
+          
         } else if (nq) {
-
+          
           vb <- locus_dual_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
                                       list_init$mu_beta_vb,
                                       list_init$sig2_beta_vb, list_init$tau_vb,

@@ -94,7 +94,6 @@ void coreDualLoop(const MapMat X,
 }
 
 
-// for locus_struct_core function
 // [[Rcpp::export]]
 void coreDualInfoLoop(const MapMat V,
                   const MapMat W,
@@ -129,5 +128,3 @@ void coreDualInfoLoop(const MapMat V,
   }
 
 }
-
-

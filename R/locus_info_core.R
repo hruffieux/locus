@@ -32,8 +32,8 @@ locus_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
 
     eps <- .Machine$double.eps^0.5
 
-    mu_c0_vb <- m0
-    mu_c_vb <- matrix(0, nrow = r, ncol = d)
+    mu_c0_vb <- rnorm(p, mean = m0, sd = abs(m0) / 5) # m0
+    mu_c_vb <- matrix(rnorm(r*d, sd = 0.1), nrow = r) # matrix(0, nrow = r, ncol = d)
 
     m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
     m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)

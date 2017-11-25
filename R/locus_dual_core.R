@@ -31,11 +31,10 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
     eps <- .Machine$double.eps^0.5
 
-    # Parameter initialization here for the top level only
+    # Parameter initialization here for the top level only (not = m0 and n0 for random initialization)
     #
-    mu_theta_vb <- m0
-    mu_rho_vb <- n0
-
+    mu_theta_vb <- rnorm(p, mean = m0, sd = abs(m0) / 5)
+    mu_rho_vb <- rnorm(d, mean = n0, sd = abs(n0) / 5) 
 
     # Covariate-specific parameters: objects derived from s02, list_struct (possible block-wise in parallel)
     #
@@ -196,7 +195,6 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
     }
 
-
     if (verbose) {
       if (converged) {
         cat(paste("Convergence obtained after ", format(it), " iterations. \n",
@@ -212,8 +210,8 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
     if (full_output) { # for internal use only
 
       create_named_list_(eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
-                         lambda_vb, m0, n0, mu_rho_vb, mu_theta_vb, nu, nu_vb,
-                         sig2_beta_vb, S0_inv, sig2_theta_vb,
+                         lambda_vb, m0, n0, mu_beta_vb, mu_rho_vb, mu_theta_vb,
+                         nu, nu_vb, sig2_beta_vb, S0_inv, sig2_theta_vb,
                          sig2_inv_vb, sig2_rho_vb, T0_inv, tau_vb, m1_beta,
                          m2_beta, mat_x_m1, vec_fac_st, vec_sum_log_det_rho,
                          vec_sum_log_det_theta)
