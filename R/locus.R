@@ -544,11 +544,20 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
           
         } else if (nq & ng) {
           
-          vb <- locus_dual_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
-                                      list_init$mu_beta_vb,
-                                      list_init$sig2_beta_vb, list_init$tau_vb,
-                                      list_struct, tol, maxit, anneal, verbose)
-
+          eb <- TRUE ## TODO: make it a user parameter?
+          
+          if (eb) {
+            vb <- locus_dual_info_vbem_core_(Y, X, V, list_hyper, list_init$gam_vb,
+                                             list_init$mu_beta_vb,
+                                             list_init$sig2_beta_vb, list_init$tau_vb,
+                                             list_struct, tol, maxit, anneal, verbose)
+          } else {
+            vb <- locus_dual_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
+                                         list_init$mu_beta_vb,
+                                         list_init$sig2_beta_vb, list_init$tau_vb,
+                                         list_struct, tol, maxit, anneal, verbose, bool_eb = FALSE)
+          }
+          
         } else if (nq) {
           
           vb <- locus_dual_group_core_(Y, X, list_hyper, list_init$gam_vb,
