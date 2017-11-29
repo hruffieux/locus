@@ -534,18 +534,36 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
       } else if (dual) {
 
         if (nq & nr & ng) {
-          # list_struct can be non-null for injected  predictor correlation structure,
+          # list_struct can be non-null for injected predictor correlation structure,
           # see core function below
 
-          vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
-                                 list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                 list_init$tau_vb, list_struct, tol, maxit,
-                                 anneal, verbose)
+          eb <- TRUE ## TODO: make it a user parameter?
+          ss <- TRUE
+          
+          if (eb) {
+            vb <- locus_dual_vbem_core_(Y, X, list_hyper, list_init$gam_vb,
+                                        list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                        list_init$tau_vb, list_struct, tol, maxit,
+                                        anneal, verbose)
+          } else {
+            if (ss) {
+              vb <- locus_dual_pleio_core_(Y, X, list_hyper, list_init$gam_vb,
+                                     list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                     list_init$tau_vb, list_struct, tol, maxit,
+                                     anneal, verbose, bool_eb = FALSE)
+            } else {
+              vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
+                                     list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                     list_init$tau_vb, list_struct, tol, maxit,
+                                     anneal, verbose)
+            }
+          }          
+          
           
         } else if (nq & ng) {
           
           eb <- TRUE ## TODO: make it a user parameter?
-          
+
           if (eb) {
             vb <- locus_dual_info_vbem_core_(Y, X, V, list_hyper, list_init$gam_vb,
                                              list_init$mu_beta_vb,
