@@ -5,28 +5,26 @@ locus_dual_info_vbem_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
   r <- ncol(V)
   
   maxit_em <- ceiling(maxit / 5)
-  
   converged_em <- FALSE
   it_em <- 0
-  tol_em <- 10 * tol # or monitor the elbo across VB runs?
+  tol_em <- 1e-3 
   s2_min <- 1e-6
-  list_hyper$om_vb <- rep(1/2, r) # prior proportion of active annotations # 1 / 5, of length 1 doesn't work well of length 1 and not r as before!
+  lb_old <- -Inf
+  list_hyper$om_vb <- rep(1/2, r) # prior proportion of active annotations 
   
   vb <- create_named_list_(gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb)
+  
   
   while ((!converged_em) & list_hyper$s2 > s2_min & (it_em < maxit_em)) {
     
     it_em <- it_em + 1
     
-    s2_old <- list_hyper$s2
-    om_old <- list_hyper$om_vb
-    
     if (verbose)
       cat("---------- VB updates ----------\n")
     
     vb <- locus_dual_info_core_(Y, X, V, list_hyper, vb$gam_vb, vb$mu_beta_vb,
-                                vb$sig2_beta_vb, vb$tau_vb, list_struct, tol,
-                                maxit, anneal, verbose = FALSE, full_output = TRUE, bool_eb = TRUE)
+                                vb$sig2_beta_vb, vb$tau_vb, list_struct, eb = TRUE, tol,
+                                maxit, anneal, verbose = FALSE, full_output = TRUE)
     
     if (verbose)
       cat("--- EM hyperparameter updates ---\n")
@@ -41,15 +39,16 @@ locus_dual_info_vbem_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
       cat("\n\n")
     }
      
-    converged_em <- (abs(list_hyper$s2 - s2_old) / s2_old < tol_em) && (max(abs(list_hyper$om_vb - om_old) / om_old) < tol_em)
+    converged_em <- (abs(vb$lb_opt - lb_old) < tol_em)
     
+    lb_old <- vb$lb_opt
   }
   
   if (verbose) {
     if (converged_em) {
       cat(paste0("Convergence of the EM hyperparameter optimization run obtained after ", format(it_em), " EM iterations. \n\n"))
     } else if (list_hyper$s2 <= s2_min) {
-      cat(paste0("EM hyperparameter optimization run stopped after s2 getting below 1e-5. \n\n"))
+      cat(paste0("EM hyperparameter optimization run stopped after s2 getting below ", s2_min, ". \n\n"))
     } else {
       warning("Maximal number of EM iterations reached before convergence. Exit EM run. \n\n")
     }
@@ -62,8 +61,8 @@ locus_dual_info_vbem_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
 
 
   out <- locus_dual_info_core_(Y, X, V, list_hyper, vb$gam_vb, vb$mu_beta_vb,
-                               vb$sig2_beta_vb, vb$tau_vb, list_struct, tol,
-                               maxit, anneal, verbose, bool_eb = TRUE)
+                               vb$sig2_beta_vb, vb$tau_vb, list_struct, eb = TRUE, tol,
+                               maxit, anneal, verbose)
 
   out$s2 <- list_hyper$s2
   out

@@ -450,7 +450,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, r, dual, link, ind_bin, struct, vec
 
       E_p_t <- p_star[1]
       V_p_t <- p_star[2]
-
+      
       dn <- 1e-6
       up <- 1e5
 

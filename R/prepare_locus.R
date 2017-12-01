@@ -251,9 +251,9 @@ convert_p0_av_ <- function(p0_av, p, list_blocks, dual, verbose, eps = .Machine$
 
     }
 
-    # the sparsity level needs to be adapted when block-wise inference is used
-    # otherwise the selected models may be too small (empirical considerations here)
     if (!is.null(list_blocks)) {
+      # the sparsity level needs to be adapted when block-wise inference is used
+      # otherwise the selected models may be too small (empirical considerations here)
       p_star <- sapply(p_star, function(p_star_j) min(p_star_j * list_blocks$n_bl, 0.975 * p))
 
       if (verbose) cat(paste("The sparsity level is adapted for block-wise inference ",
@@ -681,7 +681,7 @@ prepare_cv_ <- function(list_cv, n, p, r, bool_rmvd_x, p0_av, link, list_hyper,
 # Internal function implementing sanity checks and needed preprocessing to the
 # settings provided by the user for block-wise parallel inference.
 #
-prepare_blocks_ <- function(list_blocks, bool_rmvd_x, dual, list_cv, list_groups, list_struct) {
+prepare_blocks_ <- function(list_blocks, eb, bool_rmvd_x, dual, list_cv, list_groups, list_struct) {
 
   if (!inherits(list_blocks, "blocks"))
     stop(paste("The provided list_blocks must be an object of class ``blocks''. \n",
@@ -691,7 +691,7 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, dual, list_cv, list_groups
                "all the candidate predictors (sufficient RAM required). ***",
                sep=""))
 
-  if (dual)
+  if (xor(dual, eb))
     stop(paste("dual must be FALSE if list_blocks is provided (block-wise ",
                "inference not yet implemented for the corresponding model).",sep = ""))
 

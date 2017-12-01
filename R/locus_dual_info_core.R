@@ -6,9 +6,9 @@
 # link, no fixed covariates. See help of `locus` function for details.
 #
 locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
-                                  sig2_beta_vb, tau_vb, list_struct, tol, maxit,
+                                  sig2_beta_vb, tau_vb, list_struct, eb, tol, maxit,
                                   anneal, verbose, batch = "y",
-                                  full_output = FALSE, debug = TRUE, bool_eb = FALSE) {
+                                  full_output = FALSE, debug = TRUE) {
   
   # Y centered, and X and V standardized.
   
@@ -40,7 +40,7 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
     mu_rho_vb <- rnorm(d, mean = n0, sd = abs(n0) / 5) # n0
     mu_c_vb <- rnorm(r, sd = 0.1) # rep(0, r)
     
-    if (bool_eb) {
+    if (eb) {
       a <- b <- a_vb <- b_vb <- NULL
       
       zeta_vb <- rbeta(r, shape1 = om_vb + eps, shape2 = 1 - om_vb + eps)
@@ -95,7 +95,7 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
       if (verbose & (it == 1 | it %% 5 == 0))
         cat(paste("Iteration ", format(it), "... \n", sep = ""))
       
-      if (!bool_eb) digam_sum <- digamma(c * (a + b + 1) - 2 * c + 2)
+      if (!eb) digam_sum <- digamma(c * (a + b + 1) - 2 * c + 2)
       
       # % #
       lambda_vb <- update_lambda_vb_(lambda, sum(gam_vb), c = c)
@@ -179,7 +179,7 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
       
       if (batch == "y") { # optimal scheme
         
-        if (!bool_eb) {
+        if (!eb) {
           log_om_vb <- update_log_om_vb(a, digam_sum, zeta_vb, c = c)
           log_1_min_om_vb <- update_log_1_min_om_vb(b, 1, digam_sum, zeta_vb, c = c)
         }
@@ -194,7 +194,7 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
         
         for (l in sample(1:r)) {
           
-          if (!bool_eb) {
+          if (!eb) {
             log_om_vb <- update_log_om_vb(a, digam_sum, zeta_vb, c = c)
             log_1_min_om_vb <- update_log_1_min_om_vb(b, 1, digam_sum, zeta_vb, c = c)
           }
@@ -215,7 +215,7 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
         
       }
       
-      if (!bool_eb) {
+      if (!eb) {
         a_vb <- update_a_vb(a, zeta_vb, c = c)
         b_vb <- update_b_vb(b, 1, zeta_vb, c = c)
         om_vb <- a_vb / (a_vb + b_vb)
@@ -251,7 +251,7 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
                                   sig2_beta_vb, S0_inv, s2, sig2_c_vb, sig2_theta_vb,
                                   sig2_inv_vb, sig2_rho_vb, T0_inv, tau_vb, zeta_vb, m1_beta,
                                   m2_beta, mat_x_m1, mat_v_mu, vec_fac_st, vec_sum_log_det_rho,
-                                  vec_sum_log_det_theta, bool_eb)
+                                  vec_sum_log_det_theta, eb)
         
         if (verbose & (it == 1 | it %% 5 == 0))
           cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
@@ -264,7 +264,7 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
       }
     }
     
-    if (verbose | bool_eb) {
+    if (verbose | eb) {
       if (converged) {
         cat(paste("Convergence obtained after ", format(it), " iterations. \n",
                   "Optimal marginal log-likelihood variational lower bound ",
@@ -283,7 +283,7 @@ locus_dual_info_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
                          om_vb, sig2_beta_vb, S0_inv, s2, sig2_c_vb, sig2_theta_vb,
                          sig2_inv_vb, sig2_rho_vb, T0_inv, tau_vb, zeta_vb, m1_beta,
                          m2_beta, mat_x_m1, mat_v_mu, vec_fac_st, vec_sum_log_det_rho,
-                         vec_sum_log_det_theta)
+                         vec_sum_log_det_theta, lb_opt)
       
     } else {
       
@@ -325,7 +325,7 @@ elbo_dual_info_ <- function(Y, V, a, a_vb, b, b_vb, eta, eta_vb, gam_vb, kappa, 
                             sig2_beta_vb, S0_inv, s2, sig2_c_vb, sig2_theta_vb,
                             sig2_inv_vb, sig2_rho_vb, T0_inv, tau_vb, zeta_vb, m1_beta,
                             m2_beta, mat_x_m1, mat_v_mu, vec_fac_st, vec_sum_log_det_rho,
-                            vec_sum_log_det_theta, bool_eb) {
+                            vec_sum_log_det_theta, eb) {
   
   n <- nrow(Y)
   
@@ -340,7 +340,7 @@ elbo_dual_info_ <- function(Y, V, a, a_vb, b, b_vb, eta, eta_vb, gam_vb, kappa, 
   log_tau_vb <- update_log_tau_vb_(eta_vb, kappa_vb)
   log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
   
-  if (bool_eb) {
+  if (eb) {
     eps <- .Machine$double.eps^0.5
     log_om_vb <- log(om_vb + eps)
     log_1_min_om_vb <- log(1 - om_vb + eps)
@@ -368,7 +368,7 @@ elbo_dual_info_ <- function(Y, V, a, a_vb, b, b_vb, eta, eta_vb, gam_vb, kappa, 
   
   elbo_G <- e_sig2_inv_(lambda, lambda_vb, log_sig2_inv_vb, nu, nu_vb, sig2_inv_vb)
   
-  if (bool_eb) {
+  if (eb) {
     elbo_H <- 0
   } else {
     elbo_H <- e_omega_(a, a_vb, b, b_vb, log_om_vb, log_1_min_om_vb)

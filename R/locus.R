@@ -47,6 +47,10 @@
 #'   variables representing external information on the candidate predictors
 #'   which may make their selection more or less likely. \code{NULL} if no such
 #'   information.
+#' @param s02 Variance hyperparameter informing the proportion of active 
+#'   responses per active predictor (degree of pleiotropy in a genetic context). 
+#'   Used only if \code{dual} is \code{TRUE} or \code{V} or \code{list_struct} 
+#'   is non-\code{NULL}.
 #' @param link Response link. Must be "\code{identity}" for linear regression,
 #'   "\code{logit}" for logistic regression, "\code{probit}" for probit
 #'   regression, or "\code{mix}" for a mix of identity and probit link functions
@@ -83,6 +87,9 @@
 #' @param dual If \code{TRUE}, dual propensity control (by candidate predictors
 #'   and by responses). Functionality under development and with limited
 #'   associated functionalities. Default is \code{FALSE}.
+#' @param eb If \code{TRUE}, variance and probability hyperparameters selected
+#'   via an empirical Bayes procedure. Only used if \code{dual} is \code{TRUE}.
+#'   Default is \code{FALSE}.
 #' @param user_seed Seed set for reproducible default choices of hyperparameters
 #'   (if \code{list_hyper} is \code{NULL}) and initial variational parameters
 #'   (if \code{list_init} is \code{NULL}). Also used at the cross-validation
@@ -100,10 +107,6 @@
 #' @param save_init If \code{TRUE}, the initial variational parameters used for
 #'   the inference are saved as output.
 #' @param verbose If \code{TRUE}, messages are displayed during execution.
-#' @param s02 Variance hyperparameter informing the proportion of active 
-#'   responses per active predictor (degree of pleiotropy in a genetic context). 
-#'   Used only if \code{dual} is \code{TRUE} or \code{V} or \code{list_struct} 
-#'   is non-\code{NULL}.
 #'
 #' @return An object of class "\code{vb}" containing the following variational
 #'   estimates and settings:
@@ -281,36 +284,36 @@
 #'
 #' @export
 #'
-locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
+locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity",
                   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, list_groups = NULL,
-                  list_struct = NULL, dual = FALSE, user_seed = NULL,
+                  list_struct = NULL, dual = FALSE, eb = FALSE, user_seed = NULL,
                   tol = 1e-3, maxit = 1000, anneal = NULL, save_hyper = FALSE,
-                  save_init = FALSE, verbose = TRUE, s02 = 1e-2) {
-
+                  save_init = FALSE, verbose = TRUE, ss = TRUE) {
+  
   if (verbose) cat("== Preparing the data ... \n")
-
+  
   check_annealing_(anneal, link, Z, V, list_groups, list_struct, dual)
-
+  
   dat <- prepare_data_(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verbose)
-
+  
   bool_rmvd_x <- dat$bool_rmvd_x
   bool_rmvd_z <- dat$bool_rmvd_z
   bool_rmvd_v <- dat$bool_rmvd_v
-
+  
   X <- dat$X
   Y <- dat$Y
   Z <- dat$Z
   V <- dat$V
-
+  
   n <- nrow(X)
   p <- ncol(X)
   d <- ncol(Y)
   r <- ncol(V)
-
+  
   names_x <- colnames(X)
   names_y <- colnames(Y)
-
+  
   if (!is.null(Z)) {
     q <- ncol(Z)
     names_z <- colnames(Z)
@@ -318,7 +321,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
     q <- NULL
     names_z <- NULL
   }
-
+  
   if (!is.null(V)) {
     r <- ncol(V)
     names_v <- colnames(V)
@@ -326,11 +329,11 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
     r <- NULL
     names_v <- NULL
   }
-
+  
   if (verbose) cat("... done. == \n\n")
-
+  
   if (!is.null(list_cv) & is.null(list_blocks) & is.null(list_groups) & is.null(list_struct) & !dual) { ## TODO: allow cross-validation when list_blocks is used.
-
+    
     if (verbose) {
       cat("=============================== \n")
       cat("===== Cross-validation... ===== \n")
@@ -338,219 +341,223 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
     }
     list_cv <- prepare_cv_(list_cv, n, p, r, bool_rmvd_x, p0_av, link,
                            list_hyper, list_init, verbose)
-
+    
     p_star <- cross_validate_(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
-
+    
     vec_fac_gr <- vec_fac_st <- NULL
-
+    
   } else {
-
+    
     if (!is.null(list_blocks)) {
-
-      list_blocks <- prepare_blocks_(list_blocks, bool_rmvd_x, dual, list_cv, list_groups, list_struct)
-
+      
+      list_blocks <- prepare_blocks_(list_blocks, eb, bool_rmvd_x, dual, list_cv, list_groups, list_struct)
+      
       n_bl <- list_blocks$n_bl
       n_cpus <- list_blocks$n_cpus
       vec_fac_bl <- list_blocks$vec_fac_bl
-
+      
     }
-
-
+    
+    
     if (!is.null(list_groups)) {
-
+      
       list_groups <- prepare_groups_(list_groups, X, q, r, bool_rmvd_x, dual, link, list_cv)
-
+      
       X <- list_groups$X
       vec_fac_gr <- list_groups$vec_fac_gr
-
+      
     } else {
-
+      
       vec_fac_gr <- NULL
-
+      
     }
-
-
+    
+    
     if (!is.null(list_struct)) {
-
+      
       list_struct <- prepare_struct_(list_struct, n, q, r, bool_rmvd_x, link, list_cv, list_groups)
-
+      
       vec_fac_st <- list_struct$vec_fac_st
-
+      
     } else {
-
+      
       vec_fac_st <- NULL
-
+      
     }
-
-
+    
+    
     if (is.null(list_hyper) | is.null(list_init)) {
-
+      
       if (is.null(list_groups)) p_tot <- p
       else p_tot <- length(unique(vec_fac_gr))
-
+      
       p_star <- convert_p0_av_(p0_av, p_tot, list_blocks, dual, verbose)
-
+      
       # remove the entries corresponding to the removed constant covariates in X (if any)
       if (length(p_star) > 1 & !dual) {
         if (is.null(list_groups)) p_star <- p_star[!bool_rmvd_x]
         else p_star <- p_star[unique(vec_fac_gr)]
       }
-
-
+      
+      
     } else {
-
+      
       if (!is.null(p0_av))
         warning(paste("Provided argument p0_av not used, as both list_hyper ",
                       "and list_init were provided.", sep = ""))
-
+      
       p_star <- NULL
-
+      
     }
-
+    
   }
-
+  
   if (verbose) cat("== Preparing the hyperparameters ... \n\n")
-
+  
   list_hyper <- prepare_list_hyper_(list_hyper, Y, p, p_star, q, r, dual, link, ind_bin,
                                     vec_fac_gr, vec_fac_st, bool_rmvd_x, bool_rmvd_z,
                                     bool_rmvd_v, names_x, names_y, names_z, verbose, s02)
-
+  
   if(dual && (link != "identity" | !is.null(q)))
     stop(paste("Dual propensity control (p0_av is a list) enabled only for ",
                "identity link, Z = NULL. Exit.", sep = ""))
-
+  
   if (verbose) cat("... done. == \n\n")
-
+  
   if (verbose) cat("== Preparing the parameter initialization ... \n\n")
-
+  
   list_init <- prepare_list_init_(list_init, Y, p, p_star, q, dual, link,
                                   ind_bin, vec_fac_gr, bool_rmvd_x, bool_rmvd_z,
                                   bool_rmvd_v, user_seed, verbose)
-
+  
   if (verbose) cat("... done. == \n\n")
-
+  
   nq <- is.null(q)
   nr <- is.null(r)
-
+  
   if (link != "identity") { # adds an intercept for logistic/probit regression
-
+    
     if (nq) {
-
+      
       Z <- matrix(1, nrow = n, ncol = 1)
-
+      
       # uninformative prior
       list_hyper$phi <- list_hyper$xi <- 1e-3
-
+      
       list_init$mu_alpha_vb <- matrix(0, nrow = 1, ncol = d)
-
+      
       if (link == "probit") {
-
+        
         list_init$sig2_alpha_vb <- 1
-
+        
       } else {
-
+        
         list_init$sig2_alpha_vb <- matrix(1, nrow = 1, ncol = d)
-
+        
       }
-
+      
     } else {
-
+      
       Z <- cbind(rep(1, n), Z)
-
+      
       # uninformative prior
       list_hyper$phi <- c(1e-3, list_hyper$phi)
       list_hyper$xi <- c(1e-3, list_hyper$xi)
-
+      
       list_init$mu_alpha_vb <- rbind(rep(0, d), list_init$mu_alpha_vb)
-
+      
       if (link == "probit") {
-
+        
         list_init$sig2_alpha_vb <- c(1, list_init$sig2_alpha_vb)
-
+        
       } else {
-
+        
         list_init$sig2_alpha_vb <- rbind(rep(1, d), list_init$sig2_alpha_vb)
-
+        
       }
-
-
+      
+      
     }
     colnames(Z)[1] <- "Intercept"
   }
-
-
+  
+  
   if (verbose){
     cat(paste("============================================================== \n",
               "== Variational inference for sparse multivariate regression == \n",
               "============================================================== \n\n",
               sep = ""))
   }
-
-
+  
+  
   if (is.null(list_blocks)) {
-
+    
     if (link == "identity") {
-
+      
       ng  <- is.null(list_groups)
       ns <- is.null(list_struct)
-
+      
       if (!dual & ng & ns){
-
+        
         if (nq & nr) {
-
+          
           vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
                             list_init$mu_beta_vb, list_init$sig2_beta_vb,
                             list_init$tau_vb, tol, maxit, anneal, verbose)
-
+          
         } else if (nq) { # r non-null
-
+          
           vb <- locus_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
                                  list_init$mu_beta_vb, list_init$sig2_beta_vb,
                                  list_init$tau_vb, tol, maxit, anneal, verbose)
-
+          
         } else if (nr) { # q non-null
-
+          
           vb <- locus_z_core_(Y, X, Z, list_hyper, list_init$gam_vb,
                               list_init$mu_alpha_vb, list_init$mu_beta_vb,
                               list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                               list_init$tau_vb, tol, maxit, verbose)
-
+          
         } else { # both q and r non-null
-
+          
           vb <- locus_z_info_core_(Y, X, Z, V, list_hyper, list_init$gam_vb,
                                    list_init$mu_alpha_vb, list_init$mu_beta_vb,
                                    list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                                    list_init$tau_vb, tol, maxit, verbose)
         }
-
+        
       } else if (!ng & !dual){
-
+        
         # X is a list (transformed in prepare_data)
         # mu_beta_vb is a list (transformed in prepare_init)
         vb <- locus_group_core_(Y, X, list_hyper, list_init$gam_vb,
                                 list_init$mu_beta_vb, list_init$sig2_inv_vb,
                                 list_init$tau_vb, tol, maxit, verbose)
-
+        
       } else if (dual) {
-
+        
         if (nq & nr & ng) {
           # list_struct can be non-null for injected predictor correlation structure,
           # see core function below
-
-          eb <- TRUE ## TODO: make it a user parameter?
-          ss <- TRUE
+          
+          # ss <- TRUE  ## TODO: make it a user parameter?
           
           if (eb) {
+            
+            stopifnot(is.null(list_struct)) # TODO: implement sanity checks in prepare_locus
+            
             vb <- locus_dual_vbem_core_(Y, X, list_hyper, list_init$gam_vb,
                                         list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                        list_init$tau_vb, list_struct, tol, maxit,
-                                        anneal, verbose)
+                                        list_init$tau_vb, bool_blocks = FALSE, 
+                                        tol, maxit, anneal, verbose)
           } else {
             if (ss) {
+              
+              stopifnot(is.null(list_struct)) # TODO: implement sanity checks in prepare_locus
+              
               vb <- locus_dual_pleio_core_(Y, X, list_hyper, list_init$gam_vb,
-                                     list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                     list_init$tau_vb, list_struct, tol, maxit,
-                                     anneal, verbose, bool_eb = FALSE)
+                                           list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                           list_init$tau_vb, eb, tol, maxit, anneal, verbose)
             } else {
               vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
                                      list_init$mu_beta_vb, list_init$sig2_beta_vb,
@@ -562,8 +569,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
           
         } else if (nq & ng) {
           
-          eb <- TRUE ## TODO: make it a user parameter?
-
           if (eb) {
             vb <- locus_dual_info_vbem_core_(Y, X, V, list_hyper, list_init$gam_vb,
                                              list_init$mu_beta_vb,
@@ -571,9 +576,9 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                              list_struct, tol, maxit, anneal, verbose)
           } else {
             vb <- locus_dual_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
-                                         list_init$mu_beta_vb,
-                                         list_init$sig2_beta_vb, list_init$tau_vb,
-                                         list_struct, tol, maxit, anneal, verbose, bool_eb = FALSE)
+                                        list_init$mu_beta_vb,
+                                        list_init$sig2_beta_vb, list_init$tau_vb,
+                                        list_struct, eb, tol, maxit, anneal, verbose)
           }
           
         } else if (nq) {
@@ -582,73 +587,73 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
                                        list_init$mu_beta_vb, list_init$sig2_inv_vb,
                                        list_init$tau_vb, tol, maxit, verbose)
         }
-
+        
       } else { # list_struct non-null, and only predictor propensity control.
-
+        
         vb <- locus_struct_core_(Y, X, list_hyper, list_init$gam_vb,
                                  list_init$mu_beta_vb, list_init$sig2_beta_vb,
                                  list_init$tau_vb, list_struct, tol, maxit, verbose)
       }
-
+      
     } else if (link == "logit"){
-
+      
       if(nr) {
-
+        
         vb <- locus_logit_core_(Y, X, Z, list_hyper, list_init$chi_vb,
                                 list_init$gam_vb, list_init$mu_alpha_vb,
                                 list_init$mu_beta_vb, list_init$sig2_alpha_vb,
                                 list_init$sig2_beta_vb, tol, maxit, verbose)
       } else {
-
+        
         vb <- locus_logit_info_core_(Y, X, Z, V, list_hyper, list_init$chi_vb,
                                      list_init$gam_vb, list_init$mu_alpha_vb,
                                      list_init$mu_beta_vb, list_init$sig2_alpha_vb,
                                      list_init$sig2_beta_vb, tol, maxit,
                                      verbose)
       }
-
-
+      
+      
     } else if (link == "probit"){
-
+      
       if (nr) {
-
+        
         vb <- locus_probit_core_(Y, X, Z, list_hyper, list_init$gam_vb,
                                  list_init$mu_alpha_vb, list_init$mu_beta_vb,
                                  list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                                  tol, maxit, verbose)
-
+        
       } else {
-
+        
         vb <- locus_probit_info_core_(Y, X, Z, V, list_hyper, list_init$gam_vb,
                                       list_init$mu_alpha_vb, list_init$mu_beta_vb,
                                       list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                                       tol, maxit, verbose)
       }
-
+      
     } else {
-
+      
       if (nr) {
-
+        
         vb <- locus_mix_core_(Y, X, Z, ind_bin, list_hyper, list_init$gam_vb,
                               list_init$mu_alpha_vb, list_init$mu_beta_vb,
                               list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                               list_init$tau_vb, tol, maxit, verbose)
       } else {
-
+        
         vb <- locus_mix_info_core_(Y, X, Z, V, ind_bin, list_hyper, list_init$gam_vb,
                                    list_init$mu_alpha_vb, list_init$mu_beta_vb,
                                    list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
                                    list_init$tau_vb, tol, maxit, verbose)
       }
     }
-
+    
   } else {
-
+    
     list_pos_bl <- split(1:p, vec_fac_bl)
-
+    
     split_bl_hyper <- lapply(list_pos_bl, function(pos_bl) {
       list_hyper$p_hyper <- length(n_bl)
-      if (nr) {
+      if (!dual & nr) {
         list_hyper$a <- list_hyper$a[pos_bl]
         list_hyper$b <- list_hyper$b[pos_bl]
       } else {
@@ -656,7 +661,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
       }
       list_hyper
     })
-
+    
     split_bl_init <- lapply(list_pos_bl, function(pos_bl) {
       list_init$p_init <- length(pos_bl)
       list_init$gam_vb <- list_init$gam_vb[pos_bl,, drop = FALSE]
@@ -665,181 +670,222 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
         list_init$sig2_beta_vb <- list_init$sig2_beta_vb[pos_bl,, drop = FALSE]
       list_init
     })
-
+    
     locus_bl_ <- function(k) {
-
+      
       X_bl <- X[, list_pos_bl[[k]], drop = FALSE]
-
+      
       if (!nr) {
         V_bl <- scale(V[list_pos_bl[[k]],, drop = FALSE]) # we will assume that it is scaled in the algo
-
+        
         list_V_bl_cst <- rm_constant_(V_bl, verbose = FALSE)
         V_bl <- list_V_bl_cst$mat
         bool_cst_v_bl <- list_V_bl_cst$bool_cst
         rmvd_cst_v_bl <- list_V_bl_cst$rmvd_cst
-
+        
         list_V_bl_coll <- rm_collinear_(V_bl, verbose = FALSE)
         V_bl <- list_V_bl_coll$mat
         r <- ncol(V_bl)
         bool_coll_v_bl <- list_V_bl_coll$bool_coll
         rmvd_coll_v_bl <- list_V_bl_coll$rmvd_coll
-
+        
         bool_rmvd_v_bl <- bool_cst_v_bl
         bool_rmvd_v_bl[!bool_cst_v_bl] <- bool_coll_v_bl
-
+        
         if (sum(!bool_rmvd_v_bl) == 0)
           stop(paste("There exist one or more blocks for which no non-constant ",
                      "annotation variables remain. Try to use less blocks.", sep = ""))
       }
-
+      
+      
       list_hyper_bl <- split_bl_hyper[[k]]
       list_init_bl <- split_bl_init[[k]]
       if (!nr) list_init_bl$mu_c_vb <- list_init_bl$mu_c_vb[!bool_rmvd_v_bl,, drop = FALSE]
-
-      if (link == "identity") {
-
-        if (nq & nr) {
-
-          vb_bl <- locus_core_(Y, X_bl, list_hyper_bl,
-                               list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
-                               list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                               tol, maxit, anneal, verbose = FALSE)
-
-        } else if (nq) { # r non-null
-
-          vb_bl <- locus_info_core_(Y, X_bl, V_bl, list_hyper_bl,
-                                    list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
-                                    list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                                    tol, maxit, verbose = FALSE)
-
-        } else if (nr) { # q non-null
-
-          vb_bl <- locus_z_core_(Y, X_bl, Z, list_hyper_bl, list_init_bl$gam_vb,
-                                 list_init_bl$mu_alpha_vb,list_init_bl$mu_beta_vb,
-                                 list_init_bl$sig2_alpha_vb,
+      
+      if (dual) { # adjust the sparsity level w.r.t. the blocks size
+        
+        p_bl <- ncol(X_bl) # block size
+        
+        p_star_bl <- p_star
+        p_star_bl[1] <- p_star[1] * p_bl / p
+        adj_hyper <- get_n0_t02(d, p_bl, p_star_bl)
+        
+        list_hyper_bl$n0 <- adj_hyper$n0
+        list_hyper_bl$t02 <- adj_hyper$t02
+      }
+      
+      if (dual & eb & nq & nr & link == "identity") {
+        
+        vb_bl <- locus_dual_vbem_core_(Y, X_bl, list_hyper_bl, list_init_bl$gam_vb,
+                                       list_init_bl$mu_beta_vb, list_init_bl$sig2_beta_vb,
+                                       list_init_bl$tau_vb, bool_blocks = TRUE, 
+                                       tol, maxit, anneal, verbose = FALSE)
+        
+      } else if (!dual) {
+        
+        if (link == "identity") {
+          
+          if (nq & nr) {
+            
+            vb_bl <- locus_core_(Y, X_bl, list_hyper_bl,
+                                 list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
                                  list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                                 tol, maxit, verbose = FALSE)
-
-        } else { # both q and r non - null
-
-          vb_bl <- locus_z_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
-                                      list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
-                                      list_init_bl$mu_beta_vb, list_init_bl$sig2_alpha_vb,
+                                 tol, maxit, anneal, verbose = FALSE)
+            
+          } else if (nq) { # r non-null
+            
+            vb_bl <- locus_info_core_(Y, X_bl, V_bl, list_hyper_bl,
+                                      list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
                                       list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
                                       tol, maxit, verbose = FALSE)
-        }
-
-
-      } else if (link == "logit") {
-
-        if(nr) {
-
-          vb_bl <- locus_logit_core_(Y, X_bl, Z, list_hyper_bl,
-                                     list_init_bl$chi_vb, list_init_bl$gam_vb,
-                                     list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
-                                     list_init_bl$sig2_alpha_vb,
-                                     list_init_bl$sig2_beta_vb, tol, maxit,
-                                     verbose = FALSE)
-
-        } else {
-
-          vb_bl <- locus_logit_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
-                                          list_init_bl$chi_vb, list_init_bl$gam_vb,
-                                          list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
-                                          list_init_bl$sig2_alpha_vb,
-                                          list_init_bl$sig2_beta_vb, tol, maxit,
-                                          verbose = FALSE)
-        }
-
-
-      } else  if (link == "probit") {
-
-        if (nr) {
-          vb_bl <- locus_probit_core_(Y, X_bl, Z, list_hyper_bl,
-                                      list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
-                                      list_init_bl$mu_beta_vb,
-                                      list_init_bl$sig2_alpha_vb,
-                                      list_init_bl$sig2_beta_vb, tol, maxit,
-                                      verbose = FALSE)
-
-        } else {
-
-          vb_bl <- locus_probit_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
-                                           list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
-                                           list_init_bl$mu_beta_vb,
-                                           list_init_bl$sig2_alpha_vb,
-                                           list_init_bl$sig2_beta_vb, tol, maxit,
-                                           verbose = FALSE)
-        }
-
-
-      } else {
-
-        if (nr) {
-
-          vb_bl <- locus_mix_core_(Y, X_bl, Z, ind_bin, list_hyper_bl,
-                                   list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
-                                   list_init_bl$mu_beta_vb,
+            
+          } else if (nr) { # q non-null
+            
+            vb_bl <- locus_z_core_(Y, X_bl, Z, list_hyper_bl, list_init_bl$gam_vb,
+                                   list_init_bl$mu_alpha_vb,list_init_bl$mu_beta_vb,
                                    list_init_bl$sig2_alpha_vb,
                                    list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
                                    tol, maxit, verbose = FALSE)
-
-        } else {
-
-          vb_bl <- locus_mix_info_core_(Y, X_bl, Z, V_bl, ind_bin, list_hyper_bl,
+            
+          } else { # both q and r non - null
+            
+            vb_bl <- locus_z_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
                                         list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
                                         list_init_bl$mu_beta_vb, list_init_bl$sig2_alpha_vb,
                                         list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
                                         tol, maxit, verbose = FALSE)
-        }
-      }
-
-      if (verbose) {
-        if (vb_bl$converged) {
-          cat(paste("The algorithm reached convergence on one block after ",
-                    format(vb_bl$it), " iterations. \n", "Optimal marginal ",
-                    "log-likelihood variational lower bound (ELBO) = ",
-                    format(vb_bl$lb_opt), ". \n\n", sep = ""))
+          }
+          
+          
+        } else if (link == "logit") {
+          
+          if(nr) {
+            
+            vb_bl <- locus_logit_core_(Y, X_bl, Z, list_hyper_bl,
+                                       list_init_bl$chi_vb, list_init_bl$gam_vb,
+                                       list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
+                                       list_init_bl$sig2_alpha_vb,
+                                       list_init_bl$sig2_beta_vb, tol, maxit,
+                                       verbose = FALSE)
+            
+          } else {
+            
+            vb_bl <- locus_logit_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
+                                            list_init_bl$chi_vb, list_init_bl$gam_vb,
+                                            list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
+                                            list_init_bl$sig2_alpha_vb,
+                                            list_init_bl$sig2_beta_vb, tol, maxit,
+                                            verbose = FALSE)
+          }
+          
+          
+        } else  if (link == "probit") {
+          
+          if (nr) {
+            vb_bl <- locus_probit_core_(Y, X_bl, Z, list_hyper_bl,
+                                        list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                        list_init_bl$mu_beta_vb,
+                                        list_init_bl$sig2_alpha_vb,
+                                        list_init_bl$sig2_beta_vb, tol, maxit,
+                                        verbose = FALSE)
+            
+          } else {
+            
+            vb_bl <- locus_probit_info_core_(Y, X_bl, Z, V_bl, list_hyper_bl,
+                                             list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                             list_init_bl$mu_beta_vb,
+                                             list_init_bl$sig2_alpha_vb,
+                                             list_init_bl$sig2_beta_vb, tol, maxit,
+                                             verbose = FALSE)
+          }
+          
+          
         } else {
-          cat(paste("The algorithm reached the maximal number of iterations ",
-                    "on one block before converging.\n", "Difference in ELBO ",
-                    "between last and penultimate iterations: ",
-                    format(vb_bl$diff_lb), ".\n\n", sep = ""))
+          
+          if (nr) {
+            
+            vb_bl <- locus_mix_core_(Y, X_bl, Z, ind_bin, list_hyper_bl,
+                                     list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                     list_init_bl$mu_beta_vb,
+                                     list_init_bl$sig2_alpha_vb,
+                                     list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
+                                     tol, maxit, verbose = FALSE)
+            
+          } else {
+            
+            vb_bl <- locus_mix_info_core_(Y, X_bl, Z, V_bl, ind_bin, list_hyper_bl,
+                                          list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                          list_init_bl$mu_beta_vb, list_init_bl$sig2_alpha_vb,
+                                          list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
+                                          tol, maxit, verbose = FALSE)
+          }
         }
+        
+        if (verbose) {
+          if (vb_bl$converged) {
+            cat(paste("The algorithm reached convergence on one block after ",
+                      format(vb_bl$it), " iterations. \n", "Optimal marginal ",
+                      "log-likelihood variational lower bound (ELBO) = ",
+                      format(vb_bl$lb_opt), ". \n\n", sep = ""))
+          } else {
+            cat(paste("The algorithm reached the maximal number of iterations ",
+                      "on one block before converging.\n", "Difference in ELBO ",
+                      "between last and penultimate iterations: ",
+                      format(vb_bl$diff_lb), ".\n\n", sep = ""))
+          }
+        }
+        
+      } else {
+        stop("No corresponding block-wise scheme.")
       }
-
+      
       vb_bl
-
     }
-
+    
     list_vb <- parallel::mclapply(1:n_bl, function(k) locus_bl_(k), mc.cores = n_cpus)
+    
+    if (!dual) {
+      
+      names_vec <- c("converged", "it", "lb_opt")
+      if (nr)
+        names_vec <- c(names_vec, "om_vb")
+      else
+        names_vec <- c(names_vec, "mu_c0_vb")
+      
+      names_mat <- "gam_vb"
+      
+      vb <- c(lapply(names_vec, function(key) {
+        vec <- do.call(c, lapply(list_vb, `[[`, key))
+        names(vec) <- paste("bl_", 1:n_bl, sep = "")
+        vec}),
+        lapply(names_mat, function(key) do.call(rbind, lapply(list_vb, `[[`, key))))
+      
+      names(vb) <- c(names_vec, names_mat)
+      
+      if (!nr) {
+        list_mu_c_vb <- lapply(list_vb, `[[`, "mu_c_vb")
+        names(list_mu_c_vb) <- paste("bl_", 1:n_bl, sep = "")
+        vb <- c(vb, "list_mu_c_vb" = list(list_mu_c_vb))
+      }
+      
+    } else {
+      # get empirical-Bayes estimates:
+      
+      list_hyper$s02 <- do.call(c, lapply(list_vb, `[[`, "s02")) # now it is a vector with the s02 corresponding to each predictor
+      list_hyper$om_vb <- do.call(c, lapply(list_vb, `[[`, "om"))
+        
+      vb <- locus_dual_pleio_core_(Y, X, list_hyper, list_init$gam_vb, list_init$mu_beta_vb,
+                                   list_init$sig2_beta_vb, list_init$tau_vb, eb = TRUE, tol,
+                                   maxit, anneal, verbose)
+      
+      vb$s02 <- list_hyper$s02
 
-    names_vec <- c("converged", "it", "lb_opt")
-    if (nr)
-      names_vec <- c(names_vec, "om_vb")
-    else
-      names_vec <- c(names_vec, "mu_c0_vb")
-
-    names_mat <- "gam_vb"
-
-    vb <- c(lapply(names_vec, function(key) {
-      vec <- do.call(c, lapply(list_vb, `[[`, key))
-      names(vec) <- paste("bl_", 1:n_bl, sep = "")
-      vec}),
-      lapply(names_mat, function(key) do.call(rbind, lapply(list_vb, `[[`, key))))
-
-    names(vb) <- c(names_vec, names_mat)
-
-    if (!nr) {
-      list_mu_c_vb <- lapply(list_vb, `[[`, "mu_c_vb")
-      names(list_mu_c_vb) <- paste("bl_", 1:n_bl, sep = "")
-      vb <- c(vb, "list_mu_c_vb" = list(list_mu_c_vb))
     }
-
+ 
   }
-
+  
   vb$p_star <- p_star
-
+  
   vb$rmvd_cst_x <- dat$rmvd_cst_x
   vb$rmvd_coll_x <- dat$rmvd_coll_x
   if (!is.null(Z)) {
@@ -853,15 +899,15 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
   if (!is.null(list_groups)) {
     vb$group_labels <- vec_fac_gr # after removal of constant or collinear covariates
   }
-
+  
   if (save_hyper) vb$list_hyper <- list_hyper
   if (save_init) vb$list_init <- list_init
-
+  
   class(vb) <- "locus"
-
-
+  
+  
   if (verbose) cat("... done. == \n\n")
-
+  
   vb
-
+  
 }
