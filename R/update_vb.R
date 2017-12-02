@@ -181,6 +181,25 @@ update_mat_v_mu_ <- function(V, mu_0_s, mat_c, mu_0_t = NULL, resp_spec = FALSE)
 }
 
 
+update_mat_v_mu_block_ <- function(list_V, mu_0_s, mu_0_t, list_mat_c, vec_fac_bl) {
+  
+  d <- length(mu_0_t)
+  
+  bl_ids <- unique(vec_fac_bl)
+  n_bl <- length(bl_ids)
+  
+  list_bl <- lapply(1:n_bl, function(bl) {
+    
+    sweep(tcrossprod(as.vector(mu_0_s[vec_fac_bl == bl_ids[bl]] + list_V[[bl]] %*% list_mat_c[[bl]]), rep(1, d)), 2, mu_0_t, `+`)
+    
+  })
+  
+  as.matrix(plyr::rbind.fill.matrix(list_bl))
+  
+}
+
+
+
 ###################
 ## chi's updates ##
 ###################

@@ -573,7 +573,8 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
             vb <- locus_dual_info_vbem_core_(Y, X, V, list_hyper, list_init$gam_vb,
                                              list_init$mu_beta_vb,
                                              list_init$sig2_beta_vb, list_init$tau_vb,
-                                             list_struct, tol, maxit, anneal, verbose)
+                                             list_struct, bool_blocks = FALSE, 
+                                             tol, maxit, anneal, verbose)
           } else {
             vb <- locus_dual_info_core_(Y, X, V, list_hyper, list_init$gam_vb,
                                         list_init$mu_beta_vb,
@@ -712,14 +713,26 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
         
         list_hyper_bl$n0 <- adj_hyper$n0
         list_hyper_bl$t02 <- adj_hyper$t02
+        
+        m0 <- get_mu(p_star_bl[1], s02 + list_hyper_bl$t02, p_bl) + list_hyper_bl$n0[1] # here n0 is - n0*
+        list_hyper_bl$m0 <- rep(-m0, p_bl)
+        
       }
       
-      if (dual & eb & nq & nr & link == "identity") {
+      if (dual & eb & nq & link == "identity") {
         
-        vb_bl <- locus_dual_vbem_core_(Y, X_bl, list_hyper_bl, list_init_bl$gam_vb,
-                                       list_init_bl$mu_beta_vb, list_init_bl$sig2_beta_vb,
-                                       list_init_bl$tau_vb, bool_blocks = TRUE, 
-                                       tol, maxit, anneal, verbose = FALSE)
+        if (nr) {
+          vb_bl <- locus_dual_vbem_core_(Y, X_bl, list_hyper_bl, list_init_bl$gam_vb,
+                                         list_init_bl$mu_beta_vb, list_init_bl$sig2_beta_vb,
+                                         list_init_bl$tau_vb, bool_blocks = TRUE, 
+                                         tol, maxit, anneal, verbose = FALSE)
+        } else {
+          vb_bl <- locus_dual_info_vbem_core_(Y, X_bl, V_bl, list_hyper_bl, list_init_bl$gam_vb,
+                                              list_init_bl$mu_beta_vb, list_init_bl$sig2_beta_vb,
+                                              list_init_bl$tau_vb, list_struct, bool_blocks = TRUE, 
+                                              tol, maxit, anneal, verbose = FALSE)
+        }
+       
         
       } else if (!dual) {
         
@@ -839,6 +852,13 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
         stop("No corresponding block-wise scheme.")
       }
       
+      
+      if (!nr) {
+        vb_bl$rmvd_cst_v <- rmvd_cst_v_bl
+        vb_bl$rmvd_coll_v <- rmvd_coll_v_bl
+        vb_bl$V_bl <- V_bl
+      }
+      
       vb_bl
     }
     
@@ -868,7 +888,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
         vb <- c(vb, "list_mu_c_vb" = list(list_mu_c_vb))
       }
       
-    } else {
+    } else if (nr) {
       # get empirical-Bayes estimates:
       
       list_hyper$s02 <- do.call(c, lapply(list_vb, `[[`, "s02")) # now it is a vector with the s02 corresponding to each predictor
@@ -880,6 +900,21 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
       
       vb$s02 <- list_hyper$s02
 
+    } else {
+      
+      list_hyper$s2 <- do.call(c, lapply(list_vb, `[[`, "s2")) # now it is a vector with the s02 corresponding to each predictor
+      list_hyper$om_vb <- lapply(list_vb, `[[`, "om") # om_vb list of length n_bl (sizes of om can be different due to cst or coll columns in V_bl removed)
+      list_rmvd_cst_v <- lapply(list_vb, `[[`, "rmvd_cst_v_bl")
+      list_rmvd_coll_v <- lapply(list_vb, `[[`, "rmvd_coll_v_bl")
+      list_V <- lapply(list_vb, `[[`, "V_bl") # V_bl without cst and coll and standardized in each block
+
+      vb <- locus_dual_info_blocks_core_(Y, X, list_V, vec_fac_bl, list_hyper, list_init$gam_vb,
+                                         list_init$mu_beta_vb, list_init$sig2_beta_vb, list_init$tau_vb,
+                                         list_struct, tol, maxit, anneal, verbose)
+
+      vb$s02 <- list_hyper$s02
+      
+      
     }
  
   }
@@ -892,7 +927,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
     vb$rmvd_cst_z <- dat$rmvd_cst_z
     vb$rmvd_coll_z <- dat$rmvd_coll_z
   }
-  if (!is.null(V)) {
+  if (!is.null(V) & is.null(list_blocks)) {
     vb$rmvd_cst_v <- dat$rmvd_cst_v
     vb$rmvd_coll_v <- dat$rmvd_coll_v
   }

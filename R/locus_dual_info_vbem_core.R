@@ -1,5 +1,5 @@
 locus_dual_info_vbem_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
-                                       sig2_beta_vb, tau_vb, list_struct, tol, maxit,
+                                       sig2_beta_vb, tau_vb, list_struct, bool_blocks, tol, maxit,
                                        anneal, verbose) {
   
   r <- ncol(V)
@@ -10,7 +10,7 @@ locus_dual_info_vbem_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
   tol_em <- 1e-3 
   s2_min <- 1e-6
   lb_old <- -Inf
-  list_hyper$om_vb <- rep(1/2, r) # prior proportion of active annotations 
+  list_hyper$om_vb <- rep(1 / 2, r) # prior proportion of active annotations 
   
   vb <- create_named_list_(gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb)
   
@@ -44,27 +44,36 @@ locus_dual_info_vbem_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
     lb_old <- vb$lb_opt
   }
   
-  if (verbose) {
-    if (converged_em) {
-      cat(paste0("Convergence of the EM hyperparameter optimization run obtained after ", format(it_em), " EM iterations. \n\n"))
-    } else if (list_hyper$s2 <= s2_min) {
-      cat(paste0("EM hyperparameter optimization run stopped after s2 getting below ", s2_min, ". \n\n"))
-    } else {
-      warning("Maximal number of EM iterations reached before convergence. Exit EM run. \n\n")
-    }
+  if (bool_blocks) {
     
-    cat("======= Final VB run =======\n") 
-    cat(paste0("Empirical-Bayes hyperparameters, s2 : ", format(list_hyper$s2, digits = 4), ", omega :\n"))
-    print(summary(list_hyper$om_vb))
-    cat("\n\n")
+    out <- list("s2" = list_hyper$s2, "om" = list_hyper$om_vb)
+    
+  } else {
+    
+    if (verbose) {
+      if (converged_em) {
+        cat(paste0("Convergence of the EM hyperparameter optimization run obtained after ", format(it_em), " EM iterations. \n\n"))
+      } else if (list_hyper$s2 <= s2_min) {
+        cat(paste0("EM hyperparameter optimization run stopped after s2 getting below ", s2_min, ". \n\n"))
+      } else {
+        warning("Maximal number of EM iterations reached before convergence. Exit EM run. \n\n")
+      }
+      
+      cat("======= Final VB run =======\n") 
+      cat(paste0("Empirical-Bayes hyperparameters, s2 : ", format(list_hyper$s2, digits = 4), ", omega :\n"))
+      print(summary(list_hyper$om_vb))
+      cat("\n\n")
+    }
+  
+  
+    out <- locus_dual_info_core_(Y, X, V, list_hyper, vb$gam_vb, vb$mu_beta_vb,
+                                 vb$sig2_beta_vb, vb$tau_vb, list_struct, eb = TRUE, tol,
+                                 maxit, anneal, verbose)
+  
+    out$s2 <- list_hyper$s2
+    
   }
-
-
-  out <- locus_dual_info_core_(Y, X, V, list_hyper, vb$gam_vb, vb$mu_beta_vb,
-                               vb$sig2_beta_vb, vb$tau_vb, list_struct, eb = TRUE, tol,
-                               maxit, anneal, verbose)
-
-  out$s2 <- list_hyper$s2
+  
   out
   
 }
