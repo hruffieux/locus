@@ -34,27 +34,30 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
     
     # Covariate-specific parameters: objects derived from s02, list_struct (possible block-wise in parallel)
     #
-    stopifnot(is.null(list_struct))
-    vec_fac_st <- NULL
+    if (is.null(list_struct)) { # /! here list_struct is used to define block-specific s02, not to inject structure!
+      n_bl <- 1
+    } else {
+      vec_fac_bl <- list_struct$vec_fac_st
+      bl_ids <- list_struct$bl_ids <- unique(vec_fac_bl)
+      n_bl <- list_struct$n_bl <- length(bl_ids) 
+      bl_lgths <- list_struct$bl_lgths <- table(vec_fac_bl)
+    }
     
-    lambda_s0 <- nu_s0 <- 1e-5
+    lambda_s0 <- nu_s0 <- rep(1e-5, n_bl) 
     
     S0_inv_vb <- lambda_s0 / nu_s0 # initial values S0_inv_vb = Sigma0_inv = s0^-2 I_p but we store s0^-2
-    sig2_theta_vb <- update_sig2_c0_vb_(d, 1 / S0_inv_vb, c = c) # initial values
-    
     
     # Choose m0 so that, `a priori' (i.e. before optimization), E_p_gam is as specified by the user:
     #
     n0_star <- - n0[1]
-    m0_star <- n0_star * (sqrt(1 + (1/S0_inv_vb)^2 / (1 + t02)) - 1) # see hyperparameter_setting document. m0 not needed anymore in set_hyper.
+    m0_star <- n0_star * (sqrt(1 + (1/S0_inv_vb[1])^2 / (1 + t02)) - 1) # see hyperparameter_setting document. m0 not needed anymore in set_hyper.
     
     m0 <- - rep(m0_star, p)
     
     # Parameter initialization here for the top level only
     #
-    mu_theta_vb <- rnorm(p, mean = m0, sd = abs(m0) / 5) # m0 # doesn't seem to change anything here. ########################### see how to set m0!!!!!
+    mu_theta_vb <- rnorm(p, mean = m0, sd = abs(m0) / 5) # m0 # doesn't seem to change anything here. ########################### see how to set m0 
     mu_rho_vb <- rnorm(d, mean = n0, sd = abs(n0) / 5) # n0
-    
     
     
     # Response-specific parameters: objects derived from t02
@@ -165,26 +168,36 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
       #
       sig2_theta_vb <- update_sig2_c0_vb_(d, 1 / S0_inv_vb, c = c)
       
-      
-      mu_theta_vb <- update_mu_theta_vb_(W, m0, S0_inv_vb, sig2_theta_vb,
-                                         vec_fac_st, mu_rho_vb, is_mat = FALSE, c = c)
+      if (is.null(list_struct)) {
+        mu_theta_vb <- update_mu_theta_vb_(W, m0, S0_inv_vb, sig2_theta_vb,
+                              vec_fac_st = NULL, mu_rho_vb, is_mat = FALSE, c = c)
+      } else {
+        mu_theta_vb <- as.vector(sapply(1:n_bl, function(bl) {
+          update_mu_theta_vb_(W[vec_fac_bl == bl_ids[bl], , drop = FALSE], m0[vec_fac_bl == bl_ids[bl]], 
+                              S0_inv_vb[bl], sig2_theta_vb[bl],
+                              vec_fac_st = NULL, mu_rho_vb, is_mat = FALSE, c = c)
+        }))
+      }
       
       mu_rho_vb <- update_mu_rho_vb_(W, mu_theta_vb, n0, sig2_rho_vb, T0_inv,
                                      is_mat = FALSE, c = c) # update_mu_rho_vb_(W, mu_theta_vb, sig2_rho_vb)
       
-      lambda_s0_vb <- c * (lambda_s0 + p / 2) - c + 1 # implement annealing
-      nu_s0_vb <- c * (nu_s0 + sum(sig2_theta_vb + mu_theta_vb^2 - 2 * mu_theta_vb * m0 + m0^2) / 2)
+      if (is.null(list_struct)) {
+        lambda_s0_vb <- c * (lambda_s0 + p / 2) - c + 1 # implement annealing
+        nu_s0_vb <- c * (nu_s0 + sum(sig2_theta_vb + mu_theta_vb^2 - 2 * mu_theta_vb * m0 + m0^2) / 2)
+      
+      } else {
+        lambda_s0_vb <- c * (lambda_s0 + bl_lgths / 2) - c + 1 # implement annealing
+        nu_s0_vb <- sapply(1:n_bl, function(bl) {
+          c * (nu_s0[bl] + sum(sig2_theta_vb[bl] + 
+                             mu_theta_vb[vec_fac_bl == bl_ids[bl]]^2 - 
+                             2 * mu_theta_vb[vec_fac_bl == bl_ids[bl]] * m0[vec_fac_bl == bl_ids[bl]] +
+                             m0[vec_fac_bl == bl_ids[bl]]^2) / 2)
+        })
+      }
       
       S0_inv_vb <- lambda_s0_vb / nu_s0_vb
       
-      
-      
-      
-      # obj_theta_vb <- update_sig2_theta_vb_(d, p, list_struct, 1 / S0_inv_vb, X, c = c)
-      #
-      # sig2_theta_vb <- obj_theta_vb$sig2_theta_vb
-      # vec_sum_log_det_theta <- obj_theta_vb$vec_sum_log_det_theta
-      # vec_fac_st <- obj_theta_vb$vec_fac_st
       
       if (annealing) {
         
@@ -218,7 +231,7 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
                                    mu_theta_vb, nu, nu_vb, nu_s0, nu_s0_vb, sig2_beta_vb,
                                    S0_inv_vb, sig2_theta_vb, sig2_inv_vb, sig2_rho_vb,
                                    T0_inv, tau_vb, m1_beta, m2_beta, mat_x_m1,
-                                   vec_fac_st, vec_sum_log_det_rho)
+                                   vec_sum_log_det_rho, list_struct)
         
         if (verbose & (it == 1 | it %% 5 == 0)) {
           cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
@@ -254,7 +267,7 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
                          mu_theta_vb, nu, nu_vb, nu_s0, nu_s0_vb, sig2_beta_vb,
                          S0_inv_vb, sig2_theta_vb, sig2_inv_vb, sig2_rho_vb,
                          T0_inv, tau_vb, m1_beta, m2_beta,
-                         vec_fac_st, vec_sum_log_det_rho)
+                         vec_sum_log_det_rho)
       
     } else {
       
@@ -286,7 +299,7 @@ elbo_dual_prior_ <- function(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                              mu_theta_vb, nu, nu_vb, nu_s0, nu_s0_vb, sig2_beta_vb,
                              S0_inv_vb, sig2_theta_vb, sig2_inv_vb, sig2_rho_vb,
                              T0_inv, tau_vb, m1_beta, m2_beta, mat_x_m1,
-                             vec_fac_st, vec_sum_log_det_rho) {
+                             vec_sum_log_det_rho, list_struct) {
   
   n <- nrow(Y)
   d <- nrow(Y)
@@ -304,27 +317,39 @@ elbo_dual_prior_ <- function(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
   log_sig2_inv_vb <- update_log_sig2_inv_vb_(lambda_vb, nu_vb)
   
   log_S0_inv_vb <- update_log_sig2_inv_vb_(lambda_s0_vb, nu_s0_vb)
-  vec_sum_log_det_theta <- p * (log_S0_inv_vb + log(sig2_theta_vb)) # E(log(det(S0_inv))) + log(det(sig2_theta_vb_bl))
   
+  if (is.null(list_struct)) {
+    vec_sum_log_det_theta <- p * (log_S0_inv_vb + log(sig2_theta_vb)) # E(log(det(S0_inv))) + log(det(sig2_theta_vb_bl))
+  } else {
+    n_bl <- list_struct$n_bl
+    bl_ids <- list_struct$bl_ids
+    bl_lgths <- list_struct$bl_lgths
+    vec_fac_bl <- list_struct$vec_fac_st
+    vec_sum_log_det_theta <- sapply(1:n_bl, function(bl) bl_lgths[bl] * (log_S0_inv_vb[bl] + log(sig2_theta_vb[bl]))) # E(log(det(S0_inv))) + log(det(sig2_theta_vb_bl))
+  }
+
   elbo_A <- e_y_(n, kappa, kappa_vb, log_tau_vb, m2_beta, sig2_inv_vb, tau_vb)
   
-  elbo_B <- e_beta_gamma_dual_(gam_vb, log_sig2_inv_vb, log_tau_vb,
-                               mu_rho_vb, mu_theta_vb, m2_beta,
-                               sig2_beta_vb, sig2_rho_vb,
-                               sig2_theta_vb, sig2_inv_vb, tau_vb)
   
-  elbo_C <- e_theta_(m0, mu_theta_vb, S0_inv_vb, sig2_theta_vb, vec_fac_st,
-                     vec_sum_log_det_theta)
-  
-  # m0, mu_theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_st, vec_sum_log_det
-  # arg <- (vec_sum_log_det - # vec_sum_log_det[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
-  #           list_S0_inv * crossprod(mu_theta_vb - m0) -
-  #           p * list_S0_inv * list_sig2_theta_vb + p) / 2 # trace of a product
-  
-  # elbo_C <- p / 2 * (log_S0_inv_vb + log(sig2_theta_vb)) -
-  #   S0_inv_vb * sum(mu_theta_vb^2 + sig2_theta_vb - 2 * m0 * mu_theta_vb + m0^2) / 2 +
-  #   p / 2
-  
+  if (is.null(list_struct)) {
+    elbo_B <- e_beta_gamma_dual_(gam_vb, log_sig2_inv_vb, log_tau_vb,
+                                 mu_rho_vb, mu_theta_vb, m2_beta,
+                                 sig2_beta_vb, sig2_rho_vb,
+                                 sig2_theta_vb, sig2_inv_vb, tau_vb)
+    elbo_C <- e_theta_(m0, mu_theta_vb, S0_inv_vb, sig2_theta_vb, vec_fac_st = NULL,
+                       vec_sum_log_det_theta)
+  } else {
+    elbo_B <- sum(sapply(1:n_bl, function(bl) {
+      e_beta_gamma_dual_(gam_vb[vec_fac_bl == bl_ids[bl], , drop = FALSE], log_sig2_inv_vb, log_tau_vb,
+                         mu_rho_vb, mu_theta_vb[vec_fac_bl == bl_ids[bl]], 
+                         m2_beta[vec_fac_bl == bl_ids[bl], , drop = FALSE],
+                         sig2_beta_vb, sig2_rho_vb,
+                         sig2_theta_vb[bl], sig2_inv_vb, tau_vb)}))
+    
+    elbo_C <- sum(sapply(1:n_bl, function(bl) {
+      e_theta_(m0[vec_fac_bl == bl_ids[bl]], mu_theta_vb[vec_fac_bl == bl_ids[bl]], 
+               S0_inv_vb[bl], sig2_theta_vb[bl], vec_fac_st = NULL, vec_sum_log_det_theta[bl])}))
+  }
   
   elbo_D <- e_rho_(mu_rho_vb, n0, sig2_rho_vb, T0_inv, vec_sum_log_det_rho)
   
@@ -332,7 +357,7 @@ elbo_dual_prior_ <- function(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
   
   elbo_F <- e_sig2_inv_(lambda, lambda_vb, log_sig2_inv_vb, nu, nu_vb, sig2_inv_vb)
   
-  elbo_G <-  e_sig2_inv_(lambda_s0, lambda_s0_vb, log_S0_inv_vb, nu_s0, nu_s0_vb, S0_inv_vb)
+  elbo_G <-  sum(e_sig2_inv_(lambda_s0, lambda_s0_vb, log_S0_inv_vb, nu_s0, nu_s0_vb, S0_inv_vb)) # sum in case list_struct not NULL
   
   
   elbo_A + elbo_B + elbo_C + elbo_D + elbo_E + elbo_F + elbo_G
