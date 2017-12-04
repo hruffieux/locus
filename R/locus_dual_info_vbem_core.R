@@ -23,7 +23,7 @@ locus_dual_info_vbem_core_ <- function(Y, X, V, list_hyper, gam_vb, mu_beta_vb,
       cat("---------- VB updates ----------\n")
     
     vb <- locus_dual_info_core_(Y, X, V, list_hyper, vb$gam_vb, vb$mu_beta_vb,
-                                vb$sig2_beta_vb, vb$tau_vb, list_struct, eb = TRUE, tol,
+                                vb$sig2_beta_vb, vb$tau_vb, list_struct, eb = TRUE, tol_em,
                                 maxit, anneal, verbose = FALSE, full_output = TRUE)
     
     if (verbose)

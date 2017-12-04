@@ -213,8 +213,8 @@ e_beta_gamma_dual_info_ <- function(V, gam_vb, log_sig2_inv_vb, log_tau_vb,
     
     n_bl <- length(V)
 
-    vec_arg <- unlist(sapply(1:n_bl, function(bl) {
-      V[[bl]]^2 %*% (zeta_vb[[bl]] * (sig2_c_vb[bl] + mu_c_vb[[bl]]^2) - (mu_c_vb[[bl]] * zeta_vb[[bl]])^2) / 2}))
+    vec_arg <- as.vector(unlist(sapply(1:n_bl, function(bl) {
+      V[[bl]]^2 %*% (zeta_vb[[bl]] * (sig2_c_vb[bl] + mu_c_vb[[bl]]^2) - (mu_c_vb[[bl]] * zeta_vb[[bl]])^2) / 2})))
     arg <- sweep(arg, 1, vec_arg, `-`)
     
   } else {
