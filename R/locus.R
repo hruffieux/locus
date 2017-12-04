@@ -289,7 +289,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
                   list_cv = NULL, list_blocks = NULL, list_groups = NULL,
                   list_struct = NULL, dual = FALSE, eb = FALSE, user_seed = NULL,
                   tol = 1e-3, maxit = 1000, anneal = NULL, save_hyper = FALSE,
-                  save_init = FALSE, verbose = TRUE, ss = TRUE) {
+                  save_init = FALSE, verbose = TRUE, hyper = FALSE) {
   
   if (verbose) cat("== Preparing the data ... \n")
   
@@ -551,13 +551,20 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
                                         list_init$tau_vb, bool_blocks = FALSE, 
                                         tol, maxit, anneal, verbose)
           } else {
-            if (ss) {
+            
+            if (hyper) {
               
-              stopifnot(is.null(list_struct)) # TODO: implement sanity checks in prepare_locus
-              
-              vb <- locus_dual_pleio_core_(Y, X, list_hyper, list_init$gam_vb,
-                                           list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                           list_init$tau_vb, eb, tol, maxit, anneal, verbose)
+              vb <- locus_dual_prior_core_(Y, X, list_hyper, list_init$gam_vb,
+                                     list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                     list_init$tau_vb, list_struct, tol, maxit,
+                                     anneal, verbose)
+            # if (ss) {
+            #   
+              # stopifnot(is.null(list_struct)) # TODO: implement sanity checks in prepare_locus
+              # 
+              # vb <- locus_dual_pleio_core_(Y, X, list_hyper, list_init$gam_vb,
+              #                              list_init$mu_beta_vb, list_init$sig2_beta_vb,
+              #                              list_init$tau_vb, eb, tol, maxit, anneal, verbose)
             } else {
               vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
                                      list_init$mu_beta_vb, list_init$sig2_beta_vb,
