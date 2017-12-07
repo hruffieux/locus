@@ -5,7 +5,7 @@
 \title{Gather settings for application of the `locus` function with structured
 sparse prior.}
 \usage{
-set_struct(n, p, pos_st, n_cpus, verbose = TRUE)
+set_struct(n, p, pos_st, n_cpus, verbose = TRUE, hyper = FALSE)
 }
 \arguments{
 \item{n}{Number of samples.}
@@ -15,12 +15,18 @@ set_struct(n, p, pos_st, n_cpus, verbose = TRUE)
 \item{pos_st}{Vector gathering the predictor block positions (first index of
 each block). The predictors must be ordered by blocks.}
 
-\item{n_cpus}{Number of CPUs to be used. If large, one should ensure that
-enough RAM will be available for parallel execution. Set to 1 for serial
+\item{n_cpus}{Number of CPUs to be used. Only used if \code{hyper} is 
+\code{FALSE}, otherwise set it to 1. If large, one should ensure that 
+enough RAM will be available for parallel execution. Set to 1 for serial 
 execution.}
 
 \item{verbose}{If \code{TRUE}, messages are displayed when calling
 \code{set_struct}.}
+
+\item{hyper}{If \code{TRUE}, \code{set_struct} will be used to define blocks
+for blockwise hotspot variance estimation (hyperparameter setting on this
+variance); only valid when arguments \code{dual} and \code{hyper} set to 
+\code{TRUE} in the  \code{\link{locus}} function.}
 }
 \value{
 An object of class "\code{struct}" preparing the settings for group

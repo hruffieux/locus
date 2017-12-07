@@ -5,12 +5,15 @@
 # Internal function implementing sanity checks and needed preprocessing before
 # the application of the different `locus_*_core` algorithms.
 #
-prepare_data_ <- function(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verbose) {
+prepare_data_ <- function(Y, X, Z, V, link, ind_bin, s02, user_seed, tol, maxit, verbose) {
 
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
+  check_structure_(s02, "vector", "numeric", 1)
+  check_positive_(s02)
+  
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
-
+  
   check_structure_(tol, "vector", "numeric", 1)
   check_positive_(tol, eps=.Machine$double.eps)
 
@@ -1051,7 +1054,7 @@ set_groups <- function(n, p, pos_gr, verbose = TRUE) {
 # Internal function implementing sanity checks and needed preprocessing to the
 # settings provided by the user for structured sparsity priors.
 #
-prepare_struct_ <- function(list_struct, n, q, r, bool_rmvd_x, link, list_cv, list_groups) {
+prepare_struct_ <- function(list_struct, n, q, r, bool_rmvd_x, link, list_cv, list_groups, hyper) {
 
   if (!inherits(list_struct, "struct"))
     stop(paste("The provided list_struct must be an object of class ``struct''. \n",
@@ -1079,6 +1082,8 @@ prepare_struct_ <- function(list_struct, n, q, r, bool_rmvd_x, link, list_cv, li
   if(link != "identity" | !is.null(q) | !is.null(r) | !is.null(list_groups))
     stop("Structured sparse priors enabled only for identity link, Z = NULL, V = NULL and with no group selection. Exit.")
 
+  if (xor(hyper, list_struct$hyper))
+    stop("Argument hyper and must be TRUE if passed as TRUE in set_struct, or they should be both FALSE.")
 
   vec_fac_st <- list_struct$vec_fac_st[!bool_rmvd_x] # some blocks may disappear here, but this is not a problem
 
@@ -1110,11 +1115,16 @@ prepare_struct_ <- function(list_struct, n, q, r, bool_rmvd_x, link, list_cv, li
 #' @param p Number of candidate predictors.
 #' @param pos_st Vector gathering the predictor block positions (first index of
 #'   each block). The predictors must be ordered by blocks.
-#' @param n_cpus Number of CPUs to be used. If large, one should ensure that
-#'   enough RAM will be available for parallel execution. Set to 1 for serial
+#' @param n_cpus Number of CPUs to be used. Only used if \code{hyper} is 
+#'   \code{FALSE}, otherwise set it to 1. If large, one should ensure that 
+#'   enough RAM will be available for parallel execution. Set to 1 for serial 
 #'   execution.
 #' @param verbose If \code{TRUE}, messages are displayed when calling
 #'   \code{set_struct}.
+#' @param hyper If \code{TRUE}, \code{set_struct} will be used to define blocks
+#'   for blockwise hotspot variance estimation (hyperparameter setting on this
+#'   variance); only valid when arguments \code{dual} and \code{hyper} set to 
+#'   \code{TRUE} in the  \code{\link{locus}} function.
 #'
 #' @return An object of class "\code{struct}" preparing the settings for group
 #'   selection in a form that can be passed to the \code{\link{locus}}
@@ -1171,7 +1181,7 @@ prepare_struct_ <- function(list_struct, n, q, r, bool_rmvd_x, link, list_cv, li
 #'
 #' @export
 #'
-set_struct <- function(n, p, pos_st, n_cpus, verbose = TRUE) {
+set_struct <- function(n, p, pos_st, n_cpus, verbose = TRUE, hyper = FALSE) {
 
   check_structure_(n, "vector", "numeric", 1)
   check_natural_(n)
@@ -1181,15 +1191,15 @@ set_struct <- function(n, p, pos_st, n_cpus, verbose = TRUE) {
 
   check_structure_(verbose, "vector", "logical", 1)
 
-  check_structure_(n_cpus, "vector", "numeric", 1)
-  check_natural_(n_cpus)
+  if (hyper & n_cpus !=1) {
+   stop("No parallel implementation when hyper is TRUE. Please set n_cpus to 1.") 
+  } else {
+    check_structure_(n_cpus, "vector", "numeric", 1)
+    check_natural_(n_cpus)
+  }
 
   check_structure_(pos_st, "vector", "numeric")
   check_natural_(pos_st)
-
-  if (p / length(pos_st) > 500)
-    warning(paste("The provided number of blocks may be too small for tractable ",
-                  "inference. If possible, use more blocks.", sep = ""))
 
   if (any(pos_st < 1) | any(pos_st > p))
     stop("The positions provided in pos_st must range between 1 and total number of variables in X, p.")
@@ -1205,20 +1215,26 @@ set_struct <- function(n, p, pos_st, n_cpus, verbose = TRUE) {
   n_gr <- length(unique(vec_fac_st))
 
   if (length(unique(vec_fac_st)) == p)
-    stop(paste("All the blocks are of size one, no structured selection will be performed. ",
+    stop(paste("All the blocks are of size one, no structured selection or blockwise estimation will be performed. ",
                "Set argument list_struct to NULL in the locus function.", sep = ""))
 
-  # Should not be needed as regularization performed anyway.
-  # if (max(table(vec_fac_st)) >= n)
-  #   stop(paste("One or more block size(s) is greater or equal to n.  ",
-  #                 "Corresponding empirical covariances not positive definite. Use smaller block sizes.", sep = ""))
-
-  if (max(table(vec_fac_st)) >= n/2)
-    warning(paste("One or more block size(s) is greater or equal to n/2.  ",
-               "Corresponding empirical covariances may not be positive definite. ",
-               "Regularization will be used but this may affect the quality of inference.", sep = ""))
-
-
+  if (!hyper) {
+    
+    # Should not be needed as regularization performed anyway.
+    # if (max(table(vec_fac_st)) >= n)
+    #   stop(paste("One or more block size(s) is greater or equal to n.  ",
+    #                 "Corresponding empirical covariances not positive definite. Use smaller block sizes.", sep = ""))
+    
+    if (max(table(vec_fac_st)) >= n/2)
+      warning(paste("One or more block size(s) is greater or equal to n/2.  ",
+                    "Corresponding empirical covariances may not be positive definite. ",
+                    "Regularization will be used but this may affect the quality of inference.", sep = ""))
+    
+    if (p / length(pos_st) > 500)
+      warning(paste("The provided number of blocks may be too small for tractable ",
+                    "inference. If possible, use more blocks.", sep = ""))
+  }
+  
   if (n_cpus > 1) {
 
     n_cpus_avail <- parallel::detectCores()
@@ -1245,7 +1261,7 @@ set_struct <- function(n, p, pos_st, n_cpus, verbose = TRUE) {
   n_struct <- n
   p_struct <- p
 
-  list_struct <- create_named_list_(n_struct, p_struct, n_cpus, vec_fac_st)
+  list_struct <- create_named_list_(n_struct, p_struct, n_cpus, vec_fac_st, hyper)
 
   class(list_struct) <- "struct"
 

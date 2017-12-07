@@ -4,12 +4,12 @@
 \alias{locus}
 \title{Fit sparse multivariate regression models using variational inference.}
 \usage{
-locus(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
+locus(Y, X, p0_av, Z = NULL, V = NULL, s02 = 0.01, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL, list_cv = NULL,
   list_blocks = NULL, list_groups = NULL, list_struct = NULL,
-  dual = FALSE, user_seed = NULL, tol = 0.001, maxit = 1000,
-  anneal = NULL, save_hyper = FALSE, save_init = FALSE, verbose = TRUE,
-  s02 = 0.01)
+  dual = FALSE, eb = FALSE, user_seed = NULL, tol = 0.001,
+  maxit = 1000, anneal = NULL, save_hyper = FALSE, save_init = FALSE,
+  verbose = TRUE, hyper = FALSE)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of
@@ -38,6 +38,11 @@ dummy coding. No intercept must be supplied.}
 variables representing external information on the candidate predictors
 which may make their selection more or less likely. \code{NULL} if no such
 information.}
+
+\item{s02}{Variance hyperparameter informing the proportion of active 
+responses per active predictor (degree of pleiotropy in a genetic context). 
+Used only if \code{dual} is \code{TRUE} or \code{V} or \code{list_struct} 
+is non-\code{NULL}.}
 
 \item{link}{Response link. Must be "\code{identity}" for linear regression,
 "\code{logit}" for logistic regression, "\code{probit}" for probit
@@ -84,6 +89,10 @@ selection.}
 and by responses). Functionality under development and with limited
 associated functionalities. Default is \code{FALSE}.}
 
+\item{eb}{If \code{TRUE}, variance and probability hyperparameters selected
+via an empirical Bayes procedure. Only used if \code{dual} is \code{TRUE}.
+Default is \code{FALSE}.}
+
 \item{user_seed}{Seed set for reproducible default choices of hyperparameters
 (if \code{list_hyper} is \code{NULL}) and initial variational parameters
 (if \code{list_init} is \code{NULL}). Also used at the cross-validation
@@ -107,11 +116,6 @@ saved as output.}
 the inference are saved as output.}
 
 \item{verbose}{If \code{TRUE}, messages are displayed during execution.}
-
-\item{s02}{Variance hyperparameter informing the proportion of active 
-responses per active predictor (degree of pleiotropy in a genetic context). 
-Used only if \code{dual} is \code{TRUE} or \code{V} or \code{list_struct} 
-is non-\code{NULL}.}
 }
 \value{
 An object of class "\code{vb}" containing the following variational

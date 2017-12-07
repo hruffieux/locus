@@ -107,6 +107,9 @@
 #' @param save_init If \code{TRUE}, the initial variational parameters used for
 #'   the inference are saved as output.
 #' @param verbose If \code{TRUE}, messages are displayed during execution.
+#' @param hyper If \code{TRUE}, hyperprior specification on the predictor 
+#'   propensity variance. Only if \code{dual} is \code{TRUE}; must be 
+#'   \code{FALSE} otherwise. Default is \code{FALSE}.
 #'
 #' @return An object of class "\code{vb}" containing the following variational
 #'   estimates and settings:
@@ -295,7 +298,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
   
   check_annealing_(anneal, link, Z, V, list_groups, list_struct, dual)
   
-  dat <- prepare_data_(Y, X, Z, V, link, ind_bin, user_seed, tol, maxit, verbose)
+  dat <- prepare_data_(Y, X, Z, V, link, ind_bin, s02, user_seed, tol, maxit, verbose)
   
   bool_rmvd_x <- dat$bool_rmvd_x
   bool_rmvd_z <- dat$bool_rmvd_z
@@ -348,6 +351,9 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
     
   } else {
     
+    if (hyper & !dual)
+      stop("Argument hyper must be FALSE if dual is FALSE.")
+    
     if (!is.null(list_blocks)) {
       
       list_blocks <- prepare_blocks_(list_blocks, eb, bool_rmvd_x, dual, list_cv, list_groups, list_struct)
@@ -375,7 +381,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
     
     if (!is.null(list_struct)) {
       
-      list_struct <- prepare_struct_(list_struct, n, q, r, bool_rmvd_x, link, list_cv, list_groups)
+      list_struct <- prepare_struct_(list_struct, n, q, r, bool_rmvd_x, link, list_cv, list_groups, hyper)
       
       vec_fac_st <- list_struct$vec_fac_st
       

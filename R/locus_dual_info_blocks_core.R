@@ -322,6 +322,7 @@ elbo_dual_info_blocks_ <- function(Y, list_V, eta, eta_vb, gam_vb, kappa, kappa_
                                    vec_sum_log_det_theta) {
   
   n <- nrow(Y)
+  n_bl <- length(list_V)
   
   # needed for monotonically increasing elbo.
   #

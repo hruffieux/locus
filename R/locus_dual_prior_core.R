@@ -172,7 +172,7 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
         mu_theta_vb <- update_mu_theta_vb_(W, m0, S0_inv_vb, sig2_theta_vb,
                               vec_fac_st = NULL, mu_rho_vb, is_mat = FALSE, c = c)
       } else {
-        mu_theta_vb <- as.vector(sapply(1:n_bl, function(bl) {
+        mu_theta_vb <- unlist(lapply(1:n_bl, function(bl) {
           update_mu_theta_vb_(W[vec_fac_bl == bl_ids[bl], , drop = FALSE], m0[vec_fac_bl == bl_ids[bl]], 
                               S0_inv_vb[bl], sig2_theta_vb[bl],
                               vec_fac_st = NULL, mu_rho_vb, is_mat = FALSE, c = c)
@@ -196,8 +196,19 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
         })
       }
       
-      S0_inv_vb <- lambda_s0_vb / nu_s0_vb
+      S0_inv_vb <- as.numeric(lambda_s0_vb / nu_s0_vb)
       
+      if (verbose & (it == 1 | it %% 5 == 0)) {
+        
+        if (is.null(list_struct)) {
+          cat(paste0("Updated s02: ", format(1 / S0_inv_vb, digits = 4), ".\n"))
+        } else {
+          cat("Updated block-specific s02: \n")
+          print(summary(1 / S0_inv_vb))
+          cat("\n")
+        }
+        
+      }
       
       if (annealing) {
         
@@ -219,11 +230,6 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
         }
         
         
-        if (verbose & (it == 1 | it %% 5 == 0)) {
-          print("s02: ")
-          print(1 / S0_inv_vb)
-        }
-        
       } else {
         
         lb_new <- elbo_dual_prior_(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
@@ -233,11 +239,9 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
                                    T0_inv, tau_vb, m1_beta, m2_beta, mat_x_m1,
                                    vec_sum_log_det_rho, list_struct)
         
-        if (verbose & (it == 1 | it %% 5 == 0)) {
+        if (verbose & (it == 1 | it %% 5 == 0)) 
           cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
-          print("s02: ")
-          print(1 / S0_inv_vb)
-        }
+        
         
         if (debug && lb_new + eps < lb_old)
           stop("ELBO not increasing monotonically. Exit. ")
