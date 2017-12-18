@@ -319,6 +319,15 @@ e_sig2_inv_ <- function(lambda, lambda_vb, log_sig2_inv_vb, nu, nu_vb, sig2_inv_
 }
 
 
+e_sig2_inv_hs_ <- function(a_inv_vb, lambda_s0_vb, log_a_inv_vb, log_S0_inv_vb, nu_s0_vb, S0_inv_vb) {
+  
+  - 1/2 * log_S0_inv_vb - a_inv_vb * S0_inv_vb + log_a_inv_vb / 2 - lgamma(1 / 2) -
+    (lambda_s0_vb - 1) * log_S0_inv_vb + nu_s0_vb * S0_inv_vb - 
+    lambda_s0_vb * log(nu_s0_vb) + lgamma(lambda_s0_vb)
+  
+}
+
+
 ########################################
 ## E log p(tau | rest) - E log q(tau) ##
 ########################################
@@ -369,6 +378,14 @@ e_theta_ <- function(m0, mu_theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_s
 
 }
 
+
+e_theta_hs_ <- function(b_vb, G_vb, log_S0_inv_vb, m0, mu_theta_vb, S0_inv_vb, sig2_theta_vb) {
+  
+  sum(log_S0_inv_vb / 2 - S0_inv_vb * b_vb *
+        (mu_theta_vb^2 + sig2_theta_vb - 2 * m0 * mu_theta_vb + m0^2) / 2 +
+        (log(sig2_theta_vb) + 1) / 2 - log(pi) + G_vb * b_vb +
+        sapply(G_vb, function(G_vb_s) log(Q_approx(G_vb_s))))
+}
 
 #######################
 ## E log p(y | rest) ##

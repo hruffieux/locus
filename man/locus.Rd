@@ -7,9 +7,9 @@
 locus(Y, X, p0_av, Z = NULL, V = NULL, s02 = 0.01, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL, list_cv = NULL,
   list_blocks = NULL, list_groups = NULL, list_struct = NULL,
-  dual = FALSE, eb = FALSE, user_seed = NULL, tol = 0.001,
-  maxit = 1000, anneal = NULL, save_hyper = FALSE, save_init = FALSE,
-  verbose = TRUE, hyper = FALSE)
+  dual = FALSE, hyper = FALSE, hs = FALSE, eb = FALSE,
+  user_seed = NULL, tol = 0.001, maxit = 1000, anneal = NULL,
+  save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of
@@ -88,6 +88,15 @@ selection.}
 \item{dual}{If \code{TRUE}, dual propensity control (by candidate predictors
 and by responses). Functionality under development and with limited
 associated functionalities. Default is \code{FALSE}.}
+
+\item{hyper}{If \code{TRUE}, hyperprior specification on the predictor 
+propensity variance. Only if \code{dual} is \code{TRUE}; must be 
+\code{FALSE} otherwise. Default is \code{FALSE}.}
+
+\item{hs}{If \code{TRUE}, hyperprior giving rise to a Horseshoe distribution
+for the predictor propensities; else, Cauchy distribution. Only if 
+\code{hyper} is \code{TRUE}; must be \code{FALSE} otherwise. Default is 
+\code{FALSE}.}
 
 \item{eb}{If \code{TRUE}, variance and probability hyperparameters selected
 via an empirical Bayes procedure. Only used if \code{dual} is \code{TRUE}.

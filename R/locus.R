@@ -87,6 +87,13 @@
 #' @param dual If \code{TRUE}, dual propensity control (by candidate predictors
 #'   and by responses). Functionality under development and with limited
 #'   associated functionalities. Default is \code{FALSE}.
+#' @param hyper If \code{TRUE}, hyperprior specification on the predictor 
+#'   propensity variance. Only if \code{dual} is \code{TRUE}; must be 
+#'   \code{FALSE} otherwise. Default is \code{FALSE}.
+#' @param hs If \code{TRUE}, hyperprior giving rise to a Horseshoe distribution
+#'   for the predictor propensities; else, Cauchy distribution. Only if 
+#'   \code{hyper} is \code{TRUE}; must be \code{FALSE} otherwise. Default is 
+#'   \code{FALSE}.
 #' @param eb If \code{TRUE}, variance and probability hyperparameters selected
 #'   via an empirical Bayes procedure. Only used if \code{dual} is \code{TRUE}.
 #'   Default is \code{FALSE}.
@@ -107,9 +114,6 @@
 #' @param save_init If \code{TRUE}, the initial variational parameters used for
 #'   the inference are saved as output.
 #' @param verbose If \code{TRUE}, messages are displayed during execution.
-#' @param hyper If \code{TRUE}, hyperprior specification on the predictor 
-#'   propensity variance. Only if \code{dual} is \code{TRUE}; must be 
-#'   \code{FALSE} otherwise. Default is \code{FALSE}.
 #'
 #' @return An object of class "\code{vb}" containing the following variational
 #'   estimates and settings:
@@ -290,9 +294,10 @@
 locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity",
                   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, list_groups = NULL,
-                  list_struct = NULL, dual = FALSE, eb = FALSE, user_seed = NULL,
-                  tol = 1e-3, maxit = 1000, anneal = NULL, save_hyper = FALSE,
-                  save_init = FALSE, verbose = TRUE, hyper = FALSE) {
+                  list_struct = NULL, dual = FALSE, hyper = FALSE, hs = FALSE, 
+                  eb = FALSE, user_seed = NULL, tol = 1e-3, maxit = 1000, 
+                  anneal = NULL, save_hyper = FALSE, save_init = FALSE, 
+                  verbose = TRUE) {
   
   if (verbose) cat("== Preparing the data ... \n")
   
@@ -353,6 +358,9 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
     
     if (hyper & !dual)
       stop("Argument hyper must be FALSE if dual is FALSE.")
+    
+    if (hs & !hyper)
+      stop("Argument hs must be FALSE if hyper is FALSE.")
     
     if (!is.null(list_blocks)) {
       
@@ -546,8 +554,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
           # list_struct can be non-null for injected predictor correlation structure,
           # see core function below
           
-          # ss <- TRUE  ## TODO: make it a user parameter?
-          
           if (eb) {
             
             stopifnot(is.null(list_struct)) # TODO: implement sanity checks in prepare_locus
@@ -560,17 +566,18 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
             
             if (hyper) {
               
-              vb <- locus_dual_prior_core_(Y, X, list_hyper, list_init$gam_vb,
-                                     list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                     list_init$tau_vb, list_struct, tol, maxit,
-                                     anneal, verbose)
-            # if (ss) {
-            #   
-              # stopifnot(is.null(list_struct)) # TODO: implement sanity checks in prepare_locus
-              # 
-              # vb <- locus_dual_pleio_core_(Y, X, list_hyper, list_init$gam_vb,
-              #                              list_init$mu_beta_vb, list_init$sig2_beta_vb,
-              #                              list_init$tau_vb, eb, tol, maxit, anneal, verbose)
+              if (hs) {
+                vb <- locus_dual_horseshoe_core_(Y, X, list_hyper, list_init$gam_vb,
+                                                 list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                                 list_init$tau_vb, list_struct, tol, maxit,
+                                                 anneal, verbose)
+              } else {
+                vb <- locus_dual_prior_core_(Y, X, list_hyper, list_init$gam_vb,
+                                       list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                       list_init$tau_vb, list_struct, tol, maxit,
+                                       anneal, verbose)
+              }
+             
             } else {
               vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
                                      list_init$mu_beta_vb, list_init$sig2_beta_vb,
@@ -745,7 +752,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
                                               list_init_bl$tau_vb, list_struct, bool_blocks = TRUE, 
                                               tol, maxit, anneal, verbose = FALSE)
         }
-       
+        
         
       } else if (!dual) {
         
@@ -906,13 +913,13 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
       
       list_hyper$s02 <- do.call(c, lapply(list_vb, `[[`, "s02")) # now it is a vector with the s02 corresponding to each predictor
       list_hyper$om_vb <- do.call(c, lapply(list_vb, `[[`, "om"))
-        
+      
       vb <- locus_dual_pleio_core_(Y, X, list_hyper, list_init$gam_vb, list_init$mu_beta_vb,
                                    list_init$sig2_beta_vb, list_init$tau_vb, eb = TRUE, tol,
                                    maxit, anneal, verbose)
       
       vb$s02 <- list_hyper$s02
-
+      
     } else {
       
       list_hyper$s2 <- do.call(c, lapply(list_vb, `[[`, "s2")) # now it is a vector with the s02 corresponding to each predictor
@@ -920,16 +927,16 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
       list_rmvd_cst_v <- lapply(list_vb, `[[`, "rmvd_cst_v_bl")
       list_rmvd_coll_v <- lapply(list_vb, `[[`, "rmvd_coll_v_bl")
       list_V <- lapply(list_vb, `[[`, "V_bl") # V_bl without cst and coll and standardized in each block
-
+      
       vb <- locus_dual_info_blocks_core_(Y, X, list_V, vec_fac_bl, list_hyper, list_init$gam_vb,
                                          list_init$mu_beta_vb, list_init$sig2_beta_vb, list_init$tau_vb,
                                          list_struct, tol, maxit, anneal, verbose)
-
+      
       vb$s02 <- list_hyper$s02
       
       
     }
- 
+    
   }
   
   vb$p_star <- p_star
