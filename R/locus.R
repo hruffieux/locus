@@ -94,9 +94,10 @@
 #'   for the predictor propensities; else, Cauchy distribution. Only if 
 #'   \code{hyper} is \code{TRUE}; must be \code{FALSE} otherwise. Default is 
 #'   \code{FALSE}.
-#' @param eb If \code{TRUE}, variance and probability hyperparameters selected
-#'   via an empirical Bayes procedure. Only used if \code{dual} is \code{TRUE}.
-#'   Default is \code{FALSE}.
+#' @param eb If \code{TRUE}, annotation spike-and-slab variance and probability 
+#'   hyperparameters selected via an empirical Bayes procedure. Only used if 
+#'   \code{dual} is \code{TRUE} and \code{V} is non-\code{NULL}. Default is 
+#'   \code{FALSE}.
 #' @param user_seed Seed set for reproducible default choices of hyperparameters
 #'   (if \code{list_hyper} is \code{NULL}) and initial variational parameters
 #'   (if \code{list_init} is \code{NULL}). Also used at the cross-validation
@@ -362,6 +363,9 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
     if (hs & !hyper)
       stop("Argument hs must be FALSE if hyper is FALSE.")
     
+    if (eb & (!dual | is.null(V)))
+      stop("Argument eb must be FALSE if dual is FALSE or if V is NULL.")
+    
     if (!is.null(list_blocks)) {
       
       list_blocks <- prepare_blocks_(list_blocks, eb, bool_rmvd_x, dual, list_cv, list_groups, list_struct)
@@ -553,38 +557,27 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
         if (nq & nr & ng) {
           # list_struct can be non-null for injected predictor correlation structure,
           # see core function below
-          
-          if (eb) {
             
-            stopifnot(is.null(list_struct)) # TODO: implement sanity checks in prepare_locus
+          if (hyper) {
             
-            vb <- locus_dual_vbem_core_(Y, X, list_hyper, list_init$gam_vb,
-                                        list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                        list_init$tau_vb, bool_blocks = FALSE, 
-                                        tol, maxit, anneal, verbose)
-          } else {
-            
-            if (hyper) {
-              
-              if (hs) {
-                vb <- locus_dual_horseshoe_core_(Y, X, list_hyper, list_init$gam_vb,
-                                                 list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                                 list_init$tau_vb, list_struct, tol, maxit,
-                                                 anneal, verbose)
-              } else {
-                vb <- locus_dual_prior_core_(Y, X, list_hyper, list_init$gam_vb,
-                                       list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                       list_init$tau_vb, list_struct, tol, maxit,
-                                       anneal, verbose)
-              }
-             
+            if (hs) {
+              vb <- locus_dual_horseshoe_core_(Y, X, list_hyper, list_init$gam_vb,
+                                               list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                               list_init$tau_vb, list_struct, tol, maxit,
+                                               anneal, verbose)
             } else {
-              vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
+              vb <- locus_dual_prior_core_(Y, X, list_hyper, list_init$gam_vb,
                                      list_init$mu_beta_vb, list_init$sig2_beta_vb,
                                      list_init$tau_vb, list_struct, tol, maxit,
                                      anneal, verbose)
             }
-          }          
+           
+          } else {
+            vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
+                                   list_init$mu_beta_vb, list_init$sig2_beta_vb,
+                                   list_init$tau_vb, list_struct, tol, maxit,
+                                   anneal, verbose)
+          }
           
           
         } else if (nq & ng) {
@@ -741,18 +734,10 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
       
       if (dual & eb & nq & link == "identity") {
         
-        if (nr) {
-          vb_bl <- locus_dual_vbem_core_(Y, X_bl, list_hyper_bl, list_init_bl$gam_vb,
-                                         list_init_bl$mu_beta_vb, list_init_bl$sig2_beta_vb,
-                                         list_init_bl$tau_vb, bool_blocks = TRUE, 
-                                         tol, maxit, anneal, verbose = FALSE)
-        } else {
-          vb_bl <- locus_dual_info_vbem_core_(Y, X_bl, V_bl, list_hyper_bl, list_init_bl$gam_vb,
-                                              list_init_bl$mu_beta_vb, list_init_bl$sig2_beta_vb,
-                                              list_init_bl$tau_vb, list_struct, bool_blocks = TRUE, 
-                                              tol, maxit, anneal, verbose = FALSE)
-        }
-        
+        vb_bl <- locus_dual_info_vbem_core_(Y, X_bl, V_bl, list_hyper_bl, list_init_bl$gam_vb,
+                                            list_init_bl$mu_beta_vb, list_init_bl$sig2_beta_vb,
+                                            list_init_bl$tau_vb, list_struct, bool_blocks = TRUE, 
+                                            tol, maxit, anneal, verbose = FALSE)
         
       } else if (!dual) {
         
@@ -907,18 +892,6 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
         names(list_mu_c_vb) <- paste("bl_", 1:n_bl, sep = "")
         vb <- c(vb, "list_mu_c_vb" = list(list_mu_c_vb))
       }
-      
-    } else if (nr) {
-      # get empirical-Bayes estimates:
-      
-      list_hyper$s02 <- do.call(c, lapply(list_vb, `[[`, "s02")) # now it is a vector with the s02 corresponding to each predictor
-      list_hyper$om_vb <- do.call(c, lapply(list_vb, `[[`, "om"))
-      
-      vb <- locus_dual_pleio_core_(Y, X, list_hyper, list_init$gam_vb, list_init$mu_beta_vb,
-                                   list_init$sig2_beta_vb, list_init$tau_vb, eb = TRUE, tol,
-                                   maxit, anneal, verbose)
-      
-      vb$s02 <- list_hyper$s02
       
     } else {
       

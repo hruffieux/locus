@@ -98,9 +98,10 @@ for the predictor propensities; else, Cauchy distribution. Only if
 \code{hyper} is \code{TRUE}; must be \code{FALSE} otherwise. Default is 
 \code{FALSE}.}
 
-\item{eb}{If \code{TRUE}, variance and probability hyperparameters selected
-via an empirical Bayes procedure. Only used if \code{dual} is \code{TRUE}.
-Default is \code{FALSE}.}
+\item{eb}{If \code{TRUE}, annotation spike-and-slab variance and probability 
+hyperparameters selected via an empirical Bayes procedure. Only used if 
+\code{dual} is \code{TRUE} and \code{V} is non-\code{NULL}. Default is 
+\code{FALSE}.}
 
 \item{user_seed}{Seed set for reproducible default choices of hyperparameters
 (if \code{list_hyper} is \code{NULL}) and initial variational parameters
