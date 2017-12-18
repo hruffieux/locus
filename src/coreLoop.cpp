@@ -71,7 +71,8 @@ void coreZLoop(const MapMat X,
                MapArr2D mu_beta_vb,
                const MapArr1D sig2_beta_vb,
                const MapArr1D tau_vb,
-               const MapArr1D shuffled_ind) {
+               const MapArr1D shuffled_ind,
+               const double c = 1) {
 
   const Arr1D cst = -(log_tau_vb + log_sig2_inv_vb + log(sig2_beta_vb) )/ 2;
 
@@ -81,11 +82,11 @@ void coreZLoop(const MapMat X,
 
     mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
 
-    mu_beta_vb.row(j) = sig2_beta_vb * tau_vb *
+    mu_beta_vb.row(j) = c * sig2_beta_vb * tau_vb *
       ((Y - mat_x_m1 - mat_z_mu).transpose() * X.col(j)).array();
 
-    gam_vb.row(j) = exp(-logOnePlusExp(log_1_min_om_vb(j) - log_om_vb(j) -
-      mu_beta_vb.row(j).transpose().square() / (2 * sig2_beta_vb) + cst));
+    gam_vb.row(j) = exp(-logOnePlusExp(c * (log_1_min_om_vb(j) - log_om_vb(j) -
+      mu_beta_vb.row(j).transpose().square() / (2 * sig2_beta_vb) + cst)));
 
     m1_beta.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
 

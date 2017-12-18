@@ -29,7 +29,7 @@ update_m2_alpha_ <- function(mu_alpha_vb, sig2_alpha_vb, sweep = FALSE) {
 }
 
 
-update_sig2_alpha_vb_ <- function(n, zeta2_inv_vb, tau_vb = NULL, intercept = FALSE) {
+update_sig2_alpha_vb_ <- function(n, zeta2_inv_vb, tau_vb = NULL, intercept = FALSE, c = 1) {
 
   den <- n - 1 + zeta2_inv_vb
 
@@ -38,11 +38,11 @@ update_sig2_alpha_vb_ <- function(n, zeta2_inv_vb, tau_vb = NULL, intercept = FA
 
   if (is.null(tau_vb)) {
 
-    1 / den
+    1 / (c * den)
 
   } else {
 
-    1 / tcrossprod(den, as.matrix(tau_vb))
+    1 / (c * tcrossprod(den, as.matrix(tau_vb)))
 
   }
 
@@ -294,7 +294,7 @@ update_eta_vb_ <- function(n, eta, gam_vb, c = 1) c * (eta + n / 2 + colSums(gam
 update_g_eta_vb_ <- function(n, eta, g_sizes, gam_vb) eta + n / 2 + as.numeric(crossprod(gam_vb, g_sizes)) / 2
 
 
-update_eta_z_vb_ <- function(n, q, eta, gam_vb) eta + n / 2 + colSums(gam_vb) / 2 + q / 2
+update_eta_z_vb_ <- function(n, q, eta, gam_vb, c = 1) c * (eta + n / 2 + colSums(gam_vb) / 2 + q / 2) - c + 1
 
 
 update_kappa_vb_ <- function(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb, c = 1) {
@@ -325,19 +325,19 @@ update_g_kappa_vb_ <- function(Y, list_X, kappa, list_m1_beta, list_m1_btb,
 
 update_kappa_z_vb_ <- function(Y, Z, kappa, mu_alpha_vb, m1_beta, m2_alpha,
                                m2_beta, mat_x_m1, mat_z_mu, sig2_inv_vb,
-                               zeta2_inv_vb, intercept = FALSE) {
+                               zeta2_inv_vb, intercept = FALSE, c = 1) {
   n <- nrow(Y)
 
-  kappa_vb <- kappa + (colSums(Y^2) - 2 * colSums(Y * (mat_x_m1 + mat_z_mu))  +
+  kappa_vb <- c * (kappa + (colSums(Y^2) - 2 * colSums(Y * (mat_x_m1 + mat_z_mu))  +
                          (n - 1 + sig2_inv_vb) * colSums(m2_beta) +
                          colSums(mat_x_m1^2) - (n - 1) * colSums(m1_beta^2) +
                          (n - 1) * colSums(m2_alpha) +
                          crossprod(m2_alpha, zeta2_inv_vb) +
                          colSums(mat_z_mu^2) - (n - 1) * colSums(mu_alpha_vb^2) +
-                         2 * colSums(mat_x_m1 * mat_z_mu))/ 2
+                         2 * colSums(mat_x_m1 * mat_z_mu))/ 2)
 
   if (intercept)
-    kappa_vb <- kappa_vb + (m2_alpha[1, ] - (mu_alpha_vb[1, ])^2) / 2
+    kappa_vb <- kappa_vb + c * (m2_alpha[1, ] - (mu_alpha_vb[1, ])^2) / 2
 
   kappa_vb
 }
@@ -477,10 +477,11 @@ update_W_struct_ <- function(gam_vb, mu_theta_vb) {
 ## zeta's updates ##
 ####################
 
-update_phi_z_vb_ <- function(phi, d) phi + d / 2
+
+update_phi_z_vb_ <- function(phi, d, c = 1) c * (phi + d / 2) - c + 1
 
 
-update_xi_z_vb_ <- function(xi, tau_vb, m2_alpha) xi + m2_alpha %*% tau_vb / 2
+update_xi_z_vb_ <- function(xi, tau_vb, m2_alpha, c = 1) c * (xi + m2_alpha %*% tau_vb / 2)
 
 
 update_xi_bin_vb_ <- function(xi, m2_alpha) xi + rowSums(m2_alpha) / 2

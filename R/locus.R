@@ -534,7 +534,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
           vb <- locus_z_core_(Y, X, Z, list_hyper, list_init$gam_vb,
                               list_init$mu_alpha_vb, list_init$mu_beta_vb,
                               list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                              list_init$tau_vb, tol, maxit, verbose)
+                              list_init$tau_vb, tol, maxit, anneal, verbose)
           
         } else { # both q and r non-null
           
@@ -763,7 +763,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
                                    list_init_bl$mu_alpha_vb,list_init_bl$mu_beta_vb,
                                    list_init_bl$sig2_alpha_vb,
                                    list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                                   tol, maxit, verbose = FALSE)
+                                   tol, maxit, anneal, verbose = FALSE)
             
           } else { # both q and r non - null
             
