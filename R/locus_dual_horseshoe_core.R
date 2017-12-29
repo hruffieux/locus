@@ -178,7 +178,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
       
       if (is.null(list_struct)) {
         
-        G_vb <- S0_inv_vb * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2) / 2 # b_vb not annealed. possibly no closed form.
+        G_vb <- c * S0_inv_vb * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2) / 2 # b_vb not annealed. possibly no closed form.
         nu_a_inv_vb <- c * (A2_inv + S0_inv_vb)
         
       } else {
@@ -192,7 +192,16 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
         
       } 
       
-      b_vb <- 1 / (sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s)) * G_vb) - 1 # TODO implement a Q_approx for vectors
+      
+      if (annealing) {
+        
+        b_vb <- gsl::gamma_inc(- c + 2, G_vb) / (gsl::gamma_inc(- c + 1, G_vb) * G_vb) - 1
+        
+      } else {
+        
+        b_vb <- 1 / (sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s)) * G_vb) - 1 # TODO implement a Q_approx for vectors
+        
+      }
       
       a_inv_vb <- lambda_a_inv_vb / nu_a_inv_vb
       
