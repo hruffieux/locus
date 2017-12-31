@@ -16,17 +16,20 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
   p <- ncol(X)
   
   with(list_hyper, { # list_init not used with the with() function to avoid
-    # copy-on-write for large objects
+                     # copy-on-write for large objects
     
     # Preparing annealing if any
     #
+    anneal_scale <- FALSE # if TRUE, scale parameters s02 and b_vb also annealed.
+    
     if (is.null(anneal)) {
       annealing <- FALSE
-      c <- 1
+      c <- c_s <- 1 # c_s for scale parameters
     } else {
       annealing <- TRUE
       ladder <- get_annealing_ladder_(anneal, verbose)
       c <- ladder[1]
+      c_s <- ifelse(anneal_scale, c, 1)
     }
     
     eps <- .Machine$double.eps^0.5
@@ -60,7 +63,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
     
     # Parameter initialization here for the top level 
     #
-    mu_theta_vb <- rnorm(p, mean = m0, sd = abs(m0) / 5) # m0 # doesn't seem to change anything here. ########################### see how to set m0 
+    mu_theta_vb <- rnorm(p, mean = m0, sd = abs(m0) / 5) # m0 ########################### see how to set m0 
     sig2_theta_vb <- 1 / (d + rgamma(p, shape = S0_inv_vb[1], rate = 1)) # initial guess assuming b_vb = 1
 
     mu_rho_vb <- rnorm(d, mean = n0, sd = abs(n0) / 5) # n0
@@ -178,24 +181,24 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
       
       if (is.null(list_struct)) {
         
-        G_vb <- c * S0_inv_vb * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2) / 2 # b_vb not annealed. possibly no closed form.
-        nu_a_inv_vb <- c * (A2_inv + S0_inv_vb)
+        G_vb <- c_s * S0_inv_vb * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2) / 2 # b_vb not annealed. possibly no closed form.
+        nu_a_inv_vb <- c_s * (A2_inv + S0_inv_vb)
         
       } else {
         
-        G_vb <- unlist(lapply(1:n_bl, function(bl) { S0_inv_vb[bl] * 
+        G_vb <- unlist(lapply(1:n_bl, function(bl) { c_s * S0_inv_vb[bl] * 
             (mu_theta_vb[vec_fac_bl == bl_ids[bl]]^2 + sig2_theta_vb[vec_fac_bl == bl_ids[bl]] - 
                2 * mu_theta_vb[vec_fac_bl == bl_ids[bl]] * m0[vec_fac_bl == bl_ids[bl]] + 
                m0[vec_fac_bl == bl_ids[bl]]^2) / 2 }))
         
-        nu_a_inv_vb <- sapply(1:n_bl, function(bl) c * (A2_inv + S0_inv_vb[bl]))
+        nu_a_inv_vb <- sapply(1:n_bl, function(bl) c_s * (A2_inv + S0_inv_vb[bl]))
         
       } 
       
       
-      if (annealing) {
+      if (annealing & anneal_scale) {
         
-        b_vb <- gsl::gamma_inc(- c + 2, G_vb) / (gsl::gamma_inc(- c + 1, G_vb) * G_vb) - 1
+        b_vb <- gsl::gamma_inc(- c_s + 2, G_vb) / (gsl::gamma_inc(- c_s + 1, G_vb) * G_vb) - 1
         
       } else {
         
@@ -212,9 +215,9 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
         mu_theta_vb <- update_mu_theta_vb_(W, m0, S0_inv_vb * b_vb, sig2_theta_vb,
                                            vec_fac_st = NULL, mu_rho_vb, is_mat = FALSE, c = c)
         
-        lambda_s0_vb <- update_lambda_vb_(1 / 2, p, c = c)
+        lambda_s0_vb <- update_lambda_vb_(1 / 2, p, c = c_s)
         
-        nu_s0_vb <- c * (a_inv_vb + 
+        nu_s0_vb <- c_s * (a_inv_vb + 
                            sum(b_vb * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2)) / 2) 
         
       } else {
@@ -228,9 +231,9 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
                               vec_fac_st = NULL, mu_rho_vb, is_mat = FALSE, c = c)
         }))
         
-        lambda_s0_vb <- sapply(1:n_bl, function(bl) update_lambda_vb_(1 / 2, bl_lgths[bl], c = c))
+        lambda_s0_vb <- sapply(1:n_bl, function(bl) update_lambda_vb_(1 / 2, bl_lgths[bl], c = c_s))
         
-        nu_s0_vb <- sapply(1:n_bl, function(bl) { c * (a_inv_vb[bl] + 
+        nu_s0_vb <- sapply(1:n_bl, function(bl) { c_s * (a_inv_vb[bl] + 
                            sum(b_vb[vec_fac_bl == bl_ids[bl]] * 
                                  (mu_theta_vb[vec_fac_bl == bl_ids[bl]]^2 + 
                                     sig2_theta_vb[vec_fac_bl == bl_ids[bl]] - 
@@ -271,6 +274,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
         sig2_rho_vb <- c * sig2_rho_vb
         
         c <- ifelse(it < length(ladder), ladder[it + 1], 1)
+        c_s <- ifelse(anneal_scale, c, 1)
         
         sig2_rho_vb <- sig2_rho_vb / c
         

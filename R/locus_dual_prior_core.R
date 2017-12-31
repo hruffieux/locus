@@ -21,13 +21,16 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
     
     # Preparing annealing if any
     #
+    anneal_scale <- FALSE # if TRUE, scale parameters s02 and b_vb also annealed.
+    
     if (is.null(anneal)) {
       annealing <- FALSE
-      c <- 1
+      c <- c_s <- 1 # c_s for scale parameters
     } else {
       annealing <- TRUE
       ladder <- get_annealing_ladder_(anneal, verbose)
       c <- ladder[1]
+      c_s <- ifelse(anneal_scale, c, 1)
     }
     
     eps <- .Machine$double.eps^0.5
@@ -183,13 +186,13 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
                                      is_mat = FALSE, c = c) # update_mu_rho_vb_(W, mu_theta_vb, sig2_rho_vb)
       
       if (is.null(list_struct)) {
-        lambda_s0_vb <- c * (lambda_s0 + p / 2) - c + 1 # implement annealing
-        nu_s0_vb <- c * (nu_s0 + sum(sig2_theta_vb + mu_theta_vb^2 - 2 * mu_theta_vb * m0 + m0^2) / 2)
+        lambda_s0_vb <- c_s * (lambda_s0 + p / 2) - c_s + 1 # implement annealing
+        nu_s0_vb <- c_s * (nu_s0 + sum(sig2_theta_vb + mu_theta_vb^2 - 2 * mu_theta_vb * m0 + m0^2) / 2)
       
       } else {
-        lambda_s0_vb <- c * (lambda_s0 + bl_lgths / 2) - c + 1 # implement annealing
+        lambda_s0_vb <- c_s * (lambda_s0 + bl_lgths / 2) - c_s + 1 # implement annealing
         nu_s0_vb <- sapply(1:n_bl, function(bl) {
-          c * (nu_s0[bl] + sum(sig2_theta_vb[bl] + 
+          c_s * (nu_s0[bl] + sum(sig2_theta_vb[bl] + 
                              mu_theta_vb[vec_fac_bl == bl_ids[bl]]^2 - 
                              2 * mu_theta_vb[vec_fac_bl == bl_ids[bl]] * m0[vec_fac_bl == bl_ids[bl]] +
                              m0[vec_fac_bl == bl_ids[bl]]^2) / 2)
@@ -218,6 +221,7 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
         sig2_rho_vb <- c * sig2_rho_vb
         
         c <- ifelse(it < length(ladder), ladder[it + 1], 1)
+        c_s <- ifelse(anneal_scale, c, 1)
         
         sig2_rho_vb <- sig2_rho_vb / c
         
