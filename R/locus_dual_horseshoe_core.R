@@ -20,7 +20,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
     
     # Preparing annealing if any
     #
-    anneal_scale <- FALSE # if TRUE, scale parameters s02 and b_vb also annealed.
+    anneal_scale <- TRUE # if TRUE, scale parameters s02 and b_vb also annealed.
     
     if (is.null(anneal)) {
       annealing <- FALSE
@@ -57,14 +57,14 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
     
     # Choose m0 so that, `a priori' (i.e. before optimization), E_p_gam is as specified by the user:
     n0_star <- - n0[1]
-    m0_star <- n0_star * (sqrt(1 + (1/S0_inv_vb[1])^2 / (1 + t02)) - 1) # assumes b equiv 1. see hyperparameter_setting document. m0 not needed anymore in set_hyper.
+    m0_star <- n0_star * (sqrt(1 + (1/S0_inv_vb[1] / d) / (1 + t02)) - 1) # assumes b equiv 1. see hyperparameter_setting document. m0 not needed anymore in set_hyper.
     
     m0 <- - rep(m0_star, p)
     
     # Parameter initialization here for the top level 
     #
     mu_theta_vb <- rnorm(p, mean = m0, sd = abs(m0) / 5) # m0 ########################### see how to set m0 
-    sig2_theta_vb <- 1 / (d + rgamma(p, shape = S0_inv_vb[1], rate = 1)) # initial guess assuming b_vb = 1
+    sig2_theta_vb <- 1 / (d + rgamma(p, shape = S0_inv_vb[1] * d, rate = 1)) # initial guess assuming b_vb = 1
 
     mu_rho_vb <- rnorm(d, mean = n0, sd = abs(n0) / 5) # n0
     
@@ -181,7 +181,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
       
       if (is.null(list_struct)) {
         
-        G_vb <- c_s * S0_inv_vb * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2) / 2 # b_vb not annealed. possibly no closed form.
+        G_vb <- c_s * S0_inv_vb * d * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2) / 2 # b_vb not annealed. possibly no closed form.
         nu_a_inv_vb <- c_s * (A2_inv + S0_inv_vb)
         
       } else {
@@ -211,30 +211,30 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
 
       if (is.null(list_struct)) {
         
-        sig2_theta_vb <- update_sig2_c0_vb_(d, 1 / (S0_inv_vb * b_vb), c = c)
-        mu_theta_vb <- update_mu_theta_vb_(W, m0, S0_inv_vb * b_vb, sig2_theta_vb,
+        sig2_theta_vb <- update_sig2_c0_vb_(d, 1 / (S0_inv_vb * b_vb * d), c = c)
+        mu_theta_vb <- update_mu_theta_vb_(W, m0, S0_inv_vb * b_vb * d, sig2_theta_vb,
                                            vec_fac_st = NULL, mu_rho_vb, is_mat = FALSE, c = c)
         
         lambda_s0_vb <- update_lambda_vb_(1 / 2, p, c = c_s)
         
         nu_s0_vb <- c_s * (a_inv_vb + 
-                           sum(b_vb * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2)) / 2) 
+                           sum(b_vb * d * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2)) / 2) 
         
       } else {
         
         sig2_theta_vb <- unlist(lapply(1:n_bl, function(bl) { 
-          update_sig2_c0_vb_(d, 1 / (S0_inv_vb[bl] * b_vb[vec_fac_bl == bl_ids[bl]]), c = c) }))
+          update_sig2_c0_vb_(d, 1 / (S0_inv_vb[bl] * b_vb[vec_fac_bl == bl_ids[bl]] * d), c = c) }))
         
         mu_theta_vb <- unlist(lapply(1:n_bl, function(bl) {
           update_mu_theta_vb_(W[vec_fac_bl == bl_ids[bl], , drop = FALSE], m0[vec_fac_bl == bl_ids[bl]], 
-                              S0_inv_vb[bl] * b_vb[vec_fac_bl == bl_ids[bl]], sig2_theta_vb[vec_fac_bl == bl_ids[bl]],
+                              S0_inv_vb[bl] * b_vb[vec_fac_bl == bl_ids[bl]] * d, sig2_theta_vb[vec_fac_bl == bl_ids[bl]],
                               vec_fac_st = NULL, mu_rho_vb, is_mat = FALSE, c = c)
         }))
         
         lambda_s0_vb <- sapply(1:n_bl, function(bl) update_lambda_vb_(1 / 2, bl_lgths[bl], c = c_s))
         
         nu_s0_vb <- sapply(1:n_bl, function(bl) { c_s * (a_inv_vb[bl] + 
-                           sum(b_vb[vec_fac_bl == bl_ids[bl]] * 
+                           sum(b_vb[vec_fac_bl == bl_ids[bl]] * d * 
                                  (mu_theta_vb[vec_fac_bl == bl_ids[bl]]^2 + 
                                     sig2_theta_vb[vec_fac_bl == bl_ids[bl]] - 
                                     2 * mu_theta_vb[vec_fac_bl == bl_ids[bl]] * m0[vec_fac_bl == bl_ids[bl]] + 
@@ -251,13 +251,13 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
       if (verbose & (it == 1 | it %% 5 == 0)) {
         
         if (is.null(list_struct)) {
-          cat(paste0("Updated s02: ", format(1 / S0_inv_vb, digits = 4), ".\n"))
+          cat(paste0("Updated s02 / d: ", format(1 / S0_inv_vb / d, digits = 4), ".\n"))
           cat("Updated 1 / b: \n")
           print(summary(1 / b_vb))
           cat("\n")
         } else {
-          cat("Updated block-specific s02: \n")
-          print(summary(1 / S0_inv_vb))
+          cat("Updated block-specific s02 / d: \n")
+          print(summary(1 / S0_inv_vb / d))
           cat("\n")
           cat("Updated 1 / b: \n")
           print(summary(1 / b_vb))
@@ -398,7 +398,7 @@ elbo_dual_horseshoe_ <- function(Y, a_inv_vb, A2_inv, b_vb, eta, eta_vb, G_vb, g
                                  sig2_beta_vb, sig2_rho_vb,
                                  sig2_theta_vb, sig2_inv_vb, tau_vb)
     
-    elbo_C <- e_theta_hs_(b_vb, G_vb, log_S0_inv_vb, m0, mu_theta_vb, S0_inv_vb, sig2_theta_vb)
+    elbo_C <- e_theta_hs_(b_vb, G_vb, log_S0_inv_vb + log(d), m0, mu_theta_vb, S0_inv_vb * d, sig2_theta_vb)
     
   } else {
     elbo_B <- sum(sapply(1:n_bl, function(bl) {
@@ -409,8 +409,8 @@ elbo_dual_horseshoe_ <- function(Y, a_inv_vb, A2_inv, b_vb, eta, eta_vb, G_vb, g
                          sig2_theta_vb[vec_fac_bl == bl_ids[bl]], sig2_inv_vb, tau_vb)}))
     
     elbo_C <- sum(sapply(1:n_bl, function(bl) { 
-      e_theta_hs_(b_vb[vec_fac_bl == bl_ids[bl]], G_vb[vec_fac_bl == bl_ids[bl]], log_S0_inv_vb[bl], 
-                  m0[vec_fac_bl == bl_ids[bl]], mu_theta_vb[vec_fac_bl == bl_ids[bl]], S0_inv_vb[bl], 
+      e_theta_hs_(b_vb[vec_fac_bl == bl_ids[bl]], G_vb[vec_fac_bl == bl_ids[bl]], log_S0_inv_vb[bl] + log(d), 
+                  m0[vec_fac_bl == bl_ids[bl]], mu_theta_vb[vec_fac_bl == bl_ids[bl]], S0_inv_vb[bl] * d, 
                   sig2_theta_vb[vec_fac_bl == bl_ids[bl]])}))
   }
   

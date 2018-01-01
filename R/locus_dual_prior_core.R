@@ -21,7 +21,7 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
     
     # Preparing annealing if any
     #
-    anneal_scale <- FALSE # if TRUE, scale parameters s02 and b_vb also annealed.
+    anneal_scale <- TRUE # if TRUE, scale parameters s02 and b_vb also annealed.
     
     if (is.null(anneal)) {
       annealing <- FALSE
@@ -53,7 +53,7 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
     # Choose m0 so that, `a priori' (i.e. before optimization), E_p_gam is as specified by the user:
     #
     n0_star <- - n0[1]
-    m0_star <- n0_star * (sqrt(1 + (1/S0_inv_vb[1])^2 / (1 + t02)) - 1) # see hyperparameter_setting document. m0 not needed anymore in set_hyper.
+    m0_star <- n0_star * (sqrt(1 + (1/S0_inv_vb[1] / d) / (1 + t02)) - 1) # see hyperparameter_setting document. m0 not needed anymore in set_hyper.
     
     m0 <- - rep(m0_star, p)
     
@@ -169,15 +169,15 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
       
       # keep this order!
       #
-      sig2_theta_vb <- update_sig2_c0_vb_(d, 1 / S0_inv_vb, c = c)
+      sig2_theta_vb <- update_sig2_c0_vb_(d, 1 / S0_inv_vb / d, c = c)
       
       if (is.null(list_struct)) {
-        mu_theta_vb <- update_mu_theta_vb_(W, m0, S0_inv_vb, sig2_theta_vb,
+        mu_theta_vb <- update_mu_theta_vb_(W, m0, S0_inv_vb * d, sig2_theta_vb,
                               vec_fac_st = NULL, mu_rho_vb, is_mat = FALSE, c = c)
       } else {
         mu_theta_vb <- unlist(lapply(1:n_bl, function(bl) {
           update_mu_theta_vb_(W[vec_fac_bl == bl_ids[bl], , drop = FALSE], m0[vec_fac_bl == bl_ids[bl]], 
-                              S0_inv_vb[bl], sig2_theta_vb[bl],
+                              S0_inv_vb[bl] * d, sig2_theta_vb[bl],
                               vec_fac_st = NULL, mu_rho_vb, is_mat = FALSE, c = c)
         }))
       }
@@ -204,10 +204,10 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
       if (verbose & (it == 1 | it %% 5 == 0)) {
         
         if (is.null(list_struct)) {
-          cat(paste0("Updated s02: ", format(1 / S0_inv_vb, digits = 4), ".\n"))
+          cat(paste0("Updated s02 / d: ", format(1 / S0_inv_vb / d, digits = 4), ".\n"))
         } else {
-          cat("Updated block-specific s02: \n")
-          print(summary(1 / S0_inv_vb))
+          cat("Updated block-specific s02 / d: \n")
+          print(summary(1 / S0_inv_vb / d))
           cat("\n")
         }
         
@@ -327,13 +327,13 @@ elbo_dual_prior_ <- function(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
   log_S0_inv_vb <- update_log_sig2_inv_vb_(lambda_s0_vb, nu_s0_vb)
   
   if (is.null(list_struct)) {
-    vec_sum_log_det_theta <- p * (log_S0_inv_vb + log(sig2_theta_vb)) # E(log(det(S0_inv))) + log(det(sig2_theta_vb_bl))
+    vec_sum_log_det_theta <- p * (log_S0_inv_vb + log(d) + log(sig2_theta_vb)) # E(log(det(S0_inv))) + log(det(sig2_theta_vb_bl))
   } else {
     n_bl <- list_struct$n_bl
     bl_ids <- list_struct$bl_ids
     bl_lgths <- list_struct$bl_lgths
     vec_fac_bl <- list_struct$vec_fac_st
-    vec_sum_log_det_theta <- sapply(1:n_bl, function(bl) bl_lgths[bl] * (log_S0_inv_vb[bl] + log(sig2_theta_vb[bl]))) # E(log(det(S0_inv))) + log(det(sig2_theta_vb_bl))
+    vec_sum_log_det_theta <- sapply(1:n_bl, function(bl) bl_lgths[bl] * (log_S0_inv_vb[bl] + log(d) + log(sig2_theta_vb[bl]))) # E(log(det(S0_inv))) + log(det(sig2_theta_vb_bl))
   }
 
   elbo_A <- e_y_(n, kappa, kappa_vb, log_tau_vb, m2_beta, sig2_inv_vb, tau_vb)
@@ -344,7 +344,7 @@ elbo_dual_prior_ <- function(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                                  mu_rho_vb, mu_theta_vb, m2_beta,
                                  sig2_beta_vb, sig2_rho_vb,
                                  sig2_theta_vb, sig2_inv_vb, tau_vb)
-    elbo_C <- e_theta_(m0, mu_theta_vb, S0_inv_vb, sig2_theta_vb, vec_fac_st = NULL,
+    elbo_C <- e_theta_(m0, mu_theta_vb, d * S0_inv_vb, sig2_theta_vb, vec_fac_st = NULL,
                        vec_sum_log_det_theta)
   } else {
     elbo_B <- sum(sapply(1:n_bl, function(bl) {
@@ -356,7 +356,7 @@ elbo_dual_prior_ <- function(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
     
     elbo_C <- sum(sapply(1:n_bl, function(bl) {
       e_theta_(m0[vec_fac_bl == bl_ids[bl]], mu_theta_vb[vec_fac_bl == bl_ids[bl]], 
-               S0_inv_vb[bl], sig2_theta_vb[bl], vec_fac_st = NULL, vec_sum_log_det_theta[bl])}))
+               d * S0_inv_vb[bl], sig2_theta_vb[bl], vec_fac_st = NULL, vec_sum_log_det_theta[bl])}))
   }
   
   elbo_D <- e_rho_(mu_rho_vb, n0, sig2_rho_vb, T0_inv, vec_sum_log_det_rho)
