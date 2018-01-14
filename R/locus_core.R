@@ -7,7 +7,7 @@
 #
 locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
                         tau_vb, tol, maxit, anneal, verbose, batch = "y",
-                        full_output = FALSE, debug = TRUE) {
+                        full_output = FALSE, debug = TRUE, checkpoint_path = NULL) {
 
 
   # Y must have been centered, and X, standardized.
@@ -203,11 +203,16 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
           stop("ELBO not increasing monotonically. Exit. ")
 
         converged <- (abs(lb_new - lb_old) < tol)
+        
+        checkpoint_(it, checkpoint_path, gam_vb, converged, lb_new, lb_old, 
+                    om_vb = om_vb)
 
       }
 
 
     }
+    
+    checkpoint_clean_up_(checkpoint_path)
 
 
     if (verbose) {

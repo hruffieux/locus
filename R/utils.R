@@ -388,3 +388,48 @@ Q_approx <- function(x, eps1 = 1e-30, eps2 = 1e-7) {
     1/(x + 1 + f_c)
   }
 }
+
+
+
+
+checkpoint_ <- function(it, checkpoint_path, 
+                        gam_vb, converged, lb_new, lb_old, b_vb = NULL,
+                        mu_rho_vb = NULL, mu_theta_vb = NULL, om_vb = NULL,
+                        S0_inv_vb = NULL, rate = 500) {
+  
+  if (!is.null(checkpoint_path) && it %% rate == 0) {
+    
+    diff_lb <- abs(lb_new - lb_old)
+    
+    tmp_vb <- create_named_list_(gam_vb, converged, it, lb_new, diff_lb, 
+                                 b_vb, mu_theta_vb, mu_rho_vb, om_vb, S0_inv_vb)
+    
+    file_save <- paste0(checkpoint_path, "tmp_output_it_", it, ".RData")
+    
+    save(tmp_vb, file = file_save)
+    
+    old_file_clean_up <- paste0(checkpoint_path, "tmp_output_it_", it - 2 * rate, ".RData") # keep only the last two for comparison
+    
+    if (file.exists(old_file_clean_up)) 
+      file.remove(old_file_clean_up)
+
+  }
+    
+}
+
+
+checkpoint_clean_up_ <- function(checkpoint_path) {
+  
+  if (!is.null(checkpoint_path)) {
+    
+    old_files_clean_up <- list.files(path = checkpoint_path, pattern = "tmp_output_it_")
+    
+    sapply(old_files_clean_up, function(ff) {
+      if (file.exists(file.path(checkpoint_path, ff))) 
+        file.remove(file.path(checkpoint_path, ff))
+    })
+    
+  } 
+  
+}
+ 

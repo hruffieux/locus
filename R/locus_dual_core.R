@@ -7,7 +7,8 @@
 #
 locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
                              tau_vb, list_struct, tol, maxit, anneal, verbose,
-                             batch = "y", full_output = FALSE, debug = TRUE) {
+                             batch = "y", full_output = FALSE, debug = TRUE, 
+                             checkpoint_path = NULL) {
 
   # Y must have been centered, and X standardized.
 
@@ -191,10 +192,14 @@ locus_dual_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
        converged <- (abs(lb_new - lb_old) < tol)
 
+       checkpoint_(it, checkpoint_path, gam_vb, converged, lb_new, lb_old, 
+                   mu_rho_vb = mu_rho_vb, mu_theta_vb = mu_theta_vb)
       }
-
+      
     }
-
+    
+    checkpoint_clean_up_(checkpoint_path)
+    
     if (verbose) {
       if (converged) {
         cat(paste("Convergence obtained after ", format(it), " iterations. \n",

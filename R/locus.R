@@ -115,6 +115,8 @@
 #' @param save_init If \code{TRUE}, the initial variational parameters used for
 #'   the inference are saved as output.
 #' @param verbose If \code{TRUE}, messages are displayed during execution.
+#' @param checkpoint_path Path where to save temporary checkpoint outputs. Default is
+#'   \code{NULL}, for no checkpointing.
 #'
 #' @return An object of class "\code{vb}" containing the following variational
 #'   estimates and settings:
@@ -298,13 +300,14 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
                   list_struct = NULL, dual = FALSE, hyper = FALSE, hs = FALSE, 
                   eb = FALSE, user_seed = NULL, tol = 1e-3, maxit = 1000, 
                   anneal = NULL, save_hyper = FALSE, save_init = FALSE, 
-                  verbose = TRUE) {
+                  verbose = TRUE, checkpoint_path = NULL) {
   
   if (verbose) cat("== Preparing the data ... \n")
   
   check_annealing_(anneal, link, Z, V, list_groups, list_struct, dual)
   
-  dat <- prepare_data_(Y, X, Z, V, link, ind_bin, s02, user_seed, tol, maxit, verbose)
+  dat <- prepare_data_(Y, X, Z, V, link, ind_bin, s02, user_seed, tol, maxit, 
+                       verbose, checkpoint_path)
   
   bool_rmvd_x <- dat$bool_rmvd_x
   bool_rmvd_z <- dat$bool_rmvd_z
@@ -521,7 +524,8 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
           
           vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
                             list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                            list_init$tau_vb, tol, maxit, anneal, verbose)
+                            list_init$tau_vb, tol, maxit, anneal, verbose, 
+                            checkpoint_path = checkpoint_path)
           
         } else if (nq) { # r non-null
           
@@ -564,19 +568,22 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
               vb <- locus_dual_horseshoe_core_(Y, X, list_hyper, list_init$gam_vb,
                                                list_init$mu_beta_vb, list_init$sig2_beta_vb,
                                                list_init$tau_vb, list_struct, tol, maxit,
-                                               anneal, verbose)
+                                               anneal, verbose,
+                                               checkpoint_path = checkpoint_path)
             } else {
               vb <- locus_dual_prior_core_(Y, X, list_hyper, list_init$gam_vb,
                                      list_init$mu_beta_vb, list_init$sig2_beta_vb,
                                      list_init$tau_vb, list_struct, tol, maxit,
-                                     anneal, verbose)
+                                     anneal, verbose, 
+                                     checkpoint_path = checkpoint_path)
             }
            
           } else {
             vb <- locus_dual_core_(Y, X, list_hyper, list_init$gam_vb,
                                    list_init$mu_beta_vb, list_init$sig2_beta_vb,
                                    list_init$tau_vb, list_struct, tol, maxit,
-                                   anneal, verbose)
+                                   anneal, verbose, 
+                                   checkpoint_path = checkpoint_path)
           }
           
           
