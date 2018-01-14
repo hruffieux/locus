@@ -395,7 +395,7 @@ Q_approx <- function(x, eps1 = 1e-30, eps2 = 1e-7) {
 checkpoint_ <- function(it, checkpoint_path, 
                         gam_vb, converged, lb_new, lb_old, b_vb = NULL,
                         mu_rho_vb = NULL, mu_theta_vb = NULL, om_vb = NULL,
-                        S0_inv_vb = NULL, rate = 500) {
+                        S0_inv_vb = NULL, rate = 100) {
   
   if (!is.null(checkpoint_path) && it %% rate == 0) {
     
