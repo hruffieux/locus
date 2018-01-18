@@ -5,11 +5,12 @@
 # control. Sparse regression with identity link, no fixed covariates.
 # See help of `locus` function for details.
 #
-locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
-                                       tau_vb, list_struct, tol, maxit, anneal, verbose,
-                                       batch = "y", full_output = FALSE, debug = TRUE, 
+locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, 
+                                       sig2_beta_vb, tau_vb, df, list_struct, 
+                                       tol, maxit, anneal, verbose, batch = "y", 
+                                       full_output = FALSE, debug = TRUE, 
                                        checkpoint_path = NULL) {
-
+  
   # Y must have been centered, and X standardized.
   
   d <- ncol(Y)
@@ -17,11 +18,16 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
   p <- ncol(X)
   
   with(list_hyper, { # list_init not used with the with() function to avoid
-                     # copy-on-write for large objects
+    # copy-on-write for large objects
     
     # Preparing annealing if any
     #
-    anneal_scale <- TRUE # if TRUE, scale parameters s02 and b_vb also annealed.
+    anneal_scale <- FALSE # if TRUE, scale parameters s02 and b_vb also annealed. ###########################
+    
+    
+    if (df == 3 && !is.null(anneal) && anneal_scale) {
+      stop("Annealing for scale paramters not yet implemented with df = 3.")
+    }
     
     if (is.null(anneal)) {
       annealing <- FALSE
@@ -66,7 +72,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
     #
     mu_theta_vb <- rnorm(p, mean = m0, sd = abs(m0) / 5) # m0 ########################### see how to set m0 
     sig2_theta_vb <- 1 / (d + rgamma(p, shape = S0_inv_vb[1] * d, rate = 1)) # initial guess assuming b_vb = 1
-
+    
     mu_rho_vb <- rnorm(d, mean = n0, sd = abs(n0) / 5) # n0
     
     
@@ -141,8 +147,8 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
                      sig2_beta_vb, tau_vb, shuffled_ind, c = c)
         
       } else if (batch == "0"){ # no batch, used only internally
-                                # schemes "x" of "x-y" are not batch concave
-                                # hence not implemented as they may diverge
+        # schemes "x" of "x-y" are not batch concave
+        # hence not implemented as they may diverge
         
         for (k in sample(1:d)) {
           
@@ -187,7 +193,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
         
       } else {
         
-        G_vb <- unlist(lapply(1:n_bl, function(bl) { c_s * S0_inv_vb[bl] * 
+        G_vb <- unlist(lapply(1:n_bl, function(bl) { c_s * S0_inv_vb[bl] * d * 
             (mu_theta_vb[vec_fac_bl == bl_ids[bl]]^2 + sig2_theta_vb[vec_fac_bl == bl_ids[bl]] - 
                2 * mu_theta_vb[vec_fac_bl == bl_ids[bl]] * m0[vec_fac_bl == bl_ids[bl]] + 
                m0[vec_fac_bl == bl_ids[bl]]^2) / 2 }))
@@ -196,30 +202,50 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
         
       } 
       
-      
-      if (annealing & anneal_scale) {
+      if (df == 1) {
         
-        b_vb <- gsl::gamma_inc(- c_s + 2, G_vb) / (gsl::gamma_inc(- c_s + 1, G_vb) * G_vb) - 1
+        if (annealing & anneal_scale) {
+          
+          b_vb <- gsl::gamma_inc(- c_s + 2, G_vb) / (gsl::gamma_inc(- c_s + 1, G_vb) * G_vb) - 1
+          
+        } else {
+          
+          Q_app <- sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s))  # TODO implement a Q_approx for vectors
+          
+          b_vb <- 1 / (Q_app * G_vb) - 1
+          
+        }
+        
+      } else if (df == 3) {
+        
+        G_vb <- G_vb / 3
+        
+        Q_app <- sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s))
+        
+        b_vb <- 1 / 3 * (G_vb^(-1) * (1 - G_vb * Q_app) / (Q_app * (1 + G_vb) - 1) - 1)
+        
         
       } else {
         
-        b_vb <- 1 / (sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s)) * G_vb) - 1 # TODO implement a Q_approx for vectors
+        stop("The degrees of freedom for the Horseshoe local scale parameter must be either 1 or 3.")
         
       }
       
+      
       a_inv_vb <- lambda_a_inv_vb / nu_a_inv_vb
       
-
+      
       if (is.null(list_struct)) {
         
         sig2_theta_vb <- update_sig2_c0_vb_(d, 1 / (S0_inv_vb * b_vb * d), c = c)
+        
         mu_theta_vb <- update_mu_theta_vb_(W, m0, S0_inv_vb * b_vb * d, sig2_theta_vb,
                                            vec_fac_st = NULL, mu_rho_vb, is_mat = FALSE, c = c)
         
         lambda_s0_vb <- update_lambda_vb_(1 / 2, p, c = c_s)
         
         nu_s0_vb <- c_s * (a_inv_vb + 
-                           sum(b_vb * d * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2)) / 2) 
+                             sum(b_vb * d * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2)) / 2) 
         
       } else {
         
@@ -235,11 +261,11 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
         lambda_s0_vb <- sapply(1:n_bl, function(bl) update_lambda_vb_(1 / 2, bl_lgths[bl], c = c_s))
         
         nu_s0_vb <- sapply(1:n_bl, function(bl) { c_s * (a_inv_vb[bl] + 
-                           sum(b_vb[vec_fac_bl == bl_ids[bl]] * d * 
-                                 (mu_theta_vb[vec_fac_bl == bl_ids[bl]]^2 + 
-                                    sig2_theta_vb[vec_fac_bl == bl_ids[bl]] - 
-                                    2 * mu_theta_vb[vec_fac_bl == bl_ids[bl]] * m0[vec_fac_bl == bl_ids[bl]] + 
-                                    m0[vec_fac_bl == bl_ids[bl]]^2)) / 2)}) 
+                                                           sum(b_vb[vec_fac_bl == bl_ids[bl]] * d * 
+                                                                 (mu_theta_vb[vec_fac_bl == bl_ids[bl]]^2 + 
+                                                                    sig2_theta_vb[vec_fac_bl == bl_ids[bl]] - 
+                                                                    2 * mu_theta_vb[vec_fac_bl == bl_ids[bl]] * m0[vec_fac_bl == bl_ids[bl]] + 
+                                                                    m0[vec_fac_bl == bl_ids[bl]]^2)) / 2)}) 
         
       }
       
@@ -248,7 +274,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
       mu_rho_vb <- update_mu_rho_vb_(W, mu_theta_vb, n0, sig2_rho_vb, T0_inv,
                                      is_mat = FALSE, c = c) 
       
-
+      
       if (verbose & (it == 1 | it %% 5 == 0)) {
         
         if (is.null(list_struct)) {
@@ -292,14 +318,14 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
         
         lb_new <- elbo_dual_horseshoe_(Y, a_inv_vb, A2_inv, b_vb, eta, eta_vb, G_vb, gam_vb, kappa, kappa_vb, lambda,
                                        lambda_vb, lambda_a_inv_vb, lambda_s0_vb, m0, n0, mu_rho_vb,
-                                       mu_theta_vb, nu, nu_vb, nu_a_inv_vb, nu_s0_vb, sig2_beta_vb,
+                                       mu_theta_vb, nu, nu_vb, nu_a_inv_vb, nu_s0_vb, Q_app, sig2_beta_vb,
                                        S0_inv_vb, sig2_theta_vb, sig2_inv_vb, sig2_rho_vb,
                                        T0_inv, tau_vb, m1_beta, m2_beta, mat_x_m1,
-                                       vec_sum_log_det_rho, list_struct)
+                                       vec_sum_log_det_rho, list_struct, df)
         
         if (verbose & (it == 1 | it %% 5 == 0))
           cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
-        
+      
         
         if (debug && lb_new + eps < lb_old)
           stop("ELBO not increasing monotonically. Exit. ")
@@ -332,10 +358,10 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
       
       create_named_list_(a_inv_vb, A2_inv, b_vb, eta, eta_vb, G_vb, gam_vb, kappa, kappa_vb, lambda,
                          lambda_vb, lambda_a_inv_vb, lambda_s0_vb, m0, n0, mu_rho_vb,
-                         mu_theta_vb, nu, nu_vb, nu_a_inv_vb, nu_s0_vb, sig2_beta_vb,
+                         mu_theta_vb, nu, nu_vb, nu_a_inv_vb, nu_s0_vb, Q_app, sig2_beta_vb,
                          S0_inv_vb, sig2_theta_vb, sig2_inv_vb, sig2_rho_vb,
                          T0_inv, tau_vb, m1_beta, m2_beta, mat_x_m1,
-                         vec_sum_log_det_rho, list_struct)
+                         vec_sum_log_det_rho, list_struct, df)
       
     } else {
       
@@ -351,7 +377,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
       diff_lb <- abs(lb_opt - lb_old)
       
       create_named_list_(gam_vb, mu_theta_vb, mu_rho_vb, converged, it, lb_opt,
-                         diff_lb, S0_inv_vb, b_vb)
+                         diff_lb, S0_inv_vb, b_vb, df)
       
     }
   })
@@ -363,16 +389,18 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig
 # Internal function which implements the marginal log-likelihood variational
 # lower bound (ELBO) corresponding to the `locus_struct_core` algorithm.
 #
-elbo_dual_horseshoe_ <- function(Y, a_inv_vb, A2_inv, b_vb, eta, eta_vb, G_vb, gam_vb, kappa, kappa_vb, lambda,
-                                 lambda_vb, lambda_a_inv_vb, lambda_s0_vb, m0, n0, mu_rho_vb,
-                                 mu_theta_vb, nu, nu_vb, nu_a_inv_vb, nu_s0_vb, sig2_beta_vb,
-                                 S0_inv_vb, sig2_theta_vb, sig2_inv_vb, sig2_rho_vb,
-                                 T0_inv, tau_vb, m1_beta, m2_beta, mat_x_m1,
-                                 vec_sum_log_det_rho, list_struct) {
+elbo_dual_horseshoe_ <- function(Y, a_inv_vb, A2_inv, b_vb, eta, eta_vb, G_vb, 
+                                 gam_vb, kappa, kappa_vb, lambda, lambda_vb, 
+                                 lambda_a_inv_vb, lambda_s0_vb, m0, n0, mu_rho_vb,
+                                 mu_theta_vb, nu, nu_vb, nu_a_inv_vb, nu_s0_vb, 
+                                 Q_app, sig2_beta_vb, S0_inv_vb, sig2_theta_vb, 
+                                 sig2_inv_vb, sig2_rho_vb, T0_inv, tau_vb, 
+                                 m1_beta, m2_beta, mat_x_m1, vec_sum_log_det_rho, 
+                                 list_struct, df) {
   
   n <- nrow(Y)
   d <- nrow(Y)
-  p <- length(m0)
+  p <- length(G_vb)
   
   # needed for monotonically increasing elbo.
   #
@@ -405,7 +433,8 @@ elbo_dual_horseshoe_ <- function(Y, a_inv_vb, A2_inv, b_vb, eta, eta_vb, G_vb, g
                                  sig2_beta_vb, sig2_rho_vb,
                                  sig2_theta_vb, sig2_inv_vb, tau_vb)
     
-    elbo_C <- e_theta_hs_(b_vb, G_vb, log_S0_inv_vb + log(d), m0, mu_theta_vb, S0_inv_vb * d, sig2_theta_vb)
+    elbo_C <- e_theta_hs_(b_vb, G_vb, log_S0_inv_vb + log(d), m0, mu_theta_vb, 
+                          Q_app, S0_inv_vb * d, sig2_theta_vb, df)
     
   } else {
     elbo_B <- sum(sapply(1:n_bl, function(bl) {
@@ -416,9 +445,12 @@ elbo_dual_horseshoe_ <- function(Y, a_inv_vb, A2_inv, b_vb, eta, eta_vb, G_vb, g
                          sig2_theta_vb[vec_fac_bl == bl_ids[bl]], sig2_inv_vb, tau_vb)}))
     
     elbo_C <- sum(sapply(1:n_bl, function(bl) { 
-      e_theta_hs_(b_vb[vec_fac_bl == bl_ids[bl]], G_vb[vec_fac_bl == bl_ids[bl]], log_S0_inv_vb[bl] + log(d), 
-                  m0[vec_fac_bl == bl_ids[bl]], mu_theta_vb[vec_fac_bl == bl_ids[bl]], S0_inv_vb[bl] * d, 
-                  sig2_theta_vb[vec_fac_bl == bl_ids[bl]])}))
+      e_theta_hs_(b_vb[vec_fac_bl == bl_ids[bl]], G_vb[vec_fac_bl == bl_ids[bl]], 
+                  log_S0_inv_vb[bl] + log(d), m0[vec_fac_bl == bl_ids[bl]],
+                  mu_theta_vb[vec_fac_bl == bl_ids[bl]], 
+                  Q_app[vec_fac_bl == bl_ids[bl]], S0_inv_vb[bl] * d,
+                  sig2_theta_vb[vec_fac_bl == bl_ids[bl]], df)}))
+    
   }
   
   elbo_D <- e_rho_(mu_rho_vb, n0, sig2_rho_vb, T0_inv, vec_sum_log_det_rho)

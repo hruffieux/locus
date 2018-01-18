@@ -5,7 +5,7 @@
 # Internal function implementing sanity checks and needed preprocessing before
 # the application of the different `locus_*_core` algorithms.
 #
-prepare_data_ <- function(Y, X, Z, V, link, ind_bin, s02, user_seed, tol, maxit, 
+prepare_data_ <- function(Y, X, Z, V, link, ind_bin, s02, df, user_seed, tol, maxit, 
                           verbose, checkpoint_path) {
 
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
@@ -24,6 +24,8 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, s02, user_seed, tol, maxit,
   check_structure_(verbose, "vector", "logical", 1)
 
   check_structure_(X, "matrix", "numeric")
+  
+  stopifnot(df %in% c(1, 3))
   
   if (!is.null(checkpoint_path)) {
     

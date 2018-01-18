@@ -7,7 +7,7 @@
 locus(Y, X, p0_av, Z = NULL, V = NULL, s02 = 0.01, link = "identity",
   ind_bin = NULL, list_hyper = NULL, list_init = NULL, list_cv = NULL,
   list_blocks = NULL, list_groups = NULL, list_struct = NULL,
-  dual = FALSE, hyper = FALSE, hs = FALSE, eb = FALSE,
+  dual = FALSE, hyper = FALSE, hs = FALSE, df = 1, eb = FALSE,
   user_seed = NULL, tol = 0.001, maxit = 1000, anneal = NULL,
   save_hyper = FALSE, save_init = FALSE, verbose = TRUE,
   checkpoint_path = NULL)
@@ -130,6 +130,10 @@ the inference are saved as output.}
 
 \item{checkpoint_path}{Path where to save temporary checkpoint outputs. Default is
 \code{NULL}, for no checkpointing.}
+
+\item{hs}{Degrees of freedom for the local scale parameter of the Horseshoe 
+prior. Must be either 1 (default, classical Horseshoe), or 3. Not used if
+hs is \code{FALSE}.}
 }
 \value{
 An object of class "\code{vb}" containing the following variational

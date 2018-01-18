@@ -94,6 +94,9 @@
 #'   for the predictor propensities; else, Cauchy distribution. Only if 
 #'   \code{hyper} is \code{TRUE}; must be \code{FALSE} otherwise. Default is 
 #'   \code{FALSE}.
+#' @param df Degrees of freedom for the local scale parameter of the Horseshoe 
+#'   prior. Must be either 1 (default, classical Horseshoe), or 3. Not used if
+#'   hs is \code{FALSE}.
 #' @param eb If \code{TRUE}, annotation spike-and-slab variance and probability 
 #'   hyperparameters selected via an empirical Bayes procedure. Only used if 
 #'   \code{dual} is \code{TRUE} and \code{V} is non-\code{NULL}. Default is 
@@ -298,7 +301,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
                   ind_bin = NULL, list_hyper = NULL, list_init = NULL,
                   list_cv = NULL, list_blocks = NULL, list_groups = NULL,
                   list_struct = NULL, dual = FALSE, hyper = FALSE, hs = FALSE, 
-                  eb = FALSE, user_seed = NULL, tol = 1e-3, maxit = 1000, 
+                  df = 1, eb = FALSE, user_seed = NULL, tol = 1e-3, maxit = 1000, 
                   anneal = NULL, save_hyper = FALSE, save_init = FALSE, 
                   verbose = TRUE, checkpoint_path = NULL) {
   
@@ -306,7 +309,7 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
   
   check_annealing_(anneal, link, Z, V, list_groups, list_struct, dual)
   
-  dat <- prepare_data_(Y, X, Z, V, link, ind_bin, s02, user_seed, tol, maxit, 
+  dat <- prepare_data_(Y, X, Z, V, link, ind_bin, s02, df, user_seed, tol, maxit, 
                        verbose, checkpoint_path)
   
   bool_rmvd_x <- dat$bool_rmvd_x
@@ -566,9 +569,10 @@ locus <- function(Y, X, p0_av, Z = NULL, V = NULL, s02 = 1e-2, link = "identity"
             
             if (hs) {
               vb <- locus_dual_horseshoe_core_(Y, X, list_hyper, list_init$gam_vb,
-                                               list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                               list_init$tau_vb, list_struct, tol, maxit,
-                                               anneal, verbose,
+                                               list_init$mu_beta_vb, 
+                                               list_init$sig2_beta_vb,
+                                               list_init$tau_vb, df, list_struct, 
+                                               tol, maxit, anneal, verbose,
                                                checkpoint_path = checkpoint_path)
             } else {
               vb <- locus_dual_prior_core_(Y, X, list_hyper, list_init$gam_vb,
