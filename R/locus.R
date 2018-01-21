@@ -95,8 +95,8 @@
 #'   \code{hyper} is \code{TRUE}; must be \code{FALSE} otherwise. Default is 
 #'   \code{FALSE}.
 #' @param df Degrees of freedom for the local scale parameter of the Horseshoe 
-#'   prior. Must be either 1 (default, classical Horseshoe), or 3. Not used if
-#'   hs is \code{FALSE}.
+#'   prior. Must be either 1 (default, classical Horseshoe), or an odd number up
+#'   to 7. Not used if hs is \code{FALSE}.
 #' @param eb If \code{TRUE}, annotation spike-and-slab variance and probability 
 #'   hyperparameters selected via an empirical Bayes procedure. Only used if 
 #'   \code{dual} is \code{TRUE} and \code{V} is non-\code{NULL}. Default is 
@@ -118,8 +118,8 @@
 #' @param save_init If \code{TRUE}, the initial variational parameters used for
 #'   the inference are saved as output.
 #' @param verbose If \code{TRUE}, messages are displayed during execution.
-#' @param checkpoint_path Path where to save temporary checkpoint outputs. Default is
-#'   \code{NULL}, for no checkpointing.
+#' @param checkpoint_path Path where to save temporary checkpoint outputs. 
+#'   Default is \code{NULL}, for no checkpointing.
 #'
 #' @return An object of class "\code{vb}" containing the following variational
 #'   estimates and settings:

@@ -205,32 +205,42 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
       if (df == 1) {
         
         if (annealing & anneal_scale) {
-          
+
           b_vb <- gsl::gamma_inc(- c_s + 2, G_vb) / (gsl::gamma_inc(- c_s + 1, G_vb) * G_vb) - 1
-          
+
         } else {
-          
+
           Q_app <- sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s))  # TODO implement a Q_approx for vectors
-          
+
           b_vb <- 1 / (Q_app * G_vb) - 1
-          
+
         }
-        
+
       } else if (df == 3) {
-        
-        G_vb <- G_vb / 3
+
+        G_vb <- G_vb / df
+
+        Q_app <- sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s))
+
+        b_vb <- 1 / 3 * (G_vb^(-1) * (1 - G_vb * Q_app) / (Q_app * (1 + G_vb) - 1) - 1)
+
+
+      } else {
+        # also works for df = 3 but might be slightly less efficient than the above
+        G_vb <- G_vb / df
         
         Q_app <- sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s))
         
-        b_vb <- 1 / 3 * (G_vb^(-1) * (1 - G_vb * Q_app) / (Q_app * (1 + G_vb) - 1) - 1)
+        exponent <- (df + 1) / 2
         
-        
-      } else {
-        
-        stop("The degrees of freedom for the Horseshoe local scale parameter must be either 1 or 3.")
-        
-      }
+        b_vb <- sapply(1:p, function(j) {
+          
+          compute_integral_hs_(df, G_vb[j] * df, m = exponent, n = exponent, Q_ab = Q_app[j]) / 
+            compute_integral_hs_(df, G_vb[j] * df, m = exponent, n = exponent - 1, Q_ab = Q_app[j])
+          
+        })
       
+      }
       
       a_inv_vb <- lambda_a_inv_vb / nu_a_inv_vb
       
@@ -322,15 +332,16 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
                                        S0_inv_vb, sig2_theta_vb, sig2_inv_vb, sig2_rho_vb,
                                        T0_inv, tau_vb, m1_beta, m2_beta, mat_x_m1,
                                        vec_sum_log_det_rho, list_struct, df)
-        
+
         if (verbose & (it == 1 | it %% 5 == 0))
           cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
-      
-        
+
+
         if (debug && lb_new + eps < lb_old)
           stop("ELBO not increasing monotonically. Exit. ")
-        
+
         converged <- (abs(lb_new - lb_old) < tol)
+
         
         checkpoint_(it, checkpoint_path, gam_vb, converged, lb_new, lb_old, 
                     b_vb = b_vb, mu_rho_vb = mu_rho_vb, mu_theta_vb = mu_theta_vb, 

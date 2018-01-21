@@ -25,7 +25,11 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, s02, df, user_seed, tol, ma
 
   check_structure_(X, "matrix", "numeric")
   
-  stopifnot(df %in% c(1, 3))
+  check_natural_(df)
+  
+  if(df %% 2 == 0 | df > 7) {
+    stop("The degrees of freedom for the horseshoe local scale must be an odd number, up to 7.")
+  }
   
   if (!is.null(checkpoint_path)) {
     

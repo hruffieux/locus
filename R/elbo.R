@@ -387,15 +387,35 @@ e_theta_hs_ <- function(b_vb, G_vb, log_S0_inv_vb, m0, mu_theta_vb, Q_app, S0_in
           (mu_theta_vb^2 + sig2_theta_vb - 2 * m0 * mu_theta_vb + m0^2) / 2 +
           (log(sig2_theta_vb) + 1) / 2 - log(pi) + G_vb * b_vb + log(Q_app))
     
-    # sum(log_S0_inv_vb / 2  + # test! cancels
-    #       (log(sig2_theta_vb) + 1) / 2 - log(pi)  + log(Q_app))  
-    
-  } else {
-   
+ 
+  } else if (df == 3) {
+
+    # G_vb is tilde G_vb, i.e., G_vb / df
+
     log_B <- log(9) - log(Q_app * (1 + G_vb) - 1)
-    sum(log(6) + log(3) / 2 - log(pi) - log_B + G_vb * b_vb + 
+
+    sum(log(6) + log(3) / 2 - log(pi) - log_B + df * G_vb * b_vb +
           log_S0_inv_vb / 2  - S0_inv_vb * b_vb *
-          (mu_theta_vb^2 + sig2_theta_vb - 2 * m0 * mu_theta_vb + m0^2) / 2 + 
+          (mu_theta_vb^2 + sig2_theta_vb - 2 * m0 * mu_theta_vb + m0^2) / 2 +
+          (log(sig2_theta_vb) + 1) / 2)
+
+  } else {
+    
+    # valid for df = odd number, so should also be valid for df = 1 and 3, 
+    # but the above is slightly more efficient
+    
+    p <- length(b_vb)
+    
+    exponent <- (df + 1) / 2
+    
+    # G_vb is tilde G_vb, i.e., G_vb / df 
+    log_B <- - log(sapply(1:p, function(j) {
+      compute_integral_hs_(df, G_vb[j] * df, m = exponent, n = exponent - 1, Q_ab = Q_app[j])}))
+    
+    sum(-log(pi) / 2 - lgamma(df / 2) + df * log(df) / 2 + lfactorial((df - 1)/2) - 
+          log_B + df * G_vb * b_vb  +
+          log_S0_inv_vb / 2 - S0_inv_vb * b_vb *
+          (mu_theta_vb^2 + sig2_theta_vb - 2 * m0 * mu_theta_vb + m0^2) / 2 +
           (log(sig2_theta_vb) + 1) / 2)
     
   }

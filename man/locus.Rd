@@ -99,6 +99,10 @@ for the predictor propensities; else, Cauchy distribution. Only if
 \code{hyper} is \code{TRUE}; must be \code{FALSE} otherwise. Default is 
 \code{FALSE}.}
 
+\item{df}{Degrees of freedom for the local scale parameter of the Horseshoe 
+prior. Must be either 1 (default, classical Horseshoe), or an odd number up
+to 7. Not used if hs is \code{FALSE}.}
+
 \item{eb}{If \code{TRUE}, annotation spike-and-slab variance and probability 
 hyperparameters selected via an empirical Bayes procedure. Only used if 
 \code{dual} is \code{TRUE} and \code{V} is non-\code{NULL}. Default is 
@@ -128,12 +132,8 @@ the inference are saved as output.}
 
 \item{verbose}{If \code{TRUE}, messages are displayed during execution.}
 
-\item{checkpoint_path}{Path where to save temporary checkpoint outputs. Default is
-\code{NULL}, for no checkpointing.}
-
-\item{hs}{Degrees of freedom for the local scale parameter of the Horseshoe 
-prior. Must be either 1 (default, classical Horseshoe), or 3. Not used if
-hs is \code{FALSE}.}
+\item{checkpoint_path}{Path where to save temporary checkpoint outputs. 
+Default is \code{NULL}, for no checkpointing.}
 }
 \value{
 An object of class "\code{vb}" containing the following variational
