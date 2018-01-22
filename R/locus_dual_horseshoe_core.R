@@ -222,9 +222,8 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
 
         Q_app <- sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s))
 
-        b_vb <- 1 / 3 * (G_vb^(-1) * (1 - G_vb * Q_app) / (Q_app * (1 + G_vb) - 1) - 1)
-
-
+        b_vb <- exp(-log(3) - log(G_vb) + log(1 - G_vb * Q_app) - log(Q_app * (1 + G_vb) - 1)) - 1 / 3
+        
       } else {
         # also works for df = 3 but might be slightly less efficient than the above
         G_vb <- G_vb / df
@@ -235,8 +234,8 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
         
         b_vb <- sapply(1:p, function(j) {
           
-          compute_integral_hs_(df, G_vb[j] * df, m = exponent, n = exponent, Q_ab = Q_app[j]) / 
-            compute_integral_hs_(df, G_vb[j] * df, m = exponent, n = exponent - 1, Q_ab = Q_app[j])
+          exp(log(compute_integral_hs_(df, G_vb[j] * df, m = exponent, n = exponent, Q_ab = Q_app[j])) -
+                log(compute_integral_hs_(df, G_vb[j] * df, m = exponent, n = exponent - 1, Q_ab = Q_app[j])))
           
         })
       
