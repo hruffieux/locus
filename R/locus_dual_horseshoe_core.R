@@ -22,8 +22,12 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
     
     # Preparing annealing if any
     #
-    anneal_scale <- FALSE # if TRUE, scale parameters s02 and b_vb also annealed. ###########################
-    
+    if (df == 1) {
+      anneal_scale <- TRUE # if TRUE, scale parameters s02 and b_vb also annealed. 
+    } else {
+      anneal_scale <- FALSE # annealed b_vb updates not implemented for df > 1 (need to compute a nasty integral)
+    }
+
     
     if (df == 3 && !is.null(anneal) && anneal_scale) {
       stop("Annealing for scale paramters not yet implemented with df = 3.")

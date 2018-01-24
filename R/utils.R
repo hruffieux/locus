@@ -413,28 +413,36 @@ compute_integral_hs_ <- function(alpha, beta, m, n, Q_ab) {
       
     } else if (n == 3) {
       
-      out <- out - 3 * alpha^(-4) * Q_ab + 
-        3 * alpha^(-5) * (alpha - beta * Q_ab) -
-        alpha^(-6) / 2 * (-beta * alpha + alpha^2 + beta^2 * Q_ab)
-    
+      v1 <- c(-3 * log(alpha) - log(beta),
+              log(3) - 4 * log(alpha),
+              -5 * log(alpha) - log(2) + log(beta))
+      
+      
+      v2 <- c(log(3) - 4 * log(alpha) + log(Q_ab),
+              log(3) - 5 * log(alpha) + log(beta) + log(Q_ab),
+              -4 * log(alpha) - log(2),
+              -6 * log(alpha) - log(2) + 2 * log(beta) + log(Q_ab))
+      
+      out <- exp(log_sum_exp_(v1)) - exp(log_sum_exp_(v2))
+      
     } else if (n == 4){
-
-      v1 <- c(-n * log(alpha) - log(beta),
-              log(4) - 6 * log(alpha) + log(alpha),
-              log(4) - 7 * log(alpha) - log(2) + 2 * log(alpha),
-              log(4) - 7 * log(alpha) - log(2) + 2 * log(beta) + log(Q_ab),
-              -8 * log(alpha) - log(6) + 2 * log(beta) + log(alpha),
-              -8 * log(alpha) - log(6) + log(2) + 3 * log(alpha))
+      
+      v1 <- c(-4 * log(alpha) - log(beta),
+              log(4) - 5 * log(alpha),
+              log(2) - 5 * log(alpha),
+              log(2) - 7 * log(alpha) + 2 * log(beta) + log(Q_ab),
+              -7 * log(alpha) - log(6) + 2 * log(beta),
+              -5 * log(alpha) - log(3))
       
       v2 <- c(log(4) - 5 * log(alpha) + log(Q_ab),
               log(4) - 6 * log(alpha) + log(beta) + log(Q_ab),
-              log(4) - 7 * log(alpha) - log(2)  + log(beta),
-              -8 * log(alpha) - log(6) + log(beta) + 2 * log(alpha))
+              log(2) - 7 * log(alpha) + log(beta),
+              -6 * log(alpha) - log(6) + log(beta))
       
       out <- exp(log_sum_exp_(v1)) - exp(log_sum_exp_(v2))
-    
+      
     } else {
-
+      
       v1 <- c(-n * log(alpha) - log(beta), 
               -n * log(alpha) + log(n) + unlist(sapply(2:(n-1), function(k) {
                 -k * log(alpha) - lfactorial(k-1) +
@@ -459,71 +467,71 @@ compute_integral_hs_ <- function(alpha, beta, m, n, Q_ab) {
       )
       
       out <- exp(log_sum_exp_(v1)) - exp(log_sum_exp_(v2))
-
+      
     }
-  
+    
     
   } else if (m == n + 1) { # not stable for n >= 4, i.e., can't be used for df = 9 and higher.
     
     if (n == 1) {
-
-      out <- alpha^(-2) * Q_ab - alpha^(-2) +  alpha^(-3) * beta * Q_ab
-
-    } else if (n == 2){
-
-      v1 <- c(-3 * log(alpha) + log(Q_ab),
-              -5 * log(alpha) - log(2) + 2 * log(alpha),
-              -5 * log(alpha) - log(2) + 2 * log(beta) + log(Q_ab),
-              -2 * log(alpha) + log(2) - 2 * log(alpha) + log(beta) + log(Q_ab)
-      )
-
-      v2 <- c(-5 * log(alpha) - log(2) + log(beta) + log(alpha),
-              -2 * log(alpha) + log(2) - 2 * log(alpha) + log(alpha)
-      )
-
-
-      out <- exp(log_sum_exp_(v1)) - exp(log_sum_exp_(v2))
-
-
-     } else {
       
-       
-       v1 <- c(-(n+1) * log(alpha) + log(Q_ab),
-               -(2*n+1) * log(alpha) - lfactorial(n) +
-                 sapply(seq(2, n, by = 2), function(j) {
-                   lfactorial(j-1) + (n-j) * log(beta) + j * log(alpha)}),
-               -(2*n+1) * log(alpha) - lfactorial(n) + n * log(beta) + log(Q_ab),
-               -n * log(alpha) + log(n) + unlist(sapply(2:(n-1), function(k) {
-                 -(1+k) * log(alpha) - lfactorial(k) +
-                   sapply(seq(2, k, by = 2), function(j) {
-                     lfactorial(j-1) + (k-j) * log(beta) + j * log(alpha) })
-               })),
-               -n * log(alpha) + log(n) + sapply(1:(n-1), function(k) {
-                 -(1+k) * log(alpha) - lfactorial(k) + k * log(beta) + log(Q_ab)
-               })
-       )
-
-       v2 <- c(-(2*n+1) * log(alpha) - lfactorial(n) +
-                 sapply(seq(1, n, by = 2), function(j) {
-                   lfactorial(j-1) + (n-j) * log(beta) + j * log(alpha)}),
-               -n * log(alpha) + log(n) + unlist(sapply(1:(n-1), function(k) {
-                 -(1+k) * log(alpha) - lfactorial(k) +
-                   sapply(seq(1, k, by = 2), function(j) {
-                     lfactorial(j-1) + (k-j) * log(beta) + j * log(alpha) })
-               }))
-
-       )
-       
-       out <- exp(log_sum_exp_(v1)) - exp(log_sum_exp_(v2))
-        
-  }
-
+      out <- alpha^(-2) * Q_ab - alpha^(-2) +  alpha^(-3) * beta * Q_ab
+      
+    } else if (n == 2){
+      
+      v1 <- c(-3 * log(alpha) + log(Q_ab),
+              -3 * log(alpha) - log(2),
+              -5 * log(alpha) - log(2) + 2 * log(beta) + log(Q_ab),
+              -4 * log(alpha) + log(2) + log(beta) + log(Q_ab)
+      )
+      
+      v2 <- c(-4 * log(alpha) - log(2) + log(beta),
+              -3 * log(alpha) + log(2)
+      )
+      
+      
+      out <- exp(log_sum_exp_(v1)) - exp(log_sum_exp_(v2))
+      
+    } else {
+      
+      
+      v1 <- c(-(n+1) * log(alpha) + log(Q_ab),
+              -(2*n+1) * log(alpha) - lfactorial(n) +
+                sapply(seq(2, n, by = 2), function(j) {
+                  lfactorial(j-1) + (n-j) * log(beta) + j * log(alpha)}),
+              -(2*n+1) * log(alpha) - lfactorial(n) + n * log(beta) + log(Q_ab),
+              -n * log(alpha) + log(n) + unlist(sapply(2:(n-1), function(k) {
+                -(1+k) * log(alpha) - lfactorial(k) +
+                  sapply(seq(2, k, by = 2), function(j) {
+                    lfactorial(j-1) + (k-j) * log(beta) + j * log(alpha) })
+              })),
+              -n * log(alpha) + log(n) + sapply(1:(n-1), function(k) {
+                -(1+k) * log(alpha) - lfactorial(k) + k * log(beta) + log(Q_ab)
+              })
+      )
+      
+      
+      v2 <- c(-(2*n+1) * log(alpha) - lfactorial(n) +
+                sapply(seq(1, n, by = 2), function(j) {
+                  lfactorial(j-1) + (n-j) * log(beta) + j * log(alpha)}),
+              -n * log(alpha) + log(n) + unlist(sapply(1:(n-1), function(k) {
+                -(1+k) * log(alpha) - lfactorial(k) +
+                  sapply(seq(1, k, by = 2), function(j) {
+                    lfactorial(j-1) + (k-j) * log(beta) + j * log(alpha) })
+              }))
+              
+      )
+      
+      out <- exp(log_sum_exp_(v1)) - exp(log_sum_exp_(v2))
+      
+    }
+    
   } else {
     
     stop("Invalid value of m, must be n or n + 1.")
     
   }
- 
+  
   out
 }
 
