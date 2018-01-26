@@ -149,6 +149,29 @@ update_g_m1_btXtXb_ <- function(list_X, gam_vb, list_mu_beta_vb, list_sig2_beta_
 }
 
 
+####################
+## b's updates ##
+####################
+
+
+update_annealed_b_vb_ <- function(G_vb, c, df) { # here G_vb <- c * G_vb / df
+  
+  if (df == 1) {
+
+    gsl::gamma_inc(- c + 2, G_vb) / (gsl::gamma_inc(- c + 1, G_vb) * G_vb) - 1
+
+   } else { # also works for df = 1, but slightly less efficient
+
+    (gamma(c * (df - 1) / 2 + 2) * gamma(c) * gsl::hyperg_1F1(c * (df - 1) / 2 + 2, 3 - c, G_vb) / (c - 1) / (c - 2) / gamma(c * (df + 1) / 2) +
+               gamma(2 - c) * G_vb^(c - 2) * gsl::hyperg_1F1(c * (df + 1) / 2, c - 1, G_vb) ) /
+      (gamma(c * (df - 1) / 2 + 1) * gamma(c) * gsl::hyperg_1F1(c * (df - 1) / 2 + 1, 2 - c, G_vb) / (c - 1) / gamma(c * (df + 1) / 2) +
+         gamma(1 - c) * G_vb^(c - 1) * gsl::hyperg_1F1(c * (df + 1) / 2, c, G_vb) ) / df
+
+  }
+  
+}
+
+
 ########################
 ## c0 and c's updates ##
 ########################

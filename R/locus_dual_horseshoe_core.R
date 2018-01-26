@@ -22,16 +22,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
     
     # Preparing annealing if any
     #
-    if (df == 1) {
-      anneal_scale <- TRUE # if TRUE, scale parameters s02 and b_vb also annealed. 
-    } else {
-      anneal_scale <- FALSE # annealed b_vb updates not implemented for df > 1 (need to compute a nasty integral)
-    }
-
-    
-    if (df == 3 && !is.null(anneal) && anneal_scale) {
-      stop("Annealing for scale paramters not yet implemented with df = 3.")
-    }
+    anneal_scale <- TRUE
     
     if (is.null(anneal)) {
       annealing <- FALSE
@@ -192,58 +183,57 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
       
       if (is.null(list_struct)) {
         
-        G_vb <- c_s * S0_inv_vb * d * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2) / 2 # b_vb not annealed. possibly no closed form.
-        nu_a_inv_vb <- c_s * (A2_inv + S0_inv_vb)
+        G_vb <- c_s * S0_inv_vb * d * (mu_theta_vb^2 + sig2_theta_vb - 2 * mu_theta_vb * m0 + m0^2) / 2 / df 
+        nu_a_inv_vb <- c_s * (A2_inv + S0_inv_vb) 
         
       } else {
         
         G_vb <- unlist(lapply(1:n_bl, function(bl) { c_s * S0_inv_vb[bl] * d * 
             (mu_theta_vb[vec_fac_bl == bl_ids[bl]]^2 + sig2_theta_vb[vec_fac_bl == bl_ids[bl]] - 
                2 * mu_theta_vb[vec_fac_bl == bl_ids[bl]] * m0[vec_fac_bl == bl_ids[bl]] + 
-               m0[vec_fac_bl == bl_ids[bl]]^2) / 2 }))
+               m0[vec_fac_bl == bl_ids[bl]]^2) / 2 })) / df
         
         nu_a_inv_vb <- sapply(1:n_bl, function(bl) c_s * (A2_inv + S0_inv_vb[bl]))
         
       } 
       
-      if (df == 1) {
-        
-        if (annealing & anneal_scale) {
+      
+      if (annealing & anneal_scale) {
 
-          b_vb <- gsl::gamma_inc(- c_s + 2, G_vb) / (gsl::gamma_inc(- c_s + 1, G_vb) * G_vb) - 1
-
-        } else {
-
-          Q_app <- sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s))  # TODO implement a Q_approx for vectors
-
-          b_vb <- 1 / (Q_app * G_vb) - 1
-
-        }
-
-      } else if (df == 3) {
-
-        G_vb <- G_vb / df
-
-        Q_app <- sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s))
-
-        b_vb <- exp(-log(3) - log(G_vb) + log(1 - G_vb * Q_app) - log(Q_app * (1 + G_vb) - 1)) - 1 / 3
+        b_vb <- update_annealed_b_vb_(G_vb, c_s, df)
         
       } else {
-        # also works for df = 3 but might be slightly less efficient than the above
-        G_vb <- G_vb / df
         
-        Q_app <- sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s))
-        
-        exponent <- (df + 1) / 2
-        
-        b_vb <- sapply(1:p, function(j) {
+        if (df == 1) {
           
-          exp(log(compute_integral_hs_(df, G_vb[j] * df, m = exponent, n = exponent, Q_ab = Q_app[j])) -
-                log(compute_integral_hs_(df, G_vb[j] * df, m = exponent, n = exponent - 1, Q_ab = Q_app[j])))
+          Q_app <- sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s))  # TODO implement a Q_approx for vectors
           
-        })
-      
+          b_vb <- 1 / (Q_app * G_vb) - 1
+          
+        } else if (df == 3) {
+          
+          Q_app <- sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s))
+          
+          b_vb <- exp(-log(3) - log(G_vb) + log(1 - G_vb * Q_app) - log(Q_app * (1 + G_vb) - 1)) - 1 / 3
+          
+        } else {
+          # also works for df = 3 but might be slightly less efficient than the above
+          
+          Q_app <- sapply(G_vb, function(G_vb_s) Q_approx(G_vb_s))
+          
+          exponent <- (df + 1) / 2
+          
+          b_vb <- sapply(1:p, function(j) {
+            
+            exp(log(compute_integral_hs_(df, G_vb[j] * df, m = exponent, n = exponent, Q_ab = Q_app[j])) -
+                  log(compute_integral_hs_(df, G_vb[j] * df, m = exponent, n = exponent - 1, Q_ab = Q_app[j])))
+            
+          })
+          
+        }
+        
       }
+      
       
       a_inv_vb <- lambda_a_inv_vb / nu_a_inv_vb
       
@@ -335,16 +325,16 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
                                        S0_inv_vb, sig2_theta_vb, sig2_inv_vb, sig2_rho_vb,
                                        T0_inv, tau_vb, m1_beta, m2_beta, mat_x_m1,
                                        vec_sum_log_det_rho, list_struct, df)
-
+        
         if (verbose & (it == 1 | it %% 5 == 0))
           cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
-
-
+        
+        
         if (debug && lb_new + eps < lb_old)
           stop("ELBO not increasing monotonically. Exit. ")
-
+        
         converged <- (abs(lb_new - lb_old) < tol)
-
+        
         
         checkpoint_(it, checkpoint_path, gam_vb, converged, lb_new, lb_old, 
                     b_vb = b_vb, mu_rho_vb = mu_rho_vb, mu_theta_vb = mu_theta_vb, 
