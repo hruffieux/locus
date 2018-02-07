@@ -20,7 +20,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects
     
-    shr_fac_inv <- d * (log(d) + 1)^2 # = 1 / shrinkage_factor for global variance
+    shr_fac_inv <- d # = 1 / shrinkage_factor for global variance
     
     # Preparing annealing if any
     #
