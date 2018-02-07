@@ -283,15 +283,15 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
       if (verbose & (it == 1 | it %% 5 == 0)) {
         
         if (is.null(list_struct)) {
-          cat(paste0("Updated s02 / d: ", format(1 / S0_inv_vb / shr_fac_inv, digits = 4), ".\n"))
-          cat("Updated 1 / b: \n")
+          cat(paste0("Updated global variance: ", format(1 / S0_inv_vb / shr_fac_inv, digits = 4), ".\n"))
+          cat("Updated local variances: \n")
           print(summary(1 / b_vb))
           cat("\n")
         } else {
-          cat("Updated block-specific s02 / d: \n")
+          cat("Updated block-specific global variances: \n")
           print(summary(1 / S0_inv_vb / shr_fac_inv))
           cat("\n")
-          cat("Updated 1 / b: \n")
+          cat("Updated local variances: \n")
           print(summary(1 / b_vb))
           cat("\n")
         }
@@ -404,7 +404,6 @@ elbo_dual_horseshoe_ <- function(Y, a_inv_vb, A2_inv, b_vb, eta, eta_vb, G_vb,
                                  list_struct, df, shr_fac_inv) {
   
   n <- nrow(Y)
-  d <- nrow(Y)
   p <- length(G_vb)
   
   # needed for monotonically increasing elbo.

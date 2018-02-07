@@ -205,9 +205,9 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
       if (verbose & (it == 1 | it %% 5 == 0)) {
         
         if (is.null(list_struct)) {
-          cat(paste0("Updated s02 / d: ", format(1 / S0_inv_vb / d, digits = 4), ".\n"))
+          cat(paste0("Updated global variance: ", format(1 / S0_inv_vb / d, digits = 4), ".\n"))
         } else {
-          cat("Updated block-specific s02 / d: \n")
+          cat("Updated block-specific global variances: \n")
           print(summary(1 / S0_inv_vb / d))
           cat("\n")
         }
@@ -317,7 +317,7 @@ elbo_dual_prior_ <- function(Y, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                              vec_sum_log_det_rho, list_struct) {
   
   n <- nrow(Y)
-  d <- nrow(Y)
+  d <- ncol(Y)
   p <- length(m0)
   
   # needed for monotonically increasing elbo.
