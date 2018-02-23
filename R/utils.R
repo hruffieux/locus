@@ -577,3 +577,43 @@ checkpoint_clean_up_ <- function(checkpoint_path) {
   
 }
  
+
+plot_trace_var_hs_ <- function(b_vb, S0_inv_vb, shr_fac_inv, it, trace_ind_max, trace_var_max, path_trace) {
+  
+  x <- 1 / S0_inv_vb * 1 / b_vb / shr_fac_inv
+  
+  vec_ind_max <- which(x == max(x))
+  
+  nb_max <- 4
+  for (i in 2:nb_max) {
+    
+    vec_ind_max <- c(vec_ind_max, which(x == max(x[-vec_ind_max])))
+    
+  }
+  
+  trace_ind_max <- rbind(trace_ind_max, vec_ind_max)
+  trace_var_max <- rbind(trace_var_max, x[vec_ind_max])
+  rownames(trace_var_max)[nrow(trace_var_max)] <- rownames(trace_ind_max)[nrow(trace_ind_max)] <- it
+  
+  # display
+  list_changepoints <- lapply(1:nb_max, function(i) {
+    1 + which(diff(trace_ind_max[, i]) != 0)
+  })
+  
+  png(file.path(path_trace, "traces_top_local_x_global_variances.png"), width = 5000, height = 4000,
+      res = 600, type="cairo")
+  
+  matplot(rownames(trace_var_max), trace_var_max, type = "o", col = "black", bg = 2:5, pch = 16,
+          main = "Trace lambda_s^2 x tau^2", xlab = "Iteration",
+          ylab = paste0("Traces for the ", nb_max, " largest hotspot variances"))
+  for (i in 1:nb_max) {
+    points(rownames(trace_var_max)[list_changepoints[[i]]], trace_var_max[list_changepoints[[i]], i], col = "blue", pch = 16)
+  }
+  abline(h = 5, col = "red", lty = 3)
+  legend("topleft", legend = "Current predictor different from that of previous iterations on the path.", col = "blue", pch = 16, bty = "n", cex = 0.8)
+  
+  dev.off()
+  
+  create_named_list_(trace_ind_max, trace_var_max)
+  
+}

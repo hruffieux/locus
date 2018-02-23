@@ -5,8 +5,8 @@
 # Internal function implementing sanity checks and needed preprocessing before
 # the application of the different `locus_*_core` algorithms.
 #
-prepare_data_ <- function(Y, X, Z, V, link, ind_bin, s02, df, user_seed, tol, maxit, 
-                          verbose, checkpoint_path) {
+prepare_data_ <- function(Y, X, Z, V, link, ind_bin, s02, hs, df, user_seed, tol, 
+                          maxit, verbose, checkpoint_path, trace_path) {
 
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
 
@@ -27,10 +27,6 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, s02, df, user_seed, tol, ma
   
   check_natural_(df)
   
-  if(df %% 2 == 0 | df > 7) {
-    stop("The degrees of freedom for the horseshoe local scale must be an odd number, up to 7.")
-  }
-  
   if (!is.null(checkpoint_path)) {
     
     if (!dir.exists(checkpoint_path)) {
@@ -38,7 +34,18 @@ prepare_data_ <- function(Y, X, Z, V, link, ind_bin, s02, df, user_seed, tol, ma
     }
     
     if (!is.null(Z) | !is.null(V) | link != "identity")
-      stop("Checkpointing only implemented for Z and V NULL and link = identity. Please set checkpoint_path to NULL.")
+      warning("Checkpointing only implemented for Z and V NULL and link = identity. Path specified in checkpoint_path is ignored.")
+    
+  }
+  
+  if (!is.null(trace_path)) {
+    
+    if (!dir.exists(trace_path)) {
+      stop("The directory specified in trace_path doesn't exist. Please make sure to provide a valid path.")
+    }
+    
+    if (!hs | !is.null(V))
+      warning("Trace display only valid for the horseshoe model with V = NULL. Path specified in trace_path is ignored.")
     
   }
   

@@ -9,7 +9,8 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
                                        sig2_beta_vb, tau_vb, df, list_struct, 
                                        tol, maxit, anneal, verbose, batch = "y", 
                                        full_output = FALSE, debug = TRUE, 
-                                       checkpoint_path = NULL) {
+                                       checkpoint_path = NULL,
+                                       trace_path = NULL) {
   
   # Y must have been centered, and X standardized.
   
@@ -17,8 +18,12 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
   n <- nrow(Y)
   p <- ncol(X)
   
+  # Preparing trace saving if any
+  #
+  trace_ind_max <- trace_var_max <- NULL
+  
   with(list_hyper, { # list_init not used with the with() function to avoid
-                     # copy-on-write for large objects
+    # copy-on-write for large objects
     
     shr_fac_inv <- d # = 1 / shrinkage_factor for global variance
     
@@ -201,7 +206,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
       
       
       if (annealing & anneal_scale) {
-
+        
         b_vb <- update_annealed_b_vb_(G_vb, c_s, df)
         
       } else {
@@ -280,7 +285,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
                                      is_mat = FALSE, c = c) 
       
       
-      if (verbose & (it == 1 | it %% 5 == 0)) {
+      if (verbose && (it == 1 | it %% 5 == 0)) {
         
         if (is.null(list_struct)) {
           cat(paste0("Updated global variance: ", format(1 / S0_inv_vb / shr_fac_inv, digits = 4), ".\n"))
@@ -297,6 +302,15 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
         }
         
       }
+      
+      if (!is.null(trace_path) && (it == 1 | it %% 25 == 0)) {
+        
+        list_traces <- plot_trace_var_hs_(b_vb, S0_inv_vb, d, it, trace_ind_max, trace_var_max, trace_path)
+        trace_ind_max <- list_traces$trace_ind_max
+        trace_var_max <- list_traces$trace_var_max
+        
+      }
+      
       
       if (annealing) {
         
@@ -382,12 +396,12 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
       diff_lb <- abs(lb_opt - lb_old)
       
       create_named_list_(gam_vb, mu_theta_vb, mu_rho_vb, converged, it, lb_opt,
-                         diff_lb, S0_inv_vb, b_vb, df)
+                         diff_lb, S0_inv_vb, b_vb, df, trace_ind_max, trace_var_max)
       
     }
   })
   
-}
+  }
 
 
 

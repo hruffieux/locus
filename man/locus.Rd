@@ -10,7 +10,7 @@ locus(Y, X, p0_av, Z = NULL, V = NULL, s02 = 0.01, link = "identity",
   dual = FALSE, hyper = FALSE, hs = FALSE, df = 1, eb = FALSE,
   user_seed = NULL, tol = 0.001, maxit = 1000, anneal = NULL,
   save_hyper = FALSE, save_init = FALSE, verbose = TRUE,
-  checkpoint_path = NULL)
+  checkpoint_path = NULL, trace_path = NULL)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of
@@ -134,6 +134,10 @@ the inference are saved as output.}
 
 \item{checkpoint_path}{Path where to save temporary checkpoint outputs. 
 Default is \code{NULL}, for no checkpointing.}
+
+\item{trace_path}{Path where to save trace plot for the variance of hotspot
+propensities. Only used for the Horseshoe model, is ignored if \code{hs} is
+\code{FALSE}. Default is \code{NULL}, for no trace saved.}
 }
 \value{
 An object of class "\code{vb}" containing the following variational
