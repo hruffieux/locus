@@ -25,7 +25,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
   with(list_hyper, { # list_init not used with the with() function to avoid
     # copy-on-write for large objects
     
-    shr_fac_inv <- d # = 1 / shrinkage_factor for global variance
+    shr_fac_inv <- 1 # = 1 / shrinkage_factor for global variance
     
     # Preparing annealing if any
     #
@@ -57,25 +57,25 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
     
     # Variance initialization
     #
-    S0_inv_vb <- rgamma(n_bl, shape = (bl_lgths + 1) / 2, rate = 1) # initial guess
-    
+    S0_inv_vb <- rgamma(n_bl, shape = sapply(bl_lgths, function(lgth) max(lgth, d)), rate = 1) 
     
     # Some hyperparameters
     #
-    A2_inv <- 1 #  hyperparameter # TODO: see how to fix, sensitivity analysis
+    A2_inv <- d #  hyperparameter # TODO: see how to fix, sensitivity analysis
     
-    # Choose m0 so that, `a priori' (i.e. before optimization), E_p_gam is as specified by the user:
-    n0_star <- - n0[1]
-    m0_star <- n0_star * (sqrt(1 + (1/S0_inv_vb[1] / shr_fac_inv) / (1 + t02)) - 1) # assumes b equiv 1. see hyperparameter_setting document. m0 not needed anymore in set_hyper.
+    # Choose m0 so that, `a priori' (i.e. before optimization), E_p_gam is as specified by the user. 
+    # In fact, we assume that the variance of theta (s0^2 in the hyperparameter doc) 
+    # is very small so that the shift is negligeable: we set m0 to 0.
+    #
+    m0 <- rep(0, p)
     
-    m0 <- - rep(m0_star, p)
     
     # Parameter initialization here for the top level 
     #
-    mu_theta_vb <- rnorm(p, mean = m0, sd = abs(m0) / 5) # m0 ########################### see how to set m0 
+    mu_theta_vb <- rnorm(p, sd = 1 / sqrt(S0_inv_vb[1] * shr_fac_inv)) 
     sig2_theta_vb <- 1 / (d + rgamma(p, shape = S0_inv_vb[1] * shr_fac_inv, rate = 1)) # initial guess assuming b_vb = 1
     
-    mu_rho_vb <- rnorm(d, mean = n0, sd = abs(n0) / 5) # n0
+    mu_rho_vb <- rnorm(d, mean = n0, sd = sqrt(t02))
     
     
     # Response-specific parameters: objects derived from t02
@@ -288,15 +288,15 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
       if (verbose && (it == 1 | it %% 5 == 0)) {
         
         if (is.null(list_struct)) {
-          cat(paste0("Updated global variance: ", format(1 / S0_inv_vb / shr_fac_inv, digits = 4), ".\n"))
-          cat("Updated local variances: \n")
+          cat(paste0("Updated global variance: ", format(nu_s0_vb / (lambda_s0_vb - 1) / shr_fac_inv, digits = 4), ".\n"))
+          cat("Updated local variational parameter 1 / mu_b_vb for local variances: \n")
           print(summary(1 / b_vb))
           cat("\n")
         } else {
           cat("Updated block-specific global variances: \n")
-          print(summary(1 / S0_inv_vb / shr_fac_inv))
+          print(summary(nu_s0_vb / (lambda_s0_vb - 1) / shr_fac_inv))
           cat("\n")
-          cat("Updated local variances: \n")
+          cat("Updated local variational parameter 1 / mu_b_vb for local variances: \n")
           print(summary(1 / b_vb))
           cat("\n")
         }
@@ -372,13 +372,14 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
     }
     
     lb_opt <- lb_new
+    s02_vb <- nu_s0_vb / (lambda_s0_vb - 1) / shr_fac_inv
     
     if (full_output) { # for internal use only
       
       create_named_list_(a_inv_vb, A2_inv, b_vb, eta, eta_vb, G_vb, gam_vb, kappa, kappa_vb, lambda,
                          lambda_vb, lambda_a_inv_vb, lambda_s0_vb, m0, n0, mu_rho_vb,
                          mu_theta_vb, nu, nu_vb, nu_a_inv_vb, nu_s0_vb, Q_app, sig2_beta_vb,
-                         S0_inv_vb, sig2_theta_vb, sig2_inv_vb, sig2_rho_vb,
+                         S0_inv_vb, s02_vb, sig2_theta_vb, sig2_inv_vb, sig2_rho_vb,
                          T0_inv, tau_vb, m1_beta, m2_beta, mat_x_m1,
                          vec_sum_log_det_rho, list_struct, df, shr_fac_inv)
       
@@ -396,12 +397,12 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
       diff_lb <- abs(lb_opt - lb_old)
       
       create_named_list_(gam_vb, mu_theta_vb, mu_rho_vb, converged, it, lb_opt,
-                         diff_lb, S0_inv_vb, b_vb, df, trace_ind_max, trace_var_max)
+                         diff_lb, S0_inv_vb, s02_vb, b_vb, df, trace_ind_max, trace_var_max)
       
     }
   })
   
-  }
+}
 
 
 

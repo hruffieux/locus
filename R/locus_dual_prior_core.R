@@ -40,6 +40,7 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
     #
     if (is.null(list_struct)) { # /! here list_struct is used to define block-specific s02, not to inject structure!
       n_bl <- 1
+      bl_lgths <- p
     } else {
       vec_fac_bl <- list_struct$vec_fac_st
       bl_ids <- list_struct$bl_ids <- unique(vec_fac_bl)
@@ -49,20 +50,16 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
     
     lambda_s0 <- nu_s0 <- rep(1 / 2, n_bl) # gives rise to a Cauchy prior for theta
     
-    S0_inv_vb <- lambda_s0 / nu_s0 # initial values S0_inv_vb = Sigma0_inv = s0^-2 I_p but we store s0^-2
+    S0_inv_vb <- rgamma(n_bl, shape = sapply(bl_lgths, function(lgth) max(lgth, d)), rate = 1) 
     
-    # Choose m0 so that, `a priori' (i.e. before optimization), E_p_gam is as specified by the user:
+    # Choose m0 so that, `a priori' (i.e. before optimization), E_p_gam is as specified by the user. 
+    # In fact, we assume that the variance of theta (s0^2 in the hyperparameter doc) 
+    # is very small so that the shift is negligeable: we set m0 to 0.
     #
-    n0_star <- - n0[1]
-    m0_star <- n0_star * (sqrt(1 + (1/S0_inv_vb[1] / d) / (1 + t02)) - 1) # see hyperparameter_setting document. m0 not needed anymore in set_hyper.
+    m0 <- rep(0, p)
     
-    m0 <- - rep(m0_star, p)
-    
-    # Parameter initialization here for the top level only
-    #
-    mu_theta_vb <- rnorm(p, mean = m0, sd = abs(m0) / 5) # m0 # doesn't seem to change anything here. ########################### see how to set m0 
-    mu_rho_vb <- rnorm(d, mean = n0, sd = abs(n0) / 5) # n0
-    
+    mu_theta_vb <- rnorm(p, sd = 1 / sqrt(S0_inv_vb[1] * d)) 
+    mu_rho_vb <- rnorm(d, mean = n0, sd = sqrt(t02))
     
     # Response-specific parameters: objects derived from t02
     #
@@ -205,10 +202,10 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
       if (verbose & (it == 1 | it %% 5 == 0)) {
         
         if (is.null(list_struct)) {
-          cat(paste0("Updated global variance: ", format(1 / S0_inv_vb / d, digits = 4), ".\n"))
+          cat(paste0("Updated global variance: ", format(nu_s0_vb / (lambda_s0_vb - 1) / d, digits = 4), ".\n"))
         } else {
           cat("Updated block-specific global variances: \n")
-          print(summary(1 / S0_inv_vb / d))
+          print(summary(nu_s0_vb / (lambda_s0_vb - 1) / d))
           cat("\n")
         }
         
@@ -275,12 +272,14 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
     
     lb_opt <- lb_new
     
+    s02_vb <- nu_s0_vb / (lambda_s0_vb - 1) / d
+    
     if (full_output) { # for internal use only
       
       create_named_list_(eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                          lambda_vb, lambda_s0, lambda_s0_vb, m0, n0, mu_rho_vb,
                          mu_theta_vb, nu, nu_vb, nu_s0, nu_s0_vb, sig2_beta_vb,
-                         S0_inv_vb, sig2_theta_vb, sig2_inv_vb, sig2_rho_vb,
+                         S0_inv_vb, s02_vb, sig2_theta_vb, sig2_inv_vb, sig2_rho_vb,
                          T0_inv, tau_vb, m1_beta, m2_beta,
                          vec_sum_log_det_rho)
       
@@ -297,7 +296,7 @@ locus_dual_prior_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_be
       diff_lb <- abs(lb_opt - lb_old)
       
       create_named_list_(gam_vb, mu_theta_vb, mu_rho_vb, converged, it, lb_opt,
-                         diff_lb, S0_inv_vb)
+                         diff_lb, S0_inv_vb, s02_vb)
       
     }
   })
