@@ -600,12 +600,12 @@ plot_trace_var_hs_ <- function(b_vb, S0_inv_vb, shr_fac_inv, it, trace_ind_max, 
     1 + which(diff(trace_ind_max[, i]) != 0)
   })
   
-  png(file.path(path_trace, "traces_top_local_x_global_variances.png"), width = 5000, height = 4000,
+  png(file.path(path_trace, "traces_top_local_x_global_parameters.png"), width = 5000, height = 4000,
       res = 600, type="cairo")
   
   matplot(rownames(trace_var_max), trace_var_max, type = "o", col = "black", bg = 2:5, pch = 16,
-          main = "Trace lambda_s^2 x tau^2", xlab = "Iteration",
-          ylab = paste0("Traces for the ", nb_max, " largest hotspot variances"))
+          main = "Trace 1 / mu_s0_inv_vb x 1 / mu_b_vb x shr_factor", xlab = "Iteration",
+          ylab = paste0("Traces for the ", nb_max, " largest variataional parameters related to the hotspot variances"))
   for (i in 1:nb_max) {
     points(rownames(trace_var_max)[list_changepoints[[i]]], trace_var_max[list_changepoints[[i]], i], col = "blue", pch = 16)
   }
