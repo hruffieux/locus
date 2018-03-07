@@ -25,7 +25,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
   with(list_hyper, { # list_init not used with the with() function to avoid
     # copy-on-write for large objects
     
-    shr_fac_inv <- 1 # = 1 / shrinkage_factor for global variance
+    shr_fac_inv <- d # = 1 / shrinkage_factor for global variance
     
     # Preparing annealing if any
     #
@@ -61,7 +61,7 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
     
     # Some hyperparameters
     #
-    A2_inv <- d #  hyperparameter # TODO: see how to fix, sensitivity analysis
+    A2_inv <- 1 #  hyperparameter # TODO: see how to fix, sensitivity analysis
     
     # Choose m0 so that, `a priori' (i.e. before optimization), E_p_gam is as specified by the user. 
     # In fact, we assume that the variance of theta (s0^2 in the hyperparameter doc) 
@@ -397,7 +397,8 @@ locus_dual_horseshoe_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb,
       diff_lb <- abs(lb_opt - lb_old)
       
       create_named_list_(gam_vb, mu_theta_vb, mu_rho_vb, converged, it, lb_opt,
-                         diff_lb, S0_inv_vb, s02_vb, b_vb, df, trace_ind_max, trace_var_max)
+                         diff_lb, S0_inv_vb, s02_vb, b_vb, df, trace_ind_max, 
+                         trace_var_max, shr_fac_inv)
       
     }
   })
