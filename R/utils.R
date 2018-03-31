@@ -108,7 +108,7 @@ create_named_list_ <- function(...) {
 get_annealing_ladder_ <- function(anneal, verbose) {
 
   # ladder set following:
-  # Importance Tempering, Robert B. Gramacy & Richard J. Samworth, pp.9-10
+  # Importance Tempering, Robert B. Gramacy & Richard J. Samworth, pp.9-10, arxiv v4
 
   k_m <- 1 / anneal[2]
   m <- anneal[3]
