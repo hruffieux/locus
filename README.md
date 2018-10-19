@@ -1,38 +1,30 @@
-## locus – large-scale variational inference for combined covariate and response selection in sparse regression models
+## LOCUS: Large-scale variational inference for Bayesian variable selection in multiple-response regression
 
 [![Travis-CI Build Status](https://travis-ci.org/hruffieux/locus.svg?branch=master)](https://travis-ci.org/hruffieux/locus)
 
 ## Overview
 
-**locus** is an R package providing efficient variational algorithms for
-simultaneous variable selection of covariates and associated responses based
-on multivariate regression models. Dependence across responses linked to the
-same covariates is captured through the model hierarchical structure
-(H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva, Efficient inference
-for genetic association studies with multiple outcomes, *Biostatistics*, 2017).
+**LOCUS** is an R package providing efficient variational algorithms for
+simultaneous selection of responses and associated predictors based
+on hierarchical sparse regression models. The method can for instance be 
+used for genome-wide association analyses with multiple clinical endpoints
+or for molecular quantitative trait locus (QTL) analyses which involve 
+hundreds of thousands of genetic variants as candidate predictors and
+thousands of molecular levels as responses, for thousands of samples.  
+
+**LOCUS** is described and extensively assessed in H. Ruffieux, 
+A. C. Davison, J. Hager and I. Irincheeva, Efficient inference
+for genetic association studies with multiple outcomes, *Biostatistics*, 
+18:618:636, 2017, doi: 10.1093/biostatistics/kxx007.
 
 ## Installation
 
 To install, run the following commands in R:
 
 ``` r
-install.packages("devtools")
+require(devtools) # after having installed devtools (install.packages("devtools"))
 devtools::install_github("hruffieux/locus")
 ```
-
-## Algorithms
-
-The algorithms for joint covariate and response selection provided in **locus**
-implement inference for regression models with
-
-* identity link;
-* logistic link;
-* probit link;
-* identity-probit link.
-
-Moreover, covariate-level external information variables can be incorporated to inform
-the selection.
-
 ## License and authors
 
 This software uses the GPL v2 license, see [LICENSE](LICENSE).

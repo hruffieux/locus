@@ -9,7 +9,7 @@ using namespace Rcpp;
 
 // coreBatch
 void coreBatch(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr1D log_om_vb, const MapArr1D log_1_min_om_vb, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat m1_beta, MapMat mat_x_m1, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb);
-RcppExport SEXP locus_coreBatch(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
+RcppExport SEXP _locus_coreBatch(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
@@ -30,7 +30,7 @@ END_RCPP
 }
 // coreZBatch
 void coreZBatch(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr1D log_om_vb, const MapArr1D log_1_min_om_vb, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat m1_beta, MapMat mat_x_m1, MapMat mat_z_mu, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb);
-RcppExport SEXP locus_coreZBatch(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
+RcppExport SEXP _locus_coreZBatch(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
@@ -52,7 +52,7 @@ END_RCPP
 }
 // coreProbitBatch
 void coreProbitBatch(const MapMat X, const MapMat W, MapArr2D gam_vb, const MapArr1D log_om_vb, const MapArr1D log_1_min_om_vb, const double log_sig2_inv_vb, MapMat m1_beta, MapMat mat_x_m1, MapMat mat_z_mu, MapArr2D mu_beta_vb, const double sig2_beta_vb);
-RcppExport SEXP locus_coreProbitBatch(SEXP XSEXP, SEXP WSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP) {
+RcppExport SEXP _locus_coreProbitBatch(SEXP XSEXP, SEXP WSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
@@ -72,7 +72,7 @@ END_RCPP
 }
 // coreInfoLoop
 void coreInfoLoop(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr2D log_Phi_mat_v_mu, const MapArr2D log_1_min_Phi_mat_v_mu, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat m1_beta, MapMat mat_x_m1, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb);
-RcppExport SEXP locus_coreInfoLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_Phi_mat_v_muSEXP, SEXP log_1_min_Phi_mat_v_muSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
+RcppExport SEXP _locus_coreInfoLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_Phi_mat_v_muSEXP, SEXP log_1_min_Phi_mat_v_muSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
@@ -93,7 +93,7 @@ END_RCPP
 }
 // coreZInfoLoop
 void coreZInfoLoop(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr2D log_Phi_mat_v_mu, const MapArr2D log_1_min_Phi_mat_v_mu, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat m1_beta, MapMat mat_x_m1, const MapMat mat_z_mu, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb);
-RcppExport SEXP locus_coreZInfoLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_Phi_mat_v_muSEXP, SEXP log_1_min_Phi_mat_v_muSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
+RcppExport SEXP _locus_coreZInfoLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_Phi_mat_v_muSEXP, SEXP log_1_min_Phi_mat_v_muSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
@@ -115,7 +115,7 @@ END_RCPP
 }
 // coreLogitInfoLoop
 void coreLogitInfoLoop(const MapMat X, const MapArr2D Y, MapArr2D gam_vb, const MapArr2D log_Phi_mat_v_mu, const MapArr2D log_1_min_Phi_mat_v_mu, const double log_sig2_inv_vb, MapMat m1_beta, MapArr2D mat_x_m1, MapArr2D mat_z_mu, MapArr2D mu_beta_vb, const MapArr2D psi_vb, const MapArr2D sig2_beta_vb);
-RcppExport SEXP locus_coreLogitInfoLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_Phi_mat_v_muSEXP, SEXP log_1_min_Phi_mat_v_muSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP psi_vbSEXP, SEXP sig2_beta_vbSEXP) {
+RcppExport SEXP _locus_coreLogitInfoLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_Phi_mat_v_muSEXP, SEXP log_1_min_Phi_mat_v_muSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP psi_vbSEXP, SEXP sig2_beta_vbSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
@@ -136,7 +136,7 @@ END_RCPP
 }
 // coreProbitInfoLoop
 void coreProbitInfoLoop(const MapMat X, const MapMat Wy, MapArr2D gam_vb, const MapArr2D log_Phi_mat_v_mu, const MapArr2D log_1_min_Phi_mat_v_mu, const double log_sig2_inv_vb, MapMat m1_beta, MapMat mat_x_m1, MapMat mat_z_mu, MapArr2D mu_beta_vb, const double sig2_beta_vb);
-RcppExport SEXP locus_coreProbitInfoLoop(SEXP XSEXP, SEXP WySEXP, SEXP gam_vbSEXP, SEXP log_Phi_mat_v_muSEXP, SEXP log_1_min_Phi_mat_v_muSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP) {
+RcppExport SEXP _locus_coreProbitInfoLoop(SEXP XSEXP, SEXP WySEXP, SEXP gam_vbSEXP, SEXP log_Phi_mat_v_muSEXP, SEXP log_1_min_Phi_mat_v_muSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
@@ -156,7 +156,7 @@ END_RCPP
 }
 // coreLoop
 void coreLoop(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr1D log_om_vb, const MapArr1D log_1_min_om_vb, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat m1_beta, MapMat mat_x_m1, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb);
-RcppExport SEXP locus_coreLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
+RcppExport SEXP _locus_coreLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
@@ -177,7 +177,7 @@ END_RCPP
 }
 // coreZLoop
 void coreZLoop(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr1D log_om_vb, const MapArr1D log_1_min_om_vb, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat m1_beta, MapMat mat_x_m1, MapMat mat_z_mu, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb);
-RcppExport SEXP locus_coreZLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
+RcppExport SEXP _locus_coreZLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
@@ -199,7 +199,7 @@ END_RCPP
 }
 // coreLogitLoop
 void coreLogitLoop(const MapMat X, const MapArr2D Y, MapArr2D gam_vb, const MapArr1D log_om_vb, const MapArr1D log_1_min_om_vb, const double log_sig2_inv_vb, MapMat m1_beta, MapArr2D mat_x_m1, MapArr2D mat_z_mu, MapArr2D mu_beta_vb, const MapArr2D psi_vb, const MapArr2D sig2_beta_vb);
-RcppExport SEXP locus_coreLogitLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP psi_vbSEXP, SEXP sig2_beta_vbSEXP) {
+RcppExport SEXP _locus_coreLogitLoop(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP psi_vbSEXP, SEXP sig2_beta_vbSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
@@ -220,7 +220,7 @@ END_RCPP
 }
 // coreProbitLoop
 void coreProbitLoop(const MapMat X, const MapMat W, MapArr2D gam_vb, const MapArr1D log_om_vb, const MapArr1D log_1_min_om_vb, const double log_sig2_inv_vb, MapMat m1_beta, MapMat mat_x_m1, MapMat mat_z_mu, MapArr2D mu_beta_vb, const double sig2_beta_vb);
-RcppExport SEXP locus_coreProbitLoop(SEXP XSEXP, SEXP WSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP) {
+RcppExport SEXP _locus_coreProbitLoop(SEXP XSEXP, SEXP WSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP m1_betaSEXP, SEXP mat_x_m1SEXP, SEXP mat_z_muSEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const MapMat >::type X(XSEXP);
@@ -240,17 +240,17 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"locus_coreBatch", (DL_FUNC) &locus_coreBatch, 12},
-    {"locus_coreZBatch", (DL_FUNC) &locus_coreZBatch, 13},
-    {"locus_coreProbitBatch", (DL_FUNC) &locus_coreProbitBatch, 11},
-    {"locus_coreInfoLoop", (DL_FUNC) &locus_coreInfoLoop, 12},
-    {"locus_coreZInfoLoop", (DL_FUNC) &locus_coreZInfoLoop, 13},
-    {"locus_coreLogitInfoLoop", (DL_FUNC) &locus_coreLogitInfoLoop, 12},
-    {"locus_coreProbitInfoLoop", (DL_FUNC) &locus_coreProbitInfoLoop, 11},
-    {"locus_coreLoop", (DL_FUNC) &locus_coreLoop, 12},
-    {"locus_coreZLoop", (DL_FUNC) &locus_coreZLoop, 13},
-    {"locus_coreLogitLoop", (DL_FUNC) &locus_coreLogitLoop, 12},
-    {"locus_coreProbitLoop", (DL_FUNC) &locus_coreProbitLoop, 11},
+    {"_locus_coreBatch", (DL_FUNC) &_locus_coreBatch, 12},
+    {"_locus_coreZBatch", (DL_FUNC) &_locus_coreZBatch, 13},
+    {"_locus_coreProbitBatch", (DL_FUNC) &_locus_coreProbitBatch, 11},
+    {"_locus_coreInfoLoop", (DL_FUNC) &_locus_coreInfoLoop, 12},
+    {"_locus_coreZInfoLoop", (DL_FUNC) &_locus_coreZInfoLoop, 13},
+    {"_locus_coreLogitInfoLoop", (DL_FUNC) &_locus_coreLogitInfoLoop, 12},
+    {"_locus_coreProbitInfoLoop", (DL_FUNC) &_locus_coreProbitInfoLoop, 11},
+    {"_locus_coreLoop", (DL_FUNC) &_locus_coreLoop, 12},
+    {"_locus_coreZLoop", (DL_FUNC) &_locus_coreZLoop, 13},
+    {"_locus_coreLogitLoop", (DL_FUNC) &_locus_coreLogitLoop, 12},
+    {"_locus_coreProbitLoop", (DL_FUNC) &_locus_coreProbitLoop, 11},
     {NULL, NULL, 0}
 };
 
