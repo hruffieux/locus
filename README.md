@@ -19,10 +19,17 @@ unless you want to test and report issues.
 
 ## Installation
 
-To install, run the following commands in R:
+Important note: the R package depends on `libgsl` which needs to be manually installed. 
+For example on Ubuntu,
+
+``` bash
+$ sudo apt-get install libgsl-dev
+```
+
+To install the package in R, run the following command:
 
 ``` r
-require(devtools) # after having installed devtools (install.packages("devtools"))
+# after having installed devtools (install.packages("devtools"))
 devtools::install_github("hruffieux/locus", ref = "devel")
 ```
 
