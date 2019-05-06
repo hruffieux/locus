@@ -8,24 +8,24 @@
 
 check_natural_ <- function(x, eps = .Machine$double.eps^0.75){
   if (any(x < eps | abs(x - round(x)) > eps)) {
-    stop(paste(deparse(substitute(x)),
-               " must be natural.", sep=""))
+    stop(paste0(deparse(substitute(x)),
+               " must be natural."))
   }
 }
 
 check_positive_ <- function(x, eps = .Machine$double.eps^0.75){
   if (any(x < eps)) {
-    err_mess <- paste(deparse(substitute(x)), " must be positive, greater than ",
-                      format(eps, digits = 3), ".", sep="")
-    if (length(x) > 1) err_mess <- paste("All entries of ", err_mess, sep="")
+    err_mess <- paste0(deparse(substitute(x)), " must be positive, greater than ",
+                      format(eps, digits = 3), ".")
+    if (length(x) > 1) err_mess <- paste0("All entries of ", err_mess)
     stop(err_mess)
   }
 }
 
 check_zero_one_ <- function(x){
   if (any(x < 0) | any(x > 1)) {
-    err_mess <- paste(deparse(substitute(x)), " must lie between 0 and 1.", sep="")
-    if (length(x) > 1) err_mess <- paste("All entries of ", err_mess, sep="")
+    err_mess <- paste0(deparse(substitute(x)), " must lie between 0 and 1.")
+    if (length(x) > 1) err_mess <- paste0("All entries of ", err_mess)
     stop(err_mess)
   }
 }
@@ -55,13 +55,13 @@ check_structure_ <- function(x, struct, type, size = NULL,
     bool_struct <- is.vector(x) & (length(x) > 0) # not an empty vector
     if (!is.null(size)) {
       bool_size <- length(x) %in% size
-      size_mess <- paste(" of length ", paste(size, collapse=" or "), sep = "")
+      size_mess <- paste0(" of length ", paste0(size, collapse=" or "))
     }
   } else if (struct == "matrix") {
     bool_struct <- is.matrix(x) & (length(x) > 0) # not an empty matrix
     if (!is.null(size)) {
       bool_size <- all(dim(x) == size)
-      size_mess <- paste(" of dimension ", size[1], " x ", size[2], sep = "")
+      size_mess <- paste0(" of dimension ", size[1], " x ", size[2])
     }
   }
 
@@ -93,8 +93,8 @@ check_structure_ <- function(x, struct, type, size = NULL,
   }
 
   if(!(correct_obj)) {
-    stop(paste(deparse(substitute(x)), " must be a non-empty ", type_mess, struct,
-               size_mess, inf_mess, na_mess, null_mess, ".", sep = ""))
+    stop(paste0(deparse(substitute(x)), " must be a non-empty ", type_mess, struct,
+               size_mess, inf_mess, na_mess, null_mess, "."))
   }
 }
 
@@ -229,16 +229,14 @@ rm_constant_ <- function(mat, verbose) {
 
     if (verbose) {
       if (sum(bool_cst) < 50) {
-        cat(paste("Variable(s) ", paste(rmvd_cst, collapse=", "),
+        cat(paste0("Variable(s) ", paste0(rmvd_cst, collapse=", "),
                   " constant across subjects. \n",
                   "Removing corresponding column(s) and saving its/their id(s) ",
-                  "in the function output ... \n\n",
-                  sep=""))
+                  "in the function output ... \n\n"))
       } else {
-        cat(paste(sum(bool_cst), " variables constant across subjects. \n",
+        cat(paste0(sum(bool_cst), " variables constant across subjects. \n",
                   "Removing corresponding column(s) and saving their ids ",
-                  "in the function output ... \n\n",
-                  sep=""))
+                  "in the function output ... \n\n"))
       }
     }
 
@@ -261,16 +259,14 @@ rm_collinear_ <- function(mat, verbose) {
 
     if (verbose) {
       if (length(rmvd_coll) < 50) {
-        cat(paste("Presence of collinear variable(s). ",
-                  paste(rmvd_coll, collapse=", "), " redundant. \n",
+        cat(paste0("Presence of collinear variable(s). ",
+                  paste0(rmvd_coll, collapse=", "), " redundant. \n",
                   "Removing corresponding column(s) and saving its/their id(s) ",
-                  "in the function output ... \n",
-                  sep=""))
+                  "in the function output ... \n"))
       } else {
-        cat(paste("Presence of collinear variables. ", length(rmvd_coll),
+        cat(paste0("Presence of collinear variables. ", length(rmvd_coll),
                   " redundant.\n", "Removing corresponding columns and saving ",
-                  "their ids in the function output ... \n",
-                  sep=""))
+                  "their ids in the function output ... \n"))
       }
     }
 

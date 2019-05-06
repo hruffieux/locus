@@ -97,20 +97,18 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 0.1,
 
   check_structure_(size_p0_av_grid, "vector", "numeric", 1)
   check_natural_(size_p0_av_grid)
-  if (size_p0_av_grid < 2) stop(paste("size_p0_av_grid must be at greater 1 ",
-                                      "to allow for comparisons.",
-                                      sep=""))
-  if (size_p0_av_grid > 10) stop(paste("size_p0_av_grid is large and may ",
+  if (size_p0_av_grid < 2) stop(paste0("size_p0_av_grid must be at greater 1 ",
+                                      "to allow for comparisons."))
+  if (size_p0_av_grid > 10) stop(paste0("size_p0_av_grid is large and may ",
                                        "induce expensive computations. Choose ",
-                                       "size_p0_av_grid in {2, 3, ..., 10}.",
-                                       sep=""))
+                                       "size_p0_av_grid in {2, 3, ..., 10}."))
 
   p0_av_grid <- create_grid_(p, size_p0_av_grid)
 
   new_size <- length(p0_av_grid)
   if (size_p0_av_grid > new_size) {
-    if (verbose) cat(paste("Cross-validation p0_av_grid reduced to ", new_size,
-                           " elements as p is small.\n", sep = ""))
+    if (verbose) cat(paste0("Cross-validation p0_av_grid reduced to ", new_size,
+                           " elements as p is small.\n"))
     size_p0_av_grid <- new_size
   }
 
@@ -123,8 +121,8 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 0.1,
   check_structure_(n_cpus, "vector", "numeric", 1)
   check_natural_(n_cpus)
   if (n_cpus > n_folds){
-    message <- paste("The number of cpus in use will be at most equal to n_folds.",
-                     "n_cpus is therefore set to n_folds = ", n_folds, ". \n", sep ="")
+    message <- paste0("The number of cpus in use will be at most equal to n_folds.",
+                     "n_cpus is therefore set to n_folds = ", n_folds, ". \n")
     if(verbose) cat(message)
     else warning(message)
     n_cpus <- n_folds
@@ -135,11 +133,11 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 0.1,
     n_cpus_avail <- parallel::detectCores()
     if (n_cpus > n_cpus_avail) {
       n_cpus <- n_cpus_avail
-      warning(paste("The number of CPUs specified exceeds the number of CPUs ",
-                    "available on the machine. The latter has been used instead.", sep=""))
+      warning(paste0("The number of CPUs specified exceeds the number of CPUs ",
+                    "available on the machine. The latter has been used instead."))
     }
-    if (verbose) cat(paste("Cross-validation with ", n_cpus, " CPUs.\n",
-                           "Please make sure that enough RAM is available. \n", sep=""))
+    if (verbose) cat(paste0("Cross-validation with ", n_cpus, " CPUs.\n",
+                           "Please make sure that enough RAM is available. \n"))
   }
 
   n_cv <- n
@@ -194,7 +192,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
     folds <- rep_len(1:n_folds, n)
 
     evaluate_fold_ <- function(k) {
-      if (verbose) { cat(paste("Evaluating fold k = ", k, "... \n", sep=""))
+      if (verbose) { cat(paste0("Evaluating fold k = ", k, "... \n"))
         cat("-------------------------\n")
       }
 
@@ -250,7 +248,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
         pg <-  p0_av_grid[ind_pg]
 
-        if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
+        if (verbose) cat(paste0("Evaluating p0_av = ", pg, "... \n"))
 
         list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, link = link, 
                                          ind_bin = ind_bin, struct = FALSE, 
@@ -390,8 +388,8 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
         }
 
-        if (verbose) { cat(paste("Lower bound on test set, fold ", k, ", p0_av ",
-                                 pg, ": ", format(lb_vec[ind_pg]), ". \n", sep = ""))
+        if (verbose) { cat(paste0("Lower bound on test set, fold ", k, ", p0_av ",
+                                 pg, ": ", format(lb_vec[ind_pg]), ". \n"))
           cat("-------------------------\n") }
       }
       lb_vec
@@ -403,16 +401,16 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
                                  mc.cores = n_cpus)
     lb_mat <- do.call(rbind, lb_mat)
 
-    rownames(lb_mat) <- paste("fold_", 1:n_folds, sep = "")
-    colnames(lb_mat) <- paste("p0_av_", p0_av_grid, sep = "")
+    rownames(lb_mat) <- paste0("fold_", 1:n_folds)
+    colnames(lb_mat) <- paste0("p0_av_", p0_av_grid)
 
     p0_av_opt <- p0_av_grid[which.max(colMeans(lb_mat))]
 
     if (verbose) {
       cat("Lower bounds on test sets for each fold and each grid element: \n")
       print(lb_mat)
-      cat(paste("===== ...end of cross-validation with selected p0_av = ",
-                p0_av_opt, " ===== \n", sep=""))
+      cat(paste0("===== ...end of cross-validation with selected p0_av = ",
+                p0_av_opt, " ===== \n"))
     }
 
     p0_av_opt

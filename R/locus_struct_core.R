@@ -54,7 +54,7 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
       it <- it + 1
 
       if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("Iteration ", format(it), "... \n", sep = ""))
+        cat(paste0("Iteration ", format(it), "... \n"))
 
       # % #
       lambda_vb <- update_lambda_vb_(lambda, sum(gam_vb))
@@ -135,7 +135,7 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
                              m2_beta, mat_x_m1, vec_fac_st, vec_sum_log_det)
 
       if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
+        cat(paste0("ELBO = ", format(lb_new), "\n\n"))
 
       if (debug && lb_new < lb_old)
         stop("ELBO not increasing monotonically. Exit. ")
@@ -147,9 +147,9 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
 
     if (verbose) {
       if (converged) {
-        cat(paste("Convergence obtained after ", format(it), " iterations. \n",
+        cat(paste0("Convergence obtained after ", format(it), " iterations. \n",
                   "Optimal marginal log-likelihood variational lower bound ",
-                  "(ELBO) = ", format(lb_new), ". \n\n", sep = ""))
+                  "(ELBO) = ", format(lb_new), ". \n\n"))
       } else {
         warning("Maximal number of iterations reached before convergence. Exit.")
       }
