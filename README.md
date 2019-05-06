@@ -19,10 +19,10 @@ unless you want to test and report issues.
 
 ## Installation
 
-To install, run the following commands in R:
+To install, run the following command in R:
 
 ``` r
-require(devtools) # after having installed devtools (install.packages("devtools"))
+# after having installed devtools (install.packages("devtools"))
 devtools::install_github("hruffieux/locus", ref = "devel")
 ```
 

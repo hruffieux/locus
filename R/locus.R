@@ -337,7 +337,7 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity",
       
       if (is.null(list_groups)) p_tot <- p
       else p_tot <- length(unique(vec_fac_gr))
-    
+      
       p_star <- convert_p0_av_(p0_av, p_tot, list_blocks, verbose)
       
       # remove the entries corresponding to the removed constant covariates in X (if any)
@@ -350,8 +350,8 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity",
     } else {
       
       if (!is.null(p0_av))
-        warning(paste("Provided argument p0_av not used, as both list_hyper ",
-                      "and list_init were provided.", sep = ""))
+        warning(paste0("Provided argument p0_av not used, as both list_hyper ",
+                       "and list_init were provided."))
       
       p_star <- NULL
       
@@ -426,10 +426,9 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity",
   
   
   if (verbose){
-    cat(paste("============================================================== \n",
-              "== Variational inference for sparse multivariate regression == \n",
-              "============================================================== \n\n",
-              sep = ""))
+    cat(paste0("============================================================== \n",
+               "== Variational inference for sparse multivariate regression == \n",
+               "============================================================== \n\n"))
   }
   
   
@@ -582,15 +581,15 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity",
         
         if (verbose) {
           if (vb_bl$converged) {
-            cat(paste("The algorithm reached convergence on one block after ",
-                      format(vb_bl$it), " iterations. \n", "Optimal marginal ",
-                      "log-likelihood variational lower bound (ELBO) = ",
-                      format(vb_bl$lb_opt), ". \n\n", sep = ""))
+            cat(paste0("The algorithm reached convergence on one block after ",
+                       format(vb_bl$it), " iterations. \n", "Optimal marginal ",
+                       "log-likelihood variational lower bound (ELBO) = ",
+                       format(vb_bl$lb_opt), ". \n\n"))
           } else {
-            cat(paste("The algorithm reached the maximal number of iterations ",
-                      "on one block before converging.\n", "Difference in ELBO ",
-                      "between last and penultimate iterations: ",
-                      format(vb_bl$diff_lb), ".\n\n", sep = ""))
+            cat(paste0("The algorithm reached the maximal number of iterations ",
+                       "on one block before converging.\n", "Difference in ELBO ",
+                       "between last and penultimate iterations: ",
+                       format(vb_bl$diff_lb), ".\n\n"))
           }
         }
         
@@ -608,7 +607,7 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity",
     
     vb <- c(lapply(names_vec, function(key) {
       vec <- do.call(c, lapply(list_vb, `[[`, key))
-      names(vec) <- paste("bl_", 1:n_bl, sep = "")
+      names(vec) <- paste0("bl_", 1:n_bl)
       vec}),
       lapply(names_mat, function(key) do.call(rbind, lapply(list_vb, `[[`, key))))
     

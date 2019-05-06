@@ -53,7 +53,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, alpha_vb, mu_beta_vb,
       it <- it + 1
 
       if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("Iteration ", format(it), "... \n", sep = ""))
+        cat(paste0("Iteration ", format(it), "... \n"))
 
       digam_sum <- digamma(c * (a + b + d) - 2 * c + 2) 
       
@@ -217,7 +217,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, alpha_vb, mu_beta_vb,
       if (annealing) {
         
         if (verbose & (it == 1 | it %% 5 == 0))
-          cat(paste("Temperature = ", format(1 / c, digits = 4), "\n\n", sep = ""))
+          cat(paste0("Temperature = ", format(1 / c, digits = 4), "\n\n"))
         
         c <- ifelse(it < length(ladder), ladder[it + 1], 1)
         
@@ -237,7 +237,7 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, alpha_vb, mu_beta_vb,
                           m2_alpha, m2_beta, mat_x_m1, mat_z_mu, sum_gam)
   
         if (verbose & (it == 1 | it %% 5 == 0))
-          cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
+          cat(paste0("ELBO = ", format(lb_new), "\n\n"))
         
         if (debug && lb_new + eps < lb_old)
           stop("ELBO not increasing monotonically. Exit. ")
@@ -250,9 +250,9 @@ locus_z_core_ <- function(Y, X, Z, list_hyper, gam_vb, alpha_vb, mu_beta_vb,
 
     if (verbose) {
       if (converged) {
-        cat(paste("Convergence obtained after ", format(it), " iterations. \n",
+        cat(paste0("Convergence obtained after ", format(it), " iterations. \n",
                   "Optimal marginal log-likelihood variational lower bound ",
-                  "(ELBO) = ", format(lb_new), ". \n\n", sep = ""))
+                  "(ELBO) = ", format(lb_new), ". \n\n"))
       } else {
         warning("Maximal number of iterations reached before convergence. Exit.")
       }

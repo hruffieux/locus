@@ -54,7 +54,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       it <- it + 1
 
       if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("Iteration ", format(it), "... \n", sep = ""))
+        cat(paste0("Iteration ", format(it), "... \n"))
 
       # % #
       lambda_vb <- update_g_lambda_vb_(lambda, g_sizes, rs_gam)
@@ -173,7 +173,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       log_tau_vb <- update_log_tau_vb_(eta_vb, kappa_vb)
 
       if (debug && lb_new + eps < lb_old)
-        cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
+        cat(paste0("ELBO = ", format(lb_new), "\n\n"))
 
       if (debug && lb_new < lb_old)
         stop("ELBO not increasing monotonically. Exit. ")
@@ -185,9 +185,9 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
     if (verbose) {
       if (converged) {
-        cat(paste("Convergence obtained after ", format(it), " iterations. \n",
+        cat(paste0("Convergence obtained after ", format(it), " iterations. \n",
                   "Optimal marginal log-likelihood variational lower bound ",
-                  "(ELBO) = ", format(lb_new), ". \n\n", sep = ""))
+                  "(ELBO) = ", format(lb_new), ". \n\n"))
       } else {
         warning("Maximal number of iterations reached before convergence. Exit.")
       }
@@ -205,7 +205,7 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
       names_y <- colnames(Y)
 
       names_G <- unlist(lapply(list_X,
-                               function(X_g) paste(as.character(colnames(X_g)), collapse = "-")))
+                               function(X_g) paste0(as.character(colnames(X_g)), collapse = "-")))
 
       rownames(gam_vb) <- names_G
       colnames(gam_vb) <- names_y

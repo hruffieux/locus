@@ -7,17 +7,17 @@
 #
 prepare_data_ <- function(Y, X, Z, link, ind_bin, user_seed, tol, maxit, 
                           verbose, checkpoint_path) {
-
+  
   stopifnot(link %in% c("identity", "logit", "probit", "mix"))
-
+  
   check_structure_(user_seed, "vector", "numeric", 1, null_ok = TRUE)
   
   check_structure_(tol, "vector", "numeric", 1)
   check_positive_(tol, eps=.Machine$double.eps)
-
+  
   check_structure_(maxit, "vector", "numeric", 1)
   check_natural_(maxit)
-
+  
   check_structure_(X, "matrix", "numeric")
   
   if (!is.null(checkpoint_path)) {
@@ -35,117 +35,117 @@ prepare_data_ <- function(Y, X, Z, link, ind_bin, user_seed, tol, maxit,
   
   n <- nrow(X)
   p <- ncol(X)
-
+  
   check_structure_(Y, "matrix", "numeric")
   d <- ncol(Y)
-
+  
   if (link == "mix") {
-
+    
     ind_bin <- prepare_ind_bin_(d, ind_bin, link)
-
+    
     if(!all(as.vector(Y[, ind_bin]) == as.numeric(as.logical(Y[, ind_bin]))))
       stop("The responses in Y corresponding to indices ind_bin must be a binary.")
-
+    
   } else if (link != "identity"){
-
+    
     if(!all(as.vector(Y) == as.numeric(as.logical(Y))))
       stop("Y must be a binary matrix for logistic/probit regression.")
-
+    
   }
-
+  
   if (nrow(Y) != n) stop("X and Y must have the same number of samples.")
-
+  
   if (is.null(rownames(X)) & is.null(rownames(Y)))
-    rownames(X) <- rownames(Y) <- paste("Ind_", 1:n, sep="")
+    rownames(X) <- rownames(Y) <- paste0("Ind_", 1:n)
   else if (is.null(rownames(X))) rownames(X) <- rownames(Y)
   else if (is.null(rownames(Y))) rownames(Y) <- rownames(X)
   else if (any(rownames(X) != rownames(Y)))
     stop("The provided rownames of X and Y must be the same.")
-
-  if (is.null(colnames(X))) colnames(X) <- paste("Cov_x_", 1:p, sep="")
-  if (is.null(colnames(Y))) colnames(Y) <- paste("Resp_", 1:d, sep="")
-
+  
+  if (is.null(colnames(X))) colnames(X) <- paste0("Cov_x_", 1:p)
+  if (is.null(colnames(Y))) colnames(Y) <- paste0("Resp_", 1:d)
+  
   if (!is.null(Z)) {
-
-    if (verbose) cat(paste("Each factor variables must be provided by adding ",
-                           "to Z (nb levels - 1) variables representing their ",
-                           "levels. \n", sep=""))
-
+    
+    if (verbose) cat(paste0("Each factor variables must be provided by adding ",
+                            "to Z (nb levels - 1) variables representing their ",
+                            "levels. \n"))
+    
     check_structure_(Z, "matrix", "numeric")
-
+    
     q <- ncol(Z)
-
+    
     if (nrow(Z) != n) stop("Z must have the same number of samples as Y and X.")
-
+    
     if (is.null(rownames(Z))) rownames(Z) <- rownames(X)
     else if(any(rownames(Z) != rownames(X)))
       stop("The provided rownames of Z must be the same than those of X and Y or NULL.")
-
-    if (is.null(colnames(Z))) colnames(Z) <- paste("Cov_z_", 1:q, sep="")
-
+    
+    if (is.null(colnames(Z))) colnames(Z) <- paste0("Cov_z_", 1:q)
+    
     Z <- scale(Z)
-
+    
     list_Z_cst <- rm_constant_(Z, verbose)
     Z <- list_Z_cst$mat
     bool_cst_z <- list_Z_cst$bool_cst
     rmvd_cst_z <- list_Z_cst$rmvd_cst
-
+    
     list_Z_coll <- rm_collinear_(Z, verbose)
     Z <- list_Z_coll$mat
     q <- ncol(Z)
     bool_coll_z <- list_Z_coll$bool_coll
     rmvd_coll_z <- list_Z_coll$rmvd_coll
-
+    
     bool_rmvd_z <- bool_cst_z
     bool_rmvd_z[!bool_cst_z] <- bool_coll_z
-
+    
   } else {
     q <- NULL
     bool_rmvd_z <- NULL
     rmvd_cst_z <- NULL
     rmvd_coll_z <- NULL
   }
-
+  
   X <- scale(X)
-
+  
   list_X_cst <- rm_constant_(X, verbose)
   X <- list_X_cst$mat
   bool_cst_x <- list_X_cst$bool_cst
   rmvd_cst_x <- list_X_cst$rmvd_cst
-
+  
   list_X_coll <- rm_collinear_(X, verbose)
   X <- list_X_coll$mat
-
+  
   bool_coll_x <- list_X_coll$bool_coll
   rmvd_coll_x <- list_X_coll$rmvd_coll
-
+  
   bool_rmvd_x <- bool_cst_x
   bool_rmvd_x[!bool_cst_x] <- bool_coll_x
-
+  
   p <- ncol(X)
-  if (p < 1) stop(paste("There must be at least 1 non-constant candidate predictor ",
-                        " stored in X.", sep=""))
-
+  if (p < 1) stop(paste0("There must be at least 1 non-constant candidate predictor ",
+                         " stored in X."))
+  
   if (link == "identity") {
-
+    
     Y <- scale(Y, center = TRUE, scale = FALSE)
-
+    
   } else if (link == "mix") {
-
+    
     Y[, -ind_bin] <- scale(Y[, -ind_bin], center = TRUE, scale = FALSE)
-
+    
   } else if (link == "logit") {
-
+    
     Y <- Y - 1 / 2
-
+    
   }
-
-
+  
+  
   if (is.null(q) || q < 1) Z <- NULL
-
+  
   create_named_list_(Y, X, Z, bool_rmvd_x, bool_rmvd_z, rmvd_cst_x, rmvd_cst_z, 
                      rmvd_coll_x, rmvd_coll_z)
-
+  
 }
 
 
@@ -153,99 +153,94 @@ prepare_data_ <- function(Y, X, Z, link, ind_bin, user_seed, tol, maxit,
 # argument p0_av before the application of the different `locus_*_core` algorithms.
 #
 convert_p0_av_ <- function(p0_av, p, list_blocks, verbose, eps = .Machine$double.eps^0.5) {
-
+  
   check_structure_(p0_av, "vector", "numeric", c(1, p))
-
+  
   if (length(p0_av) == 1) {
-
-    if (verbose) cat(paste("Provided p0_av = ", p0_av, " interpreted as ",
-                           "the prior number of predictors associated with at ",
-                           "least one response. \n\n", sep = ""))
-
+    
+    if (verbose) cat(paste0("Provided p0_av = ", p0_av, " interpreted as ",
+                            "the prior number of predictors associated with at ",
+                            "least one response. \n\n"))
+    
     if (p0_av / p < eps)
-      stop(paste("p0_av = ", p0_av, ": \n",
-                 "invalid provided value of p0_av.\n",
-                 "The prior sparsity level, p0_av / p, must be larger than ",
-                 "zero. \n",
-                 "Please increase p0_av.",
-                 sep = ""))
-
+      stop(paste0("p0_av = ", p0_av, ": \n",
+                  "invalid provided value of p0_av.\n",
+                  "The prior sparsity level, p0_av / p, must be larger than ",
+                  "zero. \n",
+                  "Please increase p0_av."))
+    
     if (p0_av / p > 0.95)
-      stop(paste("p0_av = ", p0_av, ": \n",
-                 "invalid provided value of p0_av.\n",
-                 "Induces a non-sparse formulation. Please decrease p0_av.",
-                 sep = ""))
-
+      stop(paste0("p0_av = ", p0_av, ": \n",
+                  "invalid provided value of p0_av.\n",
+                  "Induces a non-sparse formulation. Please decrease p0_av."))
+    
     if (p0_av > ceiling(4 * p / 5))
-      warning(paste("Prior model size p0_av = ", p0_av, ": \n",
-                    "p0_av / p is large, so multiplicity control may be weak. ",
-                    "You may want to consider a smaller p0_av.", sep=""))
-
+      warning(paste0("Prior model size p0_av = ", p0_av, ": \n",
+                     "p0_av / p is large, so multiplicity control may be weak. ",
+                     "You may want to consider a smaller p0_av."))
+    
     p_star <- p0_av
-
+    
   } else {
-
-    if (verbose) cat(paste("The sth entry of the provided p0_av ",
-                           "interpreted as the prior probability that ",
-                           "predictor s is associated with at least one ",
-                           "response. \n\n",
-                           sep = ""))
-
+    
+    if (verbose) cat(paste0("The sth entry of the provided p0_av ",
+                            "interpreted as the prior probability that ",
+                            "predictor s is associated with at least one ",
+                            "response. \n\n"))
+    
     if (any(p0_av < eps) | any(p0_av > 1 - eps))
-      stop(paste("Invalid provided vector of p0_av.\n",
-                 "All entries must lie between 0 and 1 (strictly).",
-                 sep = ""))
-
+      stop(paste0("Invalid provided vector of p0_av.\n",
+                  "All entries must lie between 0 and 1 (strictly)."))
+    
     if (median(p0_av) > 1 / 2)
-      warning(paste("The number of predictors with large prior inclusion ",
-                    "probability is large, so multiplicity control may be weak. \n",
-                    "You may want to decrease the values of several ",
-                    "entries of p0_av.",
-                    sep=""))
-
+      warning(paste0("The number of predictors with large prior inclusion ",
+                     "probability is large, so multiplicity control may be weak. \n",
+                     "You may want to decrease the values of several ",
+                     "entries of p0_av."))
+    
     p_star <- p0_av * p
-
+    
   }
-
+  
   if (!is.null(list_blocks)) {
     # the sparsity level needs to be adapted when block-wise inference is used
     # otherwise the selected models may be too small (empirical considerations here)
     p_star <- sapply(p_star, function(p_star_j) min(p_star_j * list_blocks$n_bl, 0.975 * p))
-
-    if (verbose) cat(paste("The sparsity level is adapted for block-wise inference ",
-                           "to ensure only sufficiently large models are selected.\n\n", sep = ""))
+    
+    if (verbose) cat(paste0("The sparsity level is adapted for block-wise inference ",
+                            "to ensure only sufficiently large models are selected.\n\n"))
   }
-
+  
   p_star
 }
 
 
 
 check_annealing_ <- function(anneal, link, Z, list_groups, list_struct) {
-
+  
   check_structure_(anneal, "vector", "numeric", 3, null_ok = TRUE)
-
+  
   if (!is.null(anneal)) {
-
+    
     if (link != "identity" | !is.null(list_groups))
       stop(paste0("Annealing procedure not yet implemented when link is different ",
-                 "from identity, Z, list_groups or list_struct is non-NULL. Exit."))
-
+                  "from identity, Z, list_groups or list_struct is non-NULL. Exit."))
+    
     check_natural_(anneal[c(1, 3)])
     check_positive_(anneal[2])
-
+    
     stopifnot(anneal[1] %in% 1:3)
-
+    
     if (anneal[2] < 1.5)
       stop(paste0("Initial temperature very small. May not be large enough ",
                   "for a successful exploration. Please increase it or select no annealing."))
-
+    
     if (anneal[3] > 1000)
       stop(paste0("Temperature ladder size very large. This may be unnecessarily ",
                   "computationally demanding. Please decrease it."))
     
   }
-
+  
 }
 
 
@@ -256,143 +251,142 @@ check_annealing_ <- function(anneal, link, Z, list_groups, list_struct) {
 prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, link, ind_bin,
                                 vec_fac_gr, vec_fac_st, bool_rmvd_x, bool_rmvd_z,
                                 names_x, names_y, names_z, verbose) {
-
+  
   d <- ncol(Y)
   if (!is.null(vec_fac_gr)) {
     G <- length(unique(vec_fac_gr))
   } else {
     G <- NULL
   }
-
+  
   ns <- is.null(vec_fac_st)
-
+  
   if (is.null(list_hyper)) {
-
+    
     if (verbose) cat("list_hyper set automatically. \n")
-
+    
     list_hyper <- auto_set_hyper_(Y, p, p_star, q, link, ind_bin, !ns, vec_fac_gr)
-
+    
   } else {
-
+    
     if (xor(is.null(G), is.null(list_hyper$G_hyper)))
       stop("If group selection was enabled when setting list_hyper, it must be used in locus and vice-versa.")
-
+    
     if (!inherits(list_hyper, c("hyper", "out_hyper")))
-      stop(paste("The provided list_hyper must be an object of class ``hyper'' ",
-                 "or ``out_hyper''. \n",
-                 "*** you must either use the function set_hyper to ",
-                 "set your own hyperparameters or use list_hyper from a ``vb'' ",
-                 "object or set the argument list_hyper to NULL for automatic choice. ***",
-                 sep=""))
-
+      stop(paste0("The provided list_hyper must be an object of class ``hyper'' ",
+                  "or ``out_hyper''. \n",
+                  "*** you must either use the function set_hyper to ",
+                  "set your own hyperparameters or use list_hyper from a ``vb'' ",
+                  "object or set the argument list_hyper to NULL for automatic choice. ***"))
+    
     if (inherits(list_hyper, "hyper")) {
       p_hyper_match <- length(bool_rmvd_x)
       if (!is.null(G))
         G_hyper_match <- length(levels(vec_fac_gr)) # counts the levels of the factors
-                                                    # to know how many groups before removal
-                                                    # of constant or collinear predictors
+      # to know how many groups before removal
+      # of constant or collinear predictors
     } else {
       p_hyper_match <- p
       if (!is.null(G))
         G_hyper_match <- G
     }
-
-
+    
+    
     if (list_hyper$d_hyper != d)
-      stop(paste("The dimensions (d) of the provided hyperparameters ",
-                 "(list_hyper) are not consistent with that of Y.\n", sep=""))
-
+      stop(paste0("The dimensions (d) of the provided hyperparameters ",
+                  "(list_hyper) are not consistent with that of Y.\n"))
+    
     if (!is.null(G) && list_hyper$G_hyper != G_hyper_match)
-      stop(paste("The number of groups (G) provided when setting the hyperparameters ",
-                 "(list_hyper) is not consistent with that provided in the locus function.\n", sep=""))
-
+      stop(paste0("The number of groups (G) provided when setting the hyperparameters ",
+                  "(list_hyper) is not consistent with that provided in the locus function.\n"))
+    
     if (list_hyper$p_hyper != p_hyper_match)
-      stop(paste("The dimensions (p) of the provided hyperparameters ",
-                 "(list_hyper) are not consistent with that of X.\n", sep=""))
-
+      stop(paste0("The dimensions (p) of the provided hyperparameters ",
+                  "(list_hyper) are not consistent with that of X.\n"))
+    
     if (list_hyper$link_hyper != link)
-      stop(paste("The argument link is not consistent with the variable
-                 link_hyper in list_hyper", sep=""))
-
+      stop(paste0("The argument link is not consistent with the variable
+                 link_hyper in list_hyper"))
+    
     if(link == "mix") {
       if (!all(list_hyper$ind_bin_hyper == ind_bin))
-        stop(paste("The argument ind_bin is not consistent with the variable
-                   ind_bin_hyper in list_hyper", sep=""))
+        stop(paste0("The argument ind_bin is not consistent with the variable
+                   ind_bin_hyper in list_hyper"))
     }
     
     if (ns) {
-
+      
       if (inherits(list_hyper, "hyper")) {
         # remove the entries corresponding to the removed constant predictors in X
         # (if any)
         if (is.null(G)) {
-
+          
           list_hyper$a <- list_hyper$a[!bool_rmvd_x]
           list_hyper$b <- list_hyper$b[!bool_rmvd_x]
-
+          
           if (!is.null(names(list_hyper$a)) && names(list_hyper$a) != names_x)
             stop("Provided names for the entries of a do not match the colnames of X.")
-
+          
           if (!is.null(names(list_hyper$b)) && names(list_hyper$b) != names_x)
             stop("Provided names for the entries of b do not match the colnames of X.")
-
+          
         } else {
-
+          
           list_hyper$a <- list_hyper$a[unique(vec_fac_gr)]
           list_hyper$b <- list_hyper$b[unique(vec_fac_gr)]
-
+          
         }
       }
-
+      
     } else { # list_struct non-NULL 
-
+      
       list_hyper$m0 <- list_hyper$m0[!bool_rmvd_x]
-
+      
       if (!is.null(names(list_hyper$m0)) && names(list_hyper$m0) != names_x)
         stop("Provided names for the entries of m0 do not match the colnames of X.")
-
+      
     }
-
+    
     if (link %in% c("identity", "mix")) {
-
+      
       if (link == "mix") names_y <- names_y[-ind_bin]
-
+      
       if (!is.null(names(list_hyper$eta)) && names(list_hyper$eta) != names_y)
         stop("Provided names for the entries of eta do not match the colnames of the continuous variables in Y")
-
+      
       if (!is.null(names(list_hyper$kappa)) && names(list_hyper$kappa) != names_y)
         stop("Provided names for the entries of kappa do not match the colnames of the continuous variables in Y")
     }
-
+    
     if (!is.null(q)) {
-
+      
       if (inherits(list_hyper, "hyper")) {
         q_hyper_match <- length(bool_rmvd_z)
         # remove the entries corresponding to the removed constant predictors in X
         # (if any)
         list_hyper$phi <- list_hyper$phi[!bool_rmvd_z]
         list_hyper$xi <- list_hyper$xi[!bool_rmvd_z]
-
+        
       } else {
         q_hyper_match <- q
       }
-
+      
       if (list_hyper$q_hyper != q_hyper_match)
-        stop(paste("The dimensions of the provided hyperparameters ",
-                   "(list_hyper) are not consistent with that of Z.", sep=""))
-
+        stop(paste0("The dimensions of the provided hyperparameters ",
+                    "(list_hyper) are not consistent with that of Z."))
+      
       if (!is.null(names(list_hyper$phi)) && names(list_hyper$phi) != names_z)
         stop("Provided names for the entries of phi do not match the colnames of Z.")
-
+      
       if (!is.null(names(list_hyper$xi)) && names(list_hyper$xi) != names_z)
         stop("Provided names for the entries of xi do not match the colnames of Z.")
-
+      
     }
-
+    
   }
-
+  
   class(list_hyper) <- "out_hyper"
-
+  
   list_hyper
 }
 
@@ -404,49 +398,48 @@ prepare_list_hyper_ <- function(list_hyper, Y, p, p_star, q, link, ind_bin,
 prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
                                vec_fac_gr, bool_rmvd_x, bool_rmvd_z, user_seed, 
                                verbose) {
-
+  
   d <- ncol(Y)
   n <- nrow(Y)
-
+  
   if (!is.null(vec_fac_gr)) {
     G <- length(unique(vec_fac_gr))
   } else {
     G <- NULL
   }
-
+  
   if (is.null(list_init)) {
-
-    if (!is.null(user_seed) & verbose) cat(paste("Seed set to user_seed ",
-                                                 user_seed,". \n", sep=""))
-
-    if (verbose) cat(paste("list_init set automatically. \n", sep=""))
-
+    
+    if (!is.null(user_seed) & verbose) cat(paste0("Seed set to user_seed ",
+                                                  user_seed,". \n"))
+    
+    if (verbose) cat(paste0("list_init set automatically. \n"))
+    
     list_init <- auto_set_init_(Y, G, p, p_star, q, user_seed, link, ind_bin)
-
+    
   } else {
-
+    
     if (xor(is.null(G), is.null(list_init$G_init)))
       stop("If group selection was enabled when setting list_init, it must be used in locus and vice-versa.")
-
-
+    
+    
     if (!is.null(user_seed))
       warning("user_seed not used since a non-NULL list_init was provided. \n")
-
+    
     if (!inherits(list_init, c("init", "out_init")))
-      stop(paste("The provided list_init must be an object of class ``init'' or ",
-                 " `` out_init''. \n",
-                 "*** you must either use the function set_init to ",
-                 "set your own initialization or use list_init from a ``vb'' ",
-                 "object or  set the argument list_init to NULL for automatic ",
-                 "initialization. ***",
-                 sep=""))
-
+      stop(paste0("The provided list_init must be an object of class ``init'' or ",
+                  " `` out_init''. \n",
+                  "*** you must either use the function set_init to ",
+                  "set your own initialization or use list_init from a ``vb'' ",
+                  "object or  set the argument list_init to NULL for automatic ",
+                  "initialization. ***"))
+    
     if (inherits(list_init, "init")) {
       p_init_match <- length(bool_rmvd_x)
     } else {
       p_init_match <- p
     }
-
+    
     if (inherits(list_init, "init")) {
       p_init_match <- length(bool_rmvd_x)
       if (!is.null(G))
@@ -458,31 +451,31 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
       if (!is.null(G))
         G_init_match <- G
     }
-
+    
     if (list_init$d_init != d)
-      stop(paste("The dimensions (d) of the provided initial parameters ",
-                 "(list_init) are not consistent with that of Y.\n", sep=""))
-
+      stop(paste0("The dimensions (d) of the provided initial parameters ",
+                  "(list_init) are not consistent with that of Y.\n"))
+    
     if (list_init$p_init != p_init_match)
-      stop(paste("The dimensions (p) of the provided initial parameters ",
-                 "(list_init) are not consistent with that of X.\n", sep=""))
-
+      stop(paste0("The dimensions (p) of the provided initial parameters ",
+                  "(list_init) are not consistent with that of X.\n"))
+    
     if (!is.null(G) && list_init$G_init != G_init_match)
-      stop(paste("The number of groups (G) provided when setting the initial parameters ",
-                 "(list_init) is not consistent with that provided in the locus function.\n", sep=""))
-
+      stop(paste0("The number of groups (G) provided when setting the initial parameters ",
+                  "(list_init) is not consistent with that provided in the locus function.\n"))
+    
     if (list_init$link_init != link)
-      stop(paste("The argument link is not consistent with the variable
-                 link_init in list_init", sep=""))
-
+      stop(paste0("The argument link is not consistent with the variable
+                 link_init in list_init"))
+    
     if(link == "mix") {
       if (!all(list_init$ind_bin_init == ind_bin))
-        stop(paste("The argument ind_bin is not consistent with the variable
-                   ind_bin_init in list_init", sep=""))
+        stop(paste0("The argument ind_bin is not consistent with the variable
+                   ind_bin_init in list_init"))
     }
-
+    
     if (inherits(list_init, "init")) {
-
+      
       if (is.null(G)) {
         # drops the rows corresponding to the removed constant and collinear
         # predictors in X (if any)
@@ -491,52 +484,52 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
         # drops the rows corresponding to the empty groups (if any)
         list_init$gam_vb <- list_init$gam_vb[unique(vec_fac_gr),, drop = FALSE]
       }
-
+      
       list_init$mu_beta_vb <- list_init$mu_beta_vb[!bool_rmvd_x,, drop = FALSE]
-
+      
       if (link == "logit")
         list_init$sig2_beta_vb <- list_init$sig2_beta_vb[!bool_rmvd_x,, drop = FALSE]
-
+      
     }
-
-
+    
+    
     if (!is.null(q)) {
-
+      
       if (inherits(list_init, "init")) {
         q_init_match <- length(bool_rmvd_z)
         # remove the entries corresponding to the removed constant predictors in X
         # (if any)
         list_init$alpha_vb <- list_init$alpha_vb[!bool_rmvd_z,, drop = FALSE]
-
+        
         if (link == "probit"){
-
+          
           list_init$sig2_alpha_vb <- list_init$sig2_alpha_vb[!bool_rmvd_z]
-
+          
         } else {
-
+          
           list_init$sig2_alpha_vb <- list_init$sig2_alpha_vb[!bool_rmvd_z,, drop = FALSE]
-
+          
         }
-
+        
       } else {
         q_init_match <- q
       }
-
+      
       if (list_init$q_init != q_init_match)
-        stop(paste("The dimensions of the provided initial parameters ",
-                   "(list_init) are not consistent with that of Z.", sep=""))
+        stop(paste0("The dimensions of the provided initial parameters ",
+                    "(list_init) are not consistent with that of Z."))
     }
-
+    
   }
-
-
+  
+  
   if (!is.null(G)) { # converts mu_beta_vb to a list of matrices by groups
     list_init$mu_beta_vb <- lapply(unique(vec_fac_gr),
                                    function(g) list_init$mu_beta_vb[vec_fac_gr == g,, drop = FALSE])
   }
-
+  
   class(list_init) <- "out_init"
-
+  
   list_init
 }
 
@@ -547,52 +540,51 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
 #
 prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, link, list_hyper,
                         list_init, verbose) {
-
+  
   if (!inherits(list_cv, "cv"))
-    stop(paste("The provided list_cv must be an object of class ``cv''. \n",
-               "*** you must either use the function set_cv to give the settings ",
-               "for the cross-validation or set list_cv to NULL to skip the ",
-               "cross-validation step. ***",
-               sep=""))
-
+    stop(paste0("The provided list_cv must be an object of class ``cv''. \n",
+                "*** you must either use the function set_cv to give the settings ",
+                "for the cross-validation or set list_cv to NULL to skip the ",
+                "cross-validation step. ***"))
+  
   if (link == "logit")
     stop(paste0("Cross-validation not implemented only for logistic regression. ", 
                 "Please, set list_cv to NULL or use probit regression."))
-
+  
   if (!is.null(p0_av) | !is.null(list_hyper) | !is.null(list_init))
-    stop(paste("p0_av, list_hyper and list_init must all be NULL if non NULL ",
-               "list_cv is provided (cross-validation).", sep = ""))
-
+    stop(paste0("p0_av, list_hyper and list_init must all be NULL if non NULL ",
+                "list_cv is provided (cross-validation)."))
+  
   if (list_cv$n_cv != n)
-    stop(paste("The number of samples n provided to the function set_cv",
-               "is not consistent with those of the data.", sep=""))
-
+    stop(paste0("The number of samples n provided to the function set_cv",
+                "is not consistent with those of the data."))
+  
   if (list_cv$p_cv != length(bool_rmvd_x))
-    stop(paste("The number of candidate predictor p provided to the function ",
-               "set_cv is not consistent with X.", sep=""))
-
+    stop(paste0("The number of candidate predictor p provided to the function ",
+                "set_cv is not consistent with X."))
+  
   if (any(list_cv$p0_av_grid > p)) { # p has potentially been reduced because
     # of constant candidate predictors
-
+    
     list_cv$p0_av_grid <- create_grid_(p, list_cv$size_p0_av_grid)
-
+    
     new_size <- length(list_cv$p0_av_grid)
     if (list_cv$size_p0_av_grid > new_size) {
-      if (verbose) cat(paste("Cross-validation p0_av_grid reduced to ", new_size,
-                             " elements as p is small.\n", sep = ""))
+      if (verbose) cat(paste0("Cross-validation p0_av_grid reduced to ", new_size,
+                              " elements as p is small.\n"))
       list_cv$size_p0_av_grid <- new_size
     }
-
-    message <- paste("The cross-validation grid has been readjusted because to ",
-                     "account for the removal of constant candidate predictors. Grid used: ",
-                     list_cv$p0_av_grid, ". \n", sep = "")
-
+    
+    message <- paste0("The cross-validation grid has been readjusted because to ",
+                      "account for the removal of constant candidate predictors. Grid used: ",
+                      list_cv$p0_av_grid, ". \n")
+    
     if (verbose) cat(message)
     else warning(message)
   }
-
+  
   list_cv
-
+  
 }
 
 
@@ -600,42 +592,42 @@ prepare_cv_ <- function(list_cv, n, p, bool_rmvd_x, p0_av, link, list_hyper,
 # settings provided by the user for block-wise parallel inference.
 #
 prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv, list_groups, list_struct) {
-
+  
   if (!inherits(list_blocks, "blocks"))
     stop(paste0("The provided list_blocks must be an object of class ``blocks''. \n",
                 "*** you must either use the function set_blocks to give the settings ",
                 "for parallels applications of locus on blocks of candidate ",
                 "predictors or set list_blocks to NULL to apply locus jointly on ",
                 "all the candidate predictors (sufficient RAM required). ***"))
-
+  
   if (!is.null(list_cv))
-    stop(paste("list_cv must be NULL if non NULL ",
-               "list_blocks is provided (cross-validation not yet implemented).",sep = ""))
-
+    stop(paste0("list_cv must be NULL if non NULL ",
+                "list_blocks is provided (cross-validation not yet implemented)."))
+  
   if (!is.null(list_groups))
-    stop(paste("Group selection not implemented for block-wise parallel inference. ",
-               "list_blocks and list_groups can't be both non-NULL.", sep = ""))
-
+    stop(paste0("Group selection not implemented for block-wise parallel inference. ",
+                "list_blocks and list_groups can't be both non-NULL."))
+  
   if (!is.null(list_struct))
-    stop(paste("Structured sparse priors not enabled for block-wise parallel inference. ",
-               "list_blocks and list_struct can't be both non-NULL.", sep = ""))
-
+    stop(paste0("Structured sparse priors not enabled for block-wise parallel inference. ",
+                "list_blocks and list_struct can't be both non-NULL."))
+  
   if (list_blocks$p_blocks != length(bool_rmvd_x))
-    stop(paste("The number of candidate predictors p provided to the function set_blocks ",
-               "is not consistent with X.\n", sep=""))
-
+    stop(paste0("The number of candidate predictors p provided to the function set_blocks ",
+                "is not consistent with X.\n"))
+  
   vec_fac_bl <- list_blocks$vec_fac_bl[!bool_rmvd_x]
-
+  
   tab_bl <- table(vec_fac_bl)
   pres_bl <- tab_bl > 0
-
+  
   # in case a block was removed due to the above because of bool_rmvd_x
   n_bl  <- sum(pres_bl)
   if(list_blocks$n_cpus > n_bl) n_cpus <- n_bl
   else n_cpus <- list_blocks$n_cpus
-
+  
   create_named_list_(n_bl, n_cpus, vec_fac_bl)
-
+  
 }
 
 #' Gather settings for parallel inference on partitioned predictor space.
@@ -707,65 +699,64 @@ prepare_blocks_ <- function(list_blocks, bool_rmvd_x, list_cv, list_groups, list
 #'
 #' @export
 set_blocks <- function(p, pos_bl, n_cpus, verbose = TRUE) {
-
+  
   check_structure_(p, "vector", "numeric", 1)
   check_natural_(p)
-
+  
   check_structure_(verbose, "vector", "logical", 1)
-
+  
   check_structure_(pos_bl, "vector", "numeric")
   check_natural_(pos_bl)
-
+  
   if (length(pos_bl) > 25)
-    warning(paste("The provided number of blocks may be too large for accurate ",
-                  "inference. If possible, use less blocks.", sep = ""))
-
+    warning(paste0("The provided number of blocks may be too large for accurate ",
+                   "inference. If possible, use less blocks."))
+  
   if (any(pos_bl < 1) | any(pos_bl > p))
     stop("The positions provided in pos_bl must range between 1 and total number of variables in X, p.")
-
+  
   if (any(duplicated(pos_bl)))
     stop("The positions provided in pos_bl must be unique.")
-
+  
   if (any(pos_bl != cummax(pos_bl)))
     stop("The positions provided in pos_bl must be monotonically increasing.")
-
+  
   vec_fac_bl <- as.factor(cumsum(seq_along(1:p) %in% pos_bl))
-
+  
   n_bl <- length(unique(vec_fac_bl))
-
+  
   check_structure_(n_cpus, "vector", "numeric", 1)
   check_natural_(n_cpus)
-
-
+  
+  
   if (n_cpus > 1) {
-
+    
     n_cpus_avail <- parallel::detectCores()
     if (n_cpus > n_cpus_avail) {
       n_cpus <- n_cpus_avail
-      warning(paste("The number of CPUs specified exceeds the number of CPUs ",
-                    "available on the machine. The latter has been used instead.",
-                    sep=""))
+      warning(paste0("The number of CPUs specified exceeds the number of CPUs ",
+                     "available on the machine. The latter has been used instead."))
     }
-
+    
     if (n_cpus > n_bl){
-      message <- paste("The number of cpus in use is at most equal to the number of blocks.",
-                       "n_cpus is therefore set to ", n_bl, ". \n", sep ="")
+      message <- paste0("The number of cpus in use is at most equal to the number of blocks.",
+                        "n_cpus is therefore set to ", n_bl, ". \n")
       if(verbose) cat(message)
       else warning(message)
       n_cpus <- n_bl
     }
-
-    if (verbose) cat(paste("locus applied in parallel on ", n_bl,
-                           " blocks of candidate predictors, using ", n_cpus, " CPUs.\n",
-                           "Please make sure that enough RAM is available. \n", sep=""))
+    
+    if (verbose) cat(paste0("locus applied in parallel on ", n_bl,
+                            " blocks of candidate predictors, using ", n_cpus, " CPUs.\n",
+                            "Please make sure that enough RAM is available. \n"))
   }
-
+  
   p_blocks <- p
-
+  
   list_blocks <- create_named_list_(p_blocks, n_bl, n_cpus, vec_fac_bl)
-
+  
   class(list_blocks) <- "blocks"
-
+  
   list_blocks
 }
 
@@ -774,26 +765,26 @@ set_blocks <- function(p, pos_bl, n_cpus, verbose = TRUE) {
 # case `locus_mix_core` or `locus_mix_info_core` is used.
 #
 prepare_ind_bin_ <- function(d, ind_bin, link) {
-
+  
   if (link == "mix") {
-
+    
     check_structure_(ind_bin, "vector", "numeric")
     ind_bin <- sort(unique(ind_bin))
     if (!all(ind_bin %in% 1:d))
-      stop(paste("All indices provided in ind_bin must be integers between 1 ",
-                 "and the total number of responses, d = ", d, ".", sep = ""))
-
+      stop(paste0("All indices provided in ind_bin must be integers between 1 ",
+                  "and the total number of responses, d = ", d, "."))
+    
     if (length(ind_bin) == d)
-      stop(paste("Argument ind_bin indicates that all responses are binary. \n",
-                 "Please set link to logit or probit, or change ind_bin to ",
-                 "the indices of the binary responses only.", sep = ""))
-
+      stop(paste0("Argument ind_bin indicates that all responses are binary. \n",
+                  "Please set link to logit or probit, or change ind_bin to ",
+                  "the indices of the binary responses only."))
+    
   } else if (!is.null(ind_bin)) {
-
+    
     stop("Argument ind_bin must be NULL if link is not set to mix.")
-
+    
   }
-
+  
   ind_bin
 }
 
@@ -803,34 +794,33 @@ prepare_ind_bin_ <- function(d, ind_bin, link) {
 # settings provided by the user for group selection.
 #
 prepare_groups_ <- function(list_groups, X, q, bool_rmvd_x, link, list_cv) {
-
+  
   if (!inherits(list_groups, "groups"))
-    stop(paste("The provided list_groups must be an object of class ``groups''. \n",
-               "*** you must use the function set_groups to give the settings ",
-               "for group selection. ***",
-               sep=""))
-
+    stop(paste0("The provided list_groups must be an object of class ``groups''. \n",
+                "*** you must use the function set_groups to give the settings ",
+                "for group selection. ***"))
+  
   if (!is.null(list_cv))
-    stop(paste("list_cv must be NULL if non NULL ",
-               "list_groups is provided (cross-validation not yet implemented). \n",sep = ""))
-
+    stop(paste0("list_cv must be NULL if non NULL ",
+                "list_groups is provided (cross-validation not yet implemented). \n"))
+  
   if (list_groups$p_groups != length(bool_rmvd_x))
-    stop(paste("The number of candidate predictors p provided to the function set_groups ",
-               "is not consistent with X.\n", sep=""))
-
+    stop(paste0("The number of candidate predictors p provided to the function set_groups ",
+                "is not consistent with X.\n"))
+  
   p <- length(bool_rmvd_x)
-
+  
   if(!(is.factor(list_groups$vec_fac_gr) && length(list_groups$vec_fac_gr) == p))
-    stop(paste("list_groups$vec_fac_gr must be a non-empty a factor of length ", p, ".", sep = ""))
-
+    stop(paste0("list_groups$vec_fac_gr must be a non-empty a factor of length ", p, "."))
+  
   if(link != "identity" | !is.null(q))
     stop("Group selection implemented only for identity link and Z = NULL. Exit.")
-
+  
   vec_fac_gr <- list_groups$vec_fac_gr[!bool_rmvd_x] # some groups may disappear here, but this is not a problem
   X <- lapply(unique(vec_fac_gr), function(g) X[, vec_fac_gr == g, drop = FALSE])
-
+  
   create_named_list_(X, vec_fac_gr) # X is now a list in which the matrix is split across groups
-
+  
 }
 
 
@@ -909,49 +899,49 @@ prepare_groups_ <- function(list_groups, X, q, bool_rmvd_x, link, list_cv) {
 #' @export
 #'
 set_groups <- function(n, p, pos_gr, verbose = TRUE) {
-
+  
   check_structure_(n, "vector", "numeric", 1)
   check_natural_(n)
-
+  
   check_structure_(p, "vector", "numeric", 1)
   check_natural_(p)
-
+  
   check_structure_(verbose, "vector", "logical", 1)
-
+  
   check_structure_(pos_gr, "vector", "numeric")
   check_natural_(pos_gr)
-
+  
   if (p / length(pos_gr) > 500)
-    warning(paste("The provided number of groups may be too small for tractable ",
-                  "inference. If possible, use more groups.", sep = ""))
-
+    warning(paste0("The provided number of groups may be too small for tractable ",
+                   "inference. If possible, use more groups."))
+  
   if (any(pos_gr < 1) | any(pos_gr > p))
     stop("The positions provided in pos_gr must range between 1 and total number of variables in X, p.")
-
+  
   if (any(duplicated(pos_gr)))
     stop("The positions provided in pos_gr must be unique.")
-
+  
   if (any(pos_gr != cummax(pos_gr)))
     stop("The positions provided in pos_gr must be monotonically increasing.")
-
+  
   vec_fac_gr <- as.factor(cumsum(seq_along(1:p) %in% pos_gr))
-
+  
   if (length(unique(vec_fac_gr)) == p)
-    stop(paste("All the groups are of size one, no group selection will be performed. ",
-               "Set argument list_groups to NULL in the locus function.", sep = ""))
-
+    stop(paste0("All the groups are of size one, no group selection will be performed. ",
+                "Set argument list_groups to NULL in the locus function."))
+  
   if (max(table(vec_fac_gr)) >= n)
-    stop(paste("One or more group size(s) is greater or equal to n.  ",
-               "Corresponding empirical covariances not positive definite. Use smaller group sizes.", sep = ""))
-
-  if (verbose) print(paste("Number of groups: ", length(unique(vec_fac_gr)), sep = ""))
-
+    stop(paste0("One or more group size(s) is greater or equal to n.  ",
+                "Corresponding empirical covariances not positive definite. Use smaller group sizes."))
+  
+  if (verbose) print(paste0("Number of groups: ", length(unique(vec_fac_gr))))
+  
   p_groups <- p
-
+  
   list_groups <- create_named_list_(p_groups, vec_fac_gr)
-
+  
   class(list_groups) <- "groups"
-
+  
   list_groups
 }
 
@@ -964,42 +954,41 @@ set_groups <- function(n, p, pos_gr, verbose = TRUE) {
 # settings provided by the user for structured sparsity priors.
 #
 prepare_struct_ <- function(list_struct, n, q, bool_rmvd_x, link, list_cv, list_groups) {
-
+  
   if (!inherits(list_struct, "struct"))
-    stop(paste("The provided list_struct must be an object of class ``struct''. \n",
-               "*** you must use the function set_struct to give the settings ",
-               "for structured sparse priors. ***",
-               sep=""))
-
+    stop(paste0("The provided list_struct must be an object of class ``struct''. \n",
+                "*** you must use the function set_struct to give the settings ",
+                "for structured sparse priors. ***"))
+  
   if (!is.null(list_cv))
-    stop(paste("list_cv must be NULL if non NULL ",
-               "list_struct is provided (cross-validation not yet implemented). \n",sep = ""))
-
+    stop(paste0("list_cv must be NULL if non NULL ",
+                "list_struct is provided (cross-validation not yet implemented). \n"))
+  
   if (list_struct$n_struct != n)
-    stop(paste("The number of samples n provided to the function set_struct ",
-               "is not consistent with X.\n", sep=""))
-
+    stop(paste0("The number of samples n provided to the function set_struct ",
+                "is not consistent with X.\n"))
+  
   if (list_struct$p_struct != length(bool_rmvd_x))
-    stop(paste("The number of candidate predictors p provided to the function set_struct ",
-               "is not consistent with X.\n", sep=""))
-
+    stop(paste0("The number of candidate predictors p provided to the function set_struct ",
+                "is not consistent with X.\n"))
+  
   p <- length(bool_rmvd_x)
-
+  
   if(!(is.factor(list_struct$vec_fac_st) && length(list_struct$vec_fac_st) == p))
-    stop(paste("list_struct$vec_fac_st must be a non-empty a factor of length ", p, ".", sep = ""))
-
+    stop(paste0("list_struct$vec_fac_st must be a non-empty a factor of length ", p, "."))
+  
   if(link != "identity" | !is.null(q) | !is.null(list_groups))
     stop("Structured sparse priors enabled only for identity link, Z = NULL and with no group selection. Exit.")
-
+  
   vec_fac_st <- list_struct$vec_fac_st[!bool_rmvd_x] # some blocks may disappear here, but this is not a problem
-
+  
   # in case a block was removed due to the above because of bool_rmvd_x
   n_gr <- sum(table(vec_fac_st) > 0)
   if(list_struct$n_cpus > n_gr) n_cpus <- n_gr
   else n_cpus <- list_struct$n_cpus
-
+  
   create_named_list_(n_cpus, vec_fac_st)
-
+  
 }
 
 
@@ -1084,81 +1073,80 @@ prepare_struct_ <- function(list_struct, n, q, bool_rmvd_x, link, list_cv, list_
 #' @export
 #'
 set_struct <- function(n, p, pos_st, n_cpus, verbose = TRUE) {
-
+  
   check_structure_(n, "vector", "numeric", 1)
   check_natural_(n)
-
+  
   check_structure_(p, "vector", "numeric", 1)
   check_natural_(p)
-
+  
   check_structure_(verbose, "vector", "logical", 1)
-
+  
   check_structure_(n_cpus, "vector", "numeric", 1)
   check_natural_(n_cpus)
-
+  
   check_structure_(pos_st, "vector", "numeric")
   check_natural_(pos_st)
-
+  
   if (any(pos_st < 1) | any(pos_st > p))
     stop("The positions provided in pos_st must range between 1 and total number of variables in X, p.")
-
+  
   if (any(duplicated(pos_st)))
     stop("The positions provided in pos_st must be unique.")
-
+  
   if (any(pos_st != cummax(pos_st)))
     stop("The positions provided in pos_st must be monotonically increasing.")
-
+  
   vec_fac_st <- as.factor(cumsum(seq_along(1:p) %in% pos_st))
-
+  
   n_gr <- length(unique(vec_fac_st))
-
+  
   if (length(unique(vec_fac_st)) == p)
-    stop(paste("All the blocks are of size one, no structured selection or blockwise estimation will be performed. ",
-               "Set argument list_struct to NULL in the locus function.", sep = ""))
-
+    stop(paste0("All the blocks are of size one, no structured selection or blockwise estimation will be performed. ",
+                "Set argument list_struct to NULL in the locus function."))
+  
   # Should not be needed as regularization performed anyway.
   # if (max(table(vec_fac_st)) >= n)
-  #   stop(paste("One or more block size(s) is greater or equal to n.  ",
-  #                 "Corresponding empirical covariances not positive definite. Use smaller block sizes.", sep = ""))
+  #   stop(paste0("One or more block size(s) is greater or equal to n.  ",
+  #                 "Corresponding empirical covariances not positive definite. Use smaller block sizes."))
   
   if (max(table(vec_fac_st)) >= n/2)
-    warning(paste("One or more block size(s) is greater or equal to n/2.  ",
-                  "Corresponding empirical covariances may not be positive definite. ",
-                  "Regularization will be used but this may affect the quality of inference.", sep = ""))
+    warning(paste0("One or more block size(s) is greater or equal to n/2.  ",
+                   "Corresponding empirical covariances may not be positive definite. ",
+                   "Regularization will be used but this may affect the quality of inference."))
   
   if (p / length(pos_st) > 500)
-    warning(paste("The provided number of blocks may be too small for tractable ",
-                  "inference. If possible, use more blocks.", sep = ""))
+    warning(paste0("The provided number of blocks may be too small for tractable ",
+                   "inference. If possible, use more blocks."))
   
   if (n_cpus > 1) {
-
+    
     n_cpus_avail <- parallel::detectCores()
     if (n_cpus > n_cpus_avail) {
       n_cpus <- n_cpus_avail
-      warning(paste("The number of CPUs specified exceeds the number of CPUs ",
-                    "available on the machine. The latter has been used instead.",
-                    sep=""))
+      warning(paste0("The number of CPUs specified exceeds the number of CPUs ",
+                     "available on the machine. The latter has been used instead."))
     }
-
+    
     if (n_cpus > n_gr){
-      message <- paste("The number of cpus in use is at most equal to the number of blocks.",
-                       "n_cpus is therefore set to ", n_gr, ". \n", sep ="")
+      message <- paste0("The number of cpus in use is at most equal to the number of blocks.",
+                        "n_cpus is therefore set to ", n_gr, ". \n")
       if(verbose) cat(message)
       else warning(message)
       n_cpus <- n_gr
     }
-
-    if (verbose) print(paste("Number of blocks: ", length(unique(vec_fac_st)),
-                             ", number of CPUs: ", n_cpus, sep = ""))
-
+    
+    if (verbose) print(paste0("Number of blocks: ", length(unique(vec_fac_st)),
+                              ", number of CPUs: ", n_cpus))
+    
   }
-
+  
   n_struct <- n
   p_struct <- p
-
+  
   list_struct <- create_named_list_(n_struct, p_struct, n_cpus, vec_fac_st)
-
+  
   class(list_struct) <- "struct"
-
+  
   list_struct
 }

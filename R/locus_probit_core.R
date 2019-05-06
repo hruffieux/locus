@@ -45,7 +45,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, alpha_vb,
       it <- it + 1
 
       if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("Iteration ", format(it), "... \n", sep = ""))
+        cat(paste0("Iteration ", format(it), "... \n"))
 
       # % #
       xi_vb <- update_xi_bin_vb_(xi, m2_alpha)
@@ -200,7 +200,7 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, alpha_vb,
                              m2_beta, mat_x_m1, mat_z_mu, sum_gam)
 
       if (verbose & (it == 1 | it %% 5 == 0))
-        cat(paste("ELBO = ", format(lb_new), "\n\n", sep = ""))
+        cat(paste0("ELBO = ", format(lb_new), "\n\n"))
 
       if (debug && lb_new < lb_old)
         stop("ELBO not increasing monotonically. Exit. ")
@@ -211,9 +211,9 @@ locus_probit_core_ <- function(Y, X, Z, list_hyper, gam_vb, alpha_vb,
 
     if (verbose) {
       if (converged) {
-        cat(paste("Convergence obtained after ", format(it), " iterations. \n",
+        cat(paste0("Convergence obtained after ", format(it), " iterations. \n",
                   "Optimal marginal log-likelihood variational lower bound ",
-                  "(ELBO) = ", format(lb_new), ". \n\n", sep = ""))
+                  "(ELBO) = ", format(lb_new), ". \n\n"))
       } else {
         warning("Maximal number of iterations reached before convergence. Exit.")
       }

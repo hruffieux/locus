@@ -721,8 +721,8 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
   } else if (!is.null(alpha_vb) | !is.null(sig2_alpha_vb)) {
 
-    stop(paste("Provided q = NULL, not consistent with alpha_vb or ",
-               "sig2_alpha_vb being non-null.", sep = ""))
+    stop(paste0("Provided q = NULL, not consistent with alpha_vb or ",
+                "sig2_alpha_vb being non-null."))
 
   }
 
