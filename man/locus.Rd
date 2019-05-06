@@ -8,8 +8,8 @@ locus(Y, X, p0_av, Z = NULL, link = "identity", ind_bin = NULL,
   list_hyper = NULL, list_init = NULL, list_cv = NULL,
   list_blocks = NULL, list_groups = NULL, list_struct = NULL,
   user_seed = NULL, tol = 0.1, maxit = 1000, anneal = NULL,
-  save_hyper = FALSE, save_init = FALSE, verbose = TRUE,
-  checkpoint_path = NULL)
+  save_hyper = FALSE, save_init = FALSE, full_output = FALSE,
+  verbose = TRUE, checkpoint_path = NULL)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of
@@ -89,10 +89,14 @@ and the third entry is the ladder size. If \code{NULL} (default), no
 annealing is performed.}
 
 \item{save_hyper}{If \code{TRUE}, the hyperparameters used for the model are
-saved as output.}
+returned.}
 
 \item{save_init}{If \code{TRUE}, the initial variational parameters used for
-the inference are saved as output.}
+the inference are returned (note that the size of the resulting objects is
+likely to be large). Default is \code{FALSE}.}
+
+\item{full_output}{If \code{TRUE}, the inferred variational parameters for 
+all parameters are returned.}
 
 \item{verbose}{If \code{TRUE}, messages are displayed during execution.}
 
@@ -105,7 +109,7 @@ An object of class "\code{vb}" containing the following variational
  \item{gam_vb}{Posterior inclusion probability matrix of dimension p x d.
                Entry (s, t) corresponds to the posterior probability of
                association between candidate predictor s and response t.}
- \item{mu_alpha_vb}{Matrix of dimension q x d whose entries are the posterior
+ \item{alpha_vb}{Matrix of dimension q x d whose entries are the posterior
                     mean regression coefficients for the covariates provided
                     in \code{Z} (if \code{link = "logit"},
                     \code{link = "logit"} or

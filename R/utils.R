@@ -295,17 +295,14 @@ rm_collinear_ <- function(mat, verbose) {
 make_chunks_ <- function(x, n_g) split(x, factor(sort(rank(x) %% n_g)))
 
 
-checkpoint_ <- function(it, checkpoint_path, 
-                        gam_vb, converged, lb_new, lb_old, b_vb = NULL,
-                        mu_rho_vb = NULL, mu_theta_vb = NULL, om_vb = NULL,
-                        S0_inv_vb = NULL, rate = 100) {
+checkpoint_ <- function(it, checkpoint_path, gam_vb, converged, lb_new, lb_old, 
+                        om_vb = NULL, rate = 100) {
   
   if (!is.null(checkpoint_path) && it %% rate == 0) {
     
     diff_lb <- abs(lb_new - lb_old)
     
-    tmp_vb <- create_named_list_(gam_vb, converged, it, lb_new, diff_lb, 
-                                 b_vb, mu_theta_vb, mu_rho_vb, om_vb, S0_inv_vb)
+    tmp_vb <- create_named_list_(gam_vb, converged, it, lb_new, diff_lb, om_vb)
     
     file_save <- paste0(checkpoint_path, "tmp_output_it_", it, ".RData")
     

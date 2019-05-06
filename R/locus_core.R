@@ -33,10 +33,10 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
   with(list_hyper, { # list_init not used with the with() function to avoid
                      # copy-on-write for large objects
 
-    m1_beta <- update_m1_beta_(gam_vb, mu_beta_vb)
+    beta_vb <- update_beta_vb_(gam_vb, mu_beta_vb)
     m2_beta <- update_m2_beta_(gam_vb, mu_beta_vb, sig2_beta_vb, sweep = TRUE)
 
-    mat_x_m1 <- update_mat_x_m1_(X, m1_beta)
+    mat_x_m1 <- update_mat_x_m1_(X, beta_vb)
 
     rs_gam <- rowSums(gam_vb)
     sum_gam <- sum(rs_gam)
@@ -65,7 +65,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
       # % #
       eta_vb <- update_eta_vb_(n, eta, gam_vb, c = c)
-      kappa_vb <- update_kappa_vb_(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb, c = c)
+      kappa_vb <- update_kappa_vb_(Y, kappa, mat_x_m1, beta_vb, m2_beta, sig2_inv_vb, c = c)
 
       tau_vb <- eta_vb / kappa_vb
       # % #
@@ -88,7 +88,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
         shuffled_ind <- as.numeric(sample(0:(p-1))) # Zero-based index in C++
 
         coreLoop(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
-                 log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb,
+                 log_tau_vb, beta_vb, mat_x_m1, mu_beta_vb, sig2_beta_vb,
                  tau_vb, shuffled_ind, c = c)
 
 
@@ -102,7 +102,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
         for (k in sample(1:d)) {
 
           mu_beta_vb[, k] <- c * sig2_beta_vb[k] * tau_vb[k] *
-            (crossprod(Y[, k] - mat_x_m1[, k], X) + (n - 1) * m1_beta[, k])
+            (crossprod(Y[, k] - mat_x_m1[, k], X) + (n - 1) * beta_vb[, k])
 
 
           gam_vb[, k] <- exp(-log_one_plus_exp_(c * (log_1_min_om_vb - log_om_vb -
@@ -110,9 +110,9 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
                                                        mu_beta_vb[, k] ^ 2 / (2 * sig2_beta_vb[k]) -
                                                   log(sig2_beta_vb[k]) / 2)))
 
-          m1_beta[, k] <- mu_beta_vb[, k] * gam_vb[, k]
+          beta_vb[, k] <- mu_beta_vb[, k] * gam_vb[, k]
 
-          mat_x_m1[, k] <- X %*% m1_beta[, k]
+          mat_x_m1[, k] <- X %*% beta_vb[, k]
 
         }
 
@@ -128,7 +128,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
         # C++ Eigen call for expensive updates
         coreBatch(X, Y, gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_vb,
-                  log_tau_vb, m1_beta, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb)
+                  log_tau_vb, beta_vb, mat_x_m1, mu_beta_vb, sig2_beta_vb, tau_vb)
 
         rs_gam <- rowSums(gam_vb)
 
@@ -141,7 +141,7 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
           for (j in sample(1:p)) {
 
-            mat_x_m1[, k] <- mat_x_m1[, k] - X[, j] * m1_beta[j, k]
+            mat_x_m1[, k] <- mat_x_m1[, k] - X[, j] * beta_vb[j, k]
 
             mu_beta_vb[j, k] <- c * sig2_beta_vb[k] * tau_vb[k] * crossprod(Y[, k] - mat_x_m1[, k], X[, j])
 
@@ -150,9 +150,9 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
                                                           mu_beta_vb[j, k] ^ 2 / (2 * sig2_beta_vb[k]) -
                                                      log(sig2_beta_vb[k]) / 2)))
 
-            m1_beta[j, k] <- mu_beta_vb[j, k] * gam_vb[j, k]
+            beta_vb[j, k] <- mu_beta_vb[j, k] * gam_vb[j, k]
 
-            mat_x_m1[, k] <- mat_x_m1[, k] + X[, j] * m1_beta[j, k]
+            mat_x_m1[, k] <- mat_x_m1[, k] + X[, j] * beta_vb[j, k]
 
           }
 
@@ -192,8 +192,8 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
       } else {
 
 
-        lb_new <- elbo_(Y, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, nu,
-                        sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta, m2_beta,
+        lb_new <- elbo_(Y, a, a_vb, b, b_vb, beta_vb, eta, gam_vb, kappa, 
+                        lambda, nu, sig2_beta_vb, sig2_inv_vb, tau_vb, m2_beta,
                         mat_x_m1, sum_gam)
 
         if (verbose & (it == 1 | it %% 5 == 0))
@@ -228,22 +228,23 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
     lb_opt <- lb_new
 
     if (full_output) { # for internal use only
-      create_named_list_(a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda,
-                         nu, sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta,
+      create_named_list_(a, a_vb, b, b_vb, beta_vb, eta, gam_vb, kappa, lambda,
+                         mu_beta_vb, nu, sig2_beta_vb, sig2_inv_vb, tau_vb, 
                          m2_beta, mat_x_m1, sum_gam)
     } else {
       names_x <- colnames(X)
       names_y <- colnames(Y)
 
-      rownames(gam_vb) <- names_x
-      colnames(gam_vb) <- names_y
+      rownames(gam_vb) <- rownames(beta_vb) <- names_x
+      colnames(gam_vb) <- colnames(beta_vb) <- names_y
       names(om_vb) <- names_x
 
       diff_lb <- abs(lb_opt - lb_old)
 
       annealing <- ifelse(is.null(anneal), FALSE, anneal[1])
 
-      create_named_list_(gam_vb, om_vb, converged, it, lb_opt, diff_lb, annealing)
+      create_named_list_(beta_vb, gam_vb, om_vb, converged, it, lb_opt, diff_lb, 
+                         annealing)
     }
   })
 
@@ -253,14 +254,13 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 # Internal function which implements the marginal log-likelihood variational
 # lower bound (ELBO) corresponding to the `locus_core` algorithm.
 #
-elbo_ <- function(Y, a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, nu,
-                  sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta, m2_beta, mat_x_m1,
-                  sum_gam) {
+elbo_ <- function(Y, a, a_vb, b, b_vb, beta_vb, eta, gam_vb, kappa, lambda, nu,
+                  sig2_beta_vb, sig2_inv_vb, tau_vb, m2_beta, mat_x_m1, sum_gam) {
 
   n <- nrow(Y)
 
   eta_vb <- update_eta_vb_(n, eta, gam_vb)
-  kappa_vb <- update_kappa_vb_(Y, kappa, mat_x_m1, m1_beta, m2_beta, sig2_inv_vb)
+  kappa_vb <- update_kappa_vb_(Y, kappa, mat_x_m1, beta_vb, m2_beta, sig2_inv_vb)
 
   lambda_vb <- update_lambda_vb_(lambda, sum_gam)
   nu_vb <- update_nu_vb_(nu, m2_beta, tau_vb)

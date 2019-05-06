@@ -457,7 +457,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, link, ind_bin, struct, vec_fac_gr) 
 #'   binary variables in \code{Y}. Must be \code{NULL} if \code{link != "mix"}.
 #' @param q Number of covariates. Default is \code{NULL}, for \code{Z}
 #'   \code{NULL}.
-#' @param mu_alpha_vb Matrix of size q x d with initial values for the
+#' @param alpha_vb Matrix of size q x d with initial values for the
 #'   variational parameter yielding regression coefficient estimates for
 #'   covariate-response pairs. Default is \code{NULL}, for \code{Z} \code{NULL}.
 #' @param sig2_alpha_vb Matrix of size q x d for \code{link = "identity"},
@@ -551,12 +551,12 @@ auto_set_hyper_ <- function(Y, p, p_star, q, link, ind_bin, struct, vec_fac_gr) 
 #'
 #' # With covariates
 #' #
-#' mu_alpha_vb <- matrix(rnorm(q * d), nrow = q)
+#' alpha_vb <- matrix(rnorm(q * d), nrow = q)
 #' sig2_alpha_vb <- 1 / matrix(rgamma(q * d, shape = 2, rate = 1), nrow = q)
 #'
 #' list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 #'                           link = "identity", q = q,
-#'                           mu_alpha_vb = mu_alpha_vb,
+#'                           alpha_vb = alpha_vb,
 #'                           sig2_alpha_vb = sig2_alpha_vb)
 #'
 #' vb_g_z <- locus(Y = Y, X = X, p0_av = p0, Z = Z, link = "identity",
@@ -570,7 +570,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, link, ind_bin, struct, vec_fac_gr) 
 #'
 #' list_init_logit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
 #'                             tau_vb = NULL, link = "logit", q = q,
-#'                             mu_alpha_vb = mu_alpha_vb,
+#'                             alpha_vb = alpha_vb,
 #'                             sig2_alpha_vb = sig2_alpha_vb)
 #'
 #' vb_logit <- locus(Y = Y_bin, X = X, p0_av = p0, Z = Z, link = "logit",
@@ -580,7 +580,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, link, ind_bin, struct, vec_fac_gr) 
 #' sig2_beta_vb_probit <- sig2_beta_vb[1]
 #' list_init_probit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_probit,
 #'                              tau_vb = NULL, link = "probit", q = q,
-#'                              mu_alpha_vb = mu_alpha_vb,
+#'                              alpha_vb = alpha_vb,
 #'                              sig2_alpha_vb = sig2_alpha_vb_probit)
 #'
 #' vb_probit <- locus(Y = Y_bin, X = X, p0_av = p0, Z = Z, link = "probit",
@@ -597,13 +597,13 @@ auto_set_hyper_ <- function(Y, p, p_star, q, link, ind_bin, struct, vec_fac_gr) 
 #' mu_beta_vb_mix <- matrix(rnorm(p * 2*d), nrow = p)
 #' sig2_beta_vb_mix <- 1 / c(rgamma(d, shape = 2, rate = 1 / tau_vb),
 #'                           rgamma(d, shape = 2, rate = 1))
-#' mu_alpha_vb_mix <- matrix(rnorm(q * 2*d), nrow = q)
+#' alpha_vb_mix <- matrix(rnorm(q * 2*d), nrow = q)
 #' sig2_alpha_vb_mix <- 1 / matrix(rgamma(q * 2*d, shape = 2, rate = 1), nrow = q)
 #'
 #' list_init_mix <- set_init(2*d, p, gam_vb_mix, mu_beta_vb_mix,
 #'                           sig2_beta_vb_mix, tau_vb, link = "mix",
 #'                           ind_bin = ind_bin, q = q,
-#'                           mu_alpha_vb = mu_alpha_vb_mix,
+#'                           alpha_vb = alpha_vb_mix,
 #'                           sig2_alpha_vb = sig2_alpha_vb_mix)
 #'
 #' vb_mix <- locus(Y = Y_mix, X = X, p0_av = p0, Z = Z, link = "mix",
@@ -615,7 +615,7 @@ auto_set_hyper_ <- function(Y, p, p_star, q, link, ind_bin, struct, vec_fac_gr) 
 #'
 set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
                      link = "identity", ind_bin = NULL, q = NULL,
-                     mu_alpha_vb = NULL, sig2_alpha_vb = NULL,
+                     alpha_vb = NULL, sig2_alpha_vb = NULL,
                      sig2_inv_vb = NULL, G = NULL) {
 
   check_structure_(d, "vector", "numeric", 1)
@@ -705,7 +705,7 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
   if (!is.null(q)) {
 
-    check_structure_(mu_alpha_vb, "matrix", "double", c(q, d))
+    check_structure_(alpha_vb, "matrix", "double", c(q, d))
 
     if (link == "probit") {
 
@@ -719,9 +719,9 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
     check_positive_(sig2_alpha_vb)
 
-  } else if (!is.null(mu_alpha_vb) | !is.null(sig2_alpha_vb)) {
+  } else if (!is.null(alpha_vb) | !is.null(sig2_alpha_vb)) {
 
-    stop(paste("Provided q = NULL, not consistent with mu_alpha_vb or ",
+    stop(paste("Provided q = NULL, not consistent with alpha_vb or ",
                "sig2_alpha_vb being non-null.", sep = ""))
 
   }
@@ -736,7 +736,7 @@ set_init <- function(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
 
   list_init <- create_named_list_(d_init, G_init, p_init, q_init, link_init,
                                   ind_bin_init, gam_vb, mu_beta_vb,
-                                  sig2_beta_vb, sig2_inv_vb, tau_vb, mu_alpha_vb,
+                                  sig2_beta_vb, sig2_inv_vb, tau_vb, alpha_vb,
                                   sig2_alpha_vb)
 
   class(list_init) <- "init"
@@ -822,7 +822,7 @@ auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, link, ind_bin) {
 
   if (!is.null(q)) {
 
-    mu_alpha_vb <- matrix(rnorm(q * d), nrow = q)
+    alpha_vb <- matrix(rnorm(q * d), nrow = q)
 
     if (link %in% c("identity", "mix")) {
 
@@ -850,7 +850,7 @@ auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, link, ind_bin) {
 
   } else {
 
-    mu_alpha_vb <- NULL
+    alpha_vb <- NULL
     sig2_alpha_vb <- NULL
 
   }
@@ -865,7 +865,7 @@ auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, link, ind_bin) {
 
   list_init <- create_named_list_(d_init, G_init, p_init, q_init,
                                   link_init, ind_bin_init, gam_vb, mu_beta_vb,
-                                  sig2_inv_vb, sig2_beta_vb, tau_vb, mu_alpha_vb,
+                                  sig2_inv_vb, sig2_beta_vb, tau_vb, alpha_vb,
                                   sig2_alpha_vb)
 
   class(list_init) <- "out_init"

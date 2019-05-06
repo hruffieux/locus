@@ -22,7 +22,7 @@ void coreStructLoop(const MapMat X,
                     const MapArr1D log_1_min_Phi_mu_theta_vb,
                     const double log_sig2_inv_vb,
                     const MapArr1D log_tau_vb,
-                    MapMat m1_beta,
+                    MapMat beta_vb,
                     MapMat mat_x_m1,
                     MapArr2D mu_beta_vb,
                     const MapArr1D sig2_beta_vb,
@@ -35,7 +35,7 @@ void coreStructLoop(const MapMat X,
 
     int j = shuffled_ind[i];
 
-    mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
+    mat_x_m1.noalias() -= X.col(j) * beta_vb.row(j);
 
     mu_beta_vb.row(j) = sig2_beta_vb * tau_vb *
       ((Y - mat_x_m1).transpose() * X.col(j)).array();
@@ -43,9 +43,9 @@ void coreStructLoop(const MapMat X,
     gam_vb.row(j) = exp(-logOnePlusExp(log_1_min_Phi_mu_theta_vb(j) - log_Phi_mu_theta_vb(j) -
       mu_beta_vb.row(j).square() / (2 * sig2_beta_vb.transpose()) + cst.transpose()));
 
-    m1_beta.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
+    beta_vb.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
 
-    mat_x_m1.noalias() += X.col(j) * m1_beta.row(j);
+    mat_x_m1.noalias() += X.col(j) * beta_vb.row(j);
 
   }
 

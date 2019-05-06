@@ -86,9 +86,12 @@
 #'   and the third entry is the ladder size. If \code{NULL} (default), no
 #'   annealing is performed.
 #' @param save_hyper If \code{TRUE}, the hyperparameters used for the model are
-#'   saved as output.
+#'   returned.
 #' @param save_init If \code{TRUE}, the initial variational parameters used for
-#'   the inference are saved as output.
+#'   the inference are returned (note that the size of the resulting objects is
+#'   likely to be large). Default is \code{FALSE}.
+#' @param full_output If \code{TRUE}, the inferred variational parameters for 
+#'   all parameters are returned.
 #' @param verbose If \code{TRUE}, messages are displayed during execution.
 #' @param checkpoint_path Path where to save temporary checkpoint outputs. 
 #'   Default is \code{NULL}, for no checkpointing.
@@ -98,7 +101,7 @@
 #'  \item{gam_vb}{Posterior inclusion probability matrix of dimension p x d.
 #'                Entry (s, t) corresponds to the posterior probability of
 #'                association between candidate predictor s and response t.}
-#'  \item{mu_alpha_vb}{Matrix of dimension q x d whose entries are the posterior
+#'  \item{alpha_vb}{Matrix of dimension q x d whose entries are the posterior
 #'                     mean regression coefficients for the covariates provided
 #'                     in \code{Z} (if \code{link = "logit"},
 #'                     \code{link = "logit"} or
@@ -239,7 +242,7 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity",
                   list_cv = NULL, list_blocks = NULL, list_groups = NULL, 
                   list_struct = NULL, user_seed = NULL, tol = 0.1, maxit = 1000, 
                   anneal = NULL, save_hyper = FALSE, save_init = FALSE, 
-                  verbose = TRUE, checkpoint_path = NULL) {
+                  full_output = FALSE, verbose = TRUE, checkpoint_path = NULL) {
   
   check_structure_(verbose, "vector", "logical", 1)
   
@@ -384,7 +387,7 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity",
       # uninformative prior
       list_hyper$phi <- list_hyper$xi <- 1e-3
       
-      list_init$mu_alpha_vb <- matrix(0, nrow = 1, ncol = d)
+      list_init$alpha_vb <- matrix(0, nrow = 1, ncol = d)
       
       if (link == "probit") {
         
@@ -404,7 +407,7 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity",
       list_hyper$phi <- c(1e-3, list_hyper$phi)
       list_hyper$xi <- c(1e-3, list_hyper$xi)
       
-      list_init$mu_alpha_vb <- rbind(rep(0, d), list_init$mu_alpha_vb)
+      list_init$alpha_vb <- rbind(rep(0, d), list_init$alpha_vb)
       
       if (link == "probit") {
         
@@ -444,14 +447,16 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity",
           vb <- locus_core_(Y, X, list_hyper, list_init$gam_vb,
                             list_init$mu_beta_vb, list_init$sig2_beta_vb,
                             list_init$tau_vb, tol, maxit, anneal, verbose, 
-                            checkpoint_path = checkpoint_path)
+                            checkpoint_path = checkpoint_path, 
+                            full_output = full_output)
           
         } else { # q non-null
           
           vb <- locus_z_core_(Y, X, Z, list_hyper, list_init$gam_vb,
-                              list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                              list_init$alpha_vb, list_init$mu_beta_vb,
                               list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                              list_init$tau_vb, tol, maxit, anneal, verbose)
+                              list_init$tau_vb, tol, maxit, anneal, verbose, 
+                              full_output = full_output)
           
         } 
         
@@ -461,37 +466,41 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity",
         # mu_beta_vb is a list (transformed in prepare_init)
         vb <- locus_group_core_(Y, X, list_hyper, list_init$gam_vb,
                                 list_init$mu_beta_vb, list_init$sig2_inv_vb,
-                                list_init$tau_vb, tol, maxit, verbose)
+                                list_init$tau_vb, tol, maxit, verbose, 
+                                full_output = full_output)
         
       } else { # list_struct non-null, and only predictor propensity control.
         
         vb <- locus_struct_core_(Y, X, list_hyper, list_init$gam_vb,
                                  list_init$mu_beta_vb, list_init$sig2_beta_vb,
-                                 list_init$tau_vb, list_struct, tol, maxit, verbose)
+                                 list_init$tau_vb, list_struct, tol, maxit, 
+                                 verbose, full_output = full_output)
       }
       
     } else if (link == "logit"){
       
       
       vb <- locus_logit_core_(Y, X, Z, list_hyper, list_init$chi_vb,
-                              list_init$gam_vb, list_init$mu_alpha_vb,
+                              list_init$gam_vb, list_init$alpha_vb,
                               list_init$mu_beta_vb, list_init$sig2_alpha_vb,
-                              list_init$sig2_beta_vb, tol, maxit, verbose)
+                              list_init$sig2_beta_vb, tol, maxit, verbose, 
+                              full_output = full_output)
       
       
     } else if (link == "probit"){
       
       vb <- locus_probit_core_(Y, X, Z, list_hyper, list_init$gam_vb,
-                               list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                               list_init$alpha_vb, list_init$mu_beta_vb,
                                list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                               tol, maxit, verbose)
+                               tol, maxit, verbose, full_output = full_output)
       
     } else {
       
       vb <- locus_mix_core_(Y, X, Z, ind_bin, list_hyper, list_init$gam_vb,
-                            list_init$mu_alpha_vb, list_init$mu_beta_vb,
+                            list_init$alpha_vb, list_init$mu_beta_vb,
                             list_init$sig2_alpha_vb, list_init$sig2_beta_vb,
-                            list_init$tau_vb, tol, maxit, verbose)
+                            list_init$tau_vb, tol, maxit, verbose, 
+                            full_output = full_output)
     }
     
   } else {
@@ -528,15 +537,17 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity",
           vb_bl <- locus_core_(Y, X_bl, list_hyper_bl,
                                list_init_bl$gam_vb, list_init_bl$mu_beta_vb,
                                list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                               tol, maxit, anneal, verbose = FALSE)
+                               tol, maxit, anneal, verbose = FALSE, 
+                               full_output = full_output)
           
         } else {
           
           vb_bl <- locus_z_core_(Y, X_bl, Z, list_hyper_bl, list_init_bl$gam_vb,
-                                 list_init_bl$mu_alpha_vb,list_init_bl$mu_beta_vb,
+                                 list_init_bl$alpha_vb,list_init_bl$mu_beta_vb,
                                  list_init_bl$sig2_alpha_vb,
                                  list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                                 tol, maxit, anneal, verbose = FALSE)
+                                 tol, maxit, anneal, verbose = FALSE, 
+                                 full_output = full_output)
           
         }
         
@@ -544,29 +555,30 @@ locus <- function(Y, X, p0_av, Z = NULL, link = "identity",
         
         vb_bl <- locus_logit_core_(Y, X_bl, Z, list_hyper_bl,
                                    list_init_bl$chi_vb, list_init_bl$gam_vb,
-                                   list_init_bl$mu_alpha_vb, list_init_bl$mu_beta_vb,
+                                   list_init_bl$alpha_vb, list_init_bl$mu_beta_vb,
                                    list_init_bl$sig2_alpha_vb,
                                    list_init_bl$sig2_beta_vb, tol, maxit,
-                                   verbose = FALSE)
+                                   verbose = FALSE, full_output = full_output)
         
         
       } else  if (link == "probit") {
         
         vb_bl <- locus_probit_core_(Y, X_bl, Z, list_hyper_bl,
-                                    list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                    list_init_bl$gam_vb, list_init_bl$alpha_vb,
                                     list_init_bl$mu_beta_vb,
                                     list_init_bl$sig2_alpha_vb,
                                     list_init_bl$sig2_beta_vb, tol, maxit,
-                                    verbose = FALSE)
+                                    verbose = FALSE, full_output = full_output)
         
       } else {
         
         vb_bl <- locus_mix_core_(Y, X_bl, Z, ind_bin, list_hyper_bl,
-                                 list_init_bl$gam_vb, list_init_bl$mu_alpha_vb,
+                                 list_init_bl$gam_vb, list_init_bl$alpha_vb,
                                  list_init_bl$mu_beta_vb,
                                  list_init_bl$sig2_alpha_vb,
                                  list_init_bl$sig2_beta_vb, list_init_bl$tau_vb,
-                                 tol, maxit, verbose = FALSE)
+                                 tol, maxit, verbose = FALSE, 
+                                 full_output = full_output)
         
         if (verbose) {
           if (vb_bl$converged) {

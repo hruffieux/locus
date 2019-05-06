@@ -506,7 +506,7 @@ prepare_list_init_ <- function(list_init, Y, p, p_star, q, link, ind_bin,
         q_init_match <- length(bool_rmvd_z)
         # remove the entries corresponding to the removed constant predictors in X
         # (if any)
-        list_init$mu_alpha_vb <- list_init$mu_alpha_vb[!bool_rmvd_z,, drop = FALSE]
+        list_init$alpha_vb <- list_init$alpha_vb[!bool_rmvd_z,, drop = FALSE]
 
         if (link == "probit"){
 

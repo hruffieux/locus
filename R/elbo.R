@@ -87,7 +87,7 @@ e_beta_gamma_bin_ <- function(gam_vb, log_om_vb, log_1_min_om_vb, log_sig2_inv_v
 }
 
 
-e_beta_gamma_struct_ <- function(gam_vb, log_sig2_inv_vb, log_tau_vb, mu_theta_vb,
+e_beta_gamma_struct_ <- function(gam_vb, log_sig2_inv_vb, log_tau_vb, theta_vb,
                                  m2_beta, sig2_beta_vb, list_sig2_theta_vb,
                                  sig2_inv_vb, tau_vb) {
   
@@ -98,8 +98,8 @@ e_beta_gamma_struct_ <- function(gam_vb, log_sig2_inv_vb, log_tau_vb, mu_theta_v
   sum(log_sig2_inv_vb * gam_vb / 2 +
         sweep(gam_vb, 2, log_tau_vb, `*`) / 2 -
         sweep(m2_beta, 2, tau_vb, `*`) * sig2_inv_vb / 2 +
-        sweep(gam_vb, 1, pnorm(mu_theta_vb, log.p = TRUE), `*`) +
-        sweep(sweep((1 - gam_vb), 1, pnorm(mu_theta_vb, lower.tail = FALSE, log.p = TRUE), `*`), 1, diag_sig2_theta_vb / 2, `-`) +
+        sweep(gam_vb, 1, pnorm(theta_vb, log.p = TRUE), `*`) +
+        sweep(sweep((1 - gam_vb), 1, pnorm(theta_vb, lower.tail = FALSE, log.p = TRUE), `*`), 1, diag_sig2_theta_vb / 2, `-`) +
         1 / 2 * sweep(gam_vb, 2, log(sig2_beta_vb) + 1, `*`) -
         gam_vb * log(gam_vb + eps) - (1 - gam_vb) * log(1 - gam_vb + eps))
   
@@ -148,14 +148,14 @@ e_tau_ <- function(eta, eta_vb, kappa, kappa_vb, log_tau_vb, tau_vb) {
 ############################################
 
 # S0_inv is assumed to be block-diagonal
-e_theta_ <- function(m0, mu_theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_st, vec_sum_log_det) {
+e_theta_ <- function(m0, theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_st, vec_sum_log_det) {
   
   if (is.null(vec_fac_st)) {
     
-    p <- length(mu_theta_vb)
+    p <- length(theta_vb)
     
     arg <- (vec_sum_log_det - # vec_sum_log_det[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
-              list_S0_inv * crossprod(mu_theta_vb - m0) -
+              list_S0_inv * crossprod(theta_vb - m0) -
               p * list_S0_inv * list_sig2_theta_vb + p) / 2 # trace of a product
     
   } else {
@@ -165,14 +165,14 @@ e_theta_ <- function(m0, mu_theta_vb, list_S0_inv, list_sig2_theta_vb, vec_fac_s
     
     arg <- unlist(lapply(1:n_bl, function(bl) {
       
-      mu_theta_vb_bl <- mu_theta_vb[vec_fac_st == bl_ids[bl]]
+      theta_vb_bl <- theta_vb[vec_fac_st == bl_ids[bl]]
       m0_bl <- m0[vec_fac_st == bl_ids[bl]]
       S0_inv_bl <- list_S0_inv[[bl]]
       sig2_theta_vb_bl <- list_sig2_theta_vb[[bl]]
       
       (vec_sum_log_det[bl] - # vec_sum_log_det[bl] = log(det(S0_inv_bl)) + log(det(sig2_theta_vb_bl))
-        crossprod((mu_theta_vb_bl - m0_bl),
-                  S0_inv_bl %*% (mu_theta_vb_bl - m0_bl)) -
+        crossprod((theta_vb_bl - m0_bl),
+                  S0_inv_bl %*% (theta_vb_bl - m0_bl)) -
         sum(S0_inv_bl * sig2_theta_vb_bl) + ncol(S0_inv_bl)) / 2 # trace of a product
     }))
   }
@@ -207,25 +207,25 @@ e_g_y_ <- function(n, kappa, kappa_vb, list_m1_btb, log_tau_vb, sig2_inv_vb, tau
 }
 
 
-e_y_logit_ <- function(X, Y, Z, chi_vb, m1_beta, m2_alpha, m2_beta, mat_x_m1,
-                       mat_z_mu, mu_alpha_vb, psi_vb) {
+e_y_logit_ <- function(X, Y, Z, chi_vb, beta_vb, m2_alpha, m2_beta, mat_x_m1,
+                       mat_z_mu, alpha_vb, psi_vb) {
   
   sum(log_sigmoid_(chi_vb) + Y * (mat_x_m1 + mat_z_mu)  -  chi_vb / 2 -
-        psi_vb * (X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% m1_beta^2 +
-                    Z^2 %*% m2_alpha + mat_z_mu^2 - Z^2 %*% mu_alpha_vb^2 +
+        psi_vb * (X^2 %*% m2_beta + mat_x_m1^2 - X^2 %*% beta_vb^2 +
+                    Z^2 %*% m2_alpha + mat_z_mu^2 - Z^2 %*% alpha_vb^2 +
                     2 * mat_x_m1 * mat_z_mu - chi_vb^2))
   
 }
 
 
-e_y_probit_ <- function(X, Y, Z, m1_beta, m2_beta, mat_x_m1, mat_z_mu,
+e_y_probit_ <- function(X, Y, Z, beta_vb, m2_beta, mat_x_m1, mat_z_mu,
                         sig2_alpha_vb, sweep = TRUE) {
   
   U <- mat_x_m1 + mat_z_mu
   
   arg <- Y * pnorm(U, log.p = TRUE) +
     (1 - Y) * pnorm(U, lower.tail = FALSE, log.p = TRUE) -
-    X^2 %*% (m2_beta - m1_beta^2) / 2
+    X^2 %*% (m2_beta - beta_vb^2) / 2
   
   if (sweep)
     arg <- sweep(arg, 1, Z^2 %*% sig2_alpha_vb / 2, `-`)

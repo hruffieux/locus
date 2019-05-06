@@ -23,7 +23,7 @@ void coreLoop(const MapMat X,
               const MapArr1D log_1_min_om_vb,
               const double log_sig2_inv_vb,
               const MapArr1D log_tau_vb,
-              MapMat m1_beta,
+              MapMat beta_vb,
               MapMat mat_x_m1,
               MapArr2D mu_beta_vb,
               const MapArr1D sig2_beta_vb,
@@ -37,7 +37,7 @@ void coreLoop(const MapMat X,
 
     int j = shuffled_ind[i];
 
-    mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
+    mat_x_m1.noalias() -= X.col(j) * beta_vb.row(j);
 
     mu_beta_vb.row(j) = c * sig2_beta_vb * tau_vb *
       ((Y - mat_x_m1).transpose() * X.col(j)).array();
@@ -45,9 +45,9 @@ void coreLoop(const MapMat X,
     gam_vb.row(j) = exp(-logOnePlusExp(c * (log_1_min_om_vb(j) - log_om_vb(j) -
       mu_beta_vb.row(j).transpose().square() / (2 * sig2_beta_vb) + cst)));
 
-    m1_beta.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
+    beta_vb.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
 
-    mat_x_m1.noalias() += X.col(j) * m1_beta.row(j);
+    mat_x_m1.noalias() += X.col(j) * beta_vb.row(j);
 
   }
 
@@ -64,7 +64,7 @@ void coreZLoop(const MapMat X,
                const MapArr1D log_1_min_om_vb,
                const double log_sig2_inv_vb,
                const MapArr1D log_tau_vb,
-               MapMat m1_beta,
+               MapMat beta_vb,
                MapMat mat_x_m1,
                MapMat mat_z_mu,
                MapArr2D mu_beta_vb,
@@ -79,7 +79,7 @@ void coreZLoop(const MapMat X,
 
     int j = shuffled_ind[i];
 
-    mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
+    mat_x_m1.noalias() -= X.col(j) * beta_vb.row(j);
 
     mu_beta_vb.row(j) = c * sig2_beta_vb * tau_vb *
       ((Y - mat_x_m1 - mat_z_mu).transpose() * X.col(j)).array();
@@ -87,9 +87,9 @@ void coreZLoop(const MapMat X,
     gam_vb.row(j) = exp(-logOnePlusExp(c * (log_1_min_om_vb(j) - log_om_vb(j) -
       mu_beta_vb.row(j).transpose().square() / (2 * sig2_beta_vb) + cst)));
 
-    m1_beta.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
+    beta_vb.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
 
-    mat_x_m1.noalias() += X.col(j) * m1_beta.row(j);
+    mat_x_m1.noalias() += X.col(j) * beta_vb.row(j);
 
   }
 
@@ -104,7 +104,7 @@ void coreLogitLoop(const MapMat X,
                    const MapArr1D log_om_vb,
                    const MapArr1D log_1_min_om_vb,
                    const double log_sig2_inv_vb,
-                   MapMat m1_beta,
+                   MapMat beta_vb,
                    MapArr2D mat_x_m1,
                    MapArr2D mat_z_mu,
                    MapArr2D mu_beta_vb,
@@ -116,7 +116,7 @@ void coreLogitLoop(const MapMat X,
 
     int j = shuffled_ind[i];
 
-    mat_x_m1.matrix().noalias() -= X.col(j) * m1_beta.row(j);
+    mat_x_m1.matrix().noalias() -= X.col(j) * beta_vb.row(j);
 
     mu_beta_vb.row(j) = sig2_beta_vb.row(j) * (X.col(j).transpose() * (Y - 2 * psi_vb * (mat_x_m1 + mat_z_mu)).matrix()).array();
 
@@ -124,9 +124,9 @@ void coreLogitLoop(const MapMat X,
       log_sig2_inv_vb / 2 - mu_beta_vb.row(j).square() / (2 * sig2_beta_vb.row(j)) -
       log(sig2_beta_vb.row(j)) / 2));
 
-    m1_beta.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
+    beta_vb.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
 
-    mat_x_m1.matrix().noalias() += X.col(j) * m1_beta.row(j);
+    mat_x_m1.matrix().noalias() += X.col(j) * beta_vb.row(j);
 
   }
 
@@ -142,7 +142,7 @@ void coreProbitLoop(const MapMat X,
                     const MapArr1D log_om_vb,
                     const MapArr1D log_1_min_om_vb,
                     const double log_sig2_inv_vb,
-                    MapMat m1_beta,
+                    MapMat beta_vb,
                     MapMat mat_x_m1,
                     MapMat mat_z_mu,
                     MapArr2D mu_beta_vb,
@@ -155,16 +155,16 @@ void coreProbitLoop(const MapMat X,
 
     int j = shuffled_ind[i];
 
-    mat_x_m1.noalias() -= X.col(j) * m1_beta.row(j);
+    mat_x_m1.noalias() -= X.col(j) * beta_vb.row(j);
 
     mu_beta_vb.row(j) = sig2_beta_vb * ((W - mat_x_m1 - mat_z_mu).transpose() * X.col(j)).array();
 
     gam_vb.row(j) = exp(-logOnePlusExp(log_1_min_om_vb(j) - log_om_vb(j) -
       mu_beta_vb.row(j).square() / (2 * sig2_beta_vb) + cst));
 
-    m1_beta.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
+    beta_vb.row(j) = mu_beta_vb.row(j) * gam_vb.row(j);
 
-    mat_x_m1.noalias() += X.col(j) * m1_beta.row(j);
+    mat_x_m1.noalias() += X.col(j) * beta_vb.row(j);
 
   }
 
