@@ -2,13 +2,11 @@ Package: locus
 Type: Package
 Title: Large-scale variational inference for combined selection of covariate and
     response variables in regression models
-Version: 0.8.4
-Date: 2018-01-28
+Version: 0.9.0
+Date: 2019-05-06
 Authors@R: c(
-    person("Helene", "Ruffieux", email = "helene.ruffieux@epfl.ch",
-            role = c("aut", "cre")),
-    person(given = "Nestle Institute of Health Sciences SA, Lausanne, Switzerland",
-            role = "cph"))
+    person("Helene", "Ruffieux", email = "helene.ruffieux@alumni.epfl.ch",
+            role = c("aut", "cre"))
 Description: Variational inference for sparse multivariate regression models
     that allow combined selection of covariates and associated responses in
     high-dimensional set-ups (Helene Ruffieux, Anthony C. Davison, Jorg Hager,
