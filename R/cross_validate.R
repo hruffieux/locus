@@ -82,8 +82,8 @@
 #'
 #' @export
 #'
-set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
-                   maxit_cv = 1e3, verbose = TRUE) {
+set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 0.1,
+                   maxit_cv = 1000, verbose = TRUE) {
 
   check_structure_(n_folds, "vector", "numeric", 1)
   check_natural_(n_folds)
@@ -252,11 +252,11 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
         if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
 
-        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, r = NULL, dual = FALSE,
-                                         link = link, ind_bin = ind_bin,
-                                         struct = FALSE,  vec_fac_gr = NULL)
+        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, link = link, 
+                                         ind_bin = ind_bin, struct = FALSE, 
+                                         vec_fac_gr = NULL)
         list_init_pg <- auto_set_init_(Y_tr, G = NULL, p, pg, q, user_seed,
-                                       dual = FALSE, link = link, ind_bin = ind_bin)
+                                       link = link, ind_bin = ind_bin)
 
         nq <- is.null(q)
 
@@ -270,7 +270,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
             # uninformative prior
             list_hyper_pg$phi <- list_hyper_pg$xi <- 1e-3
 
-            list_init_pg$mu_alpha_vb <- matrix(0, nrow = 1, ncol = d)
+            list_init_pg$alpha_vb <- matrix(0, nrow = 1, ncol = d)
 
             if (link == "probit") {
 
@@ -291,7 +291,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
             list_hyper_pg$phi <- c(1e-3, list_hyper_pg$phi)
             list_hyper_pg$xi <- c(1e-3, list_hyper_pg$xi)
 
-            list_init_pg$mu_alpha_vb <- rbind(rep(0, d), list_init_pg$mu_alpha_vb)
+            list_init_pg$alpha_vb <- rbind(rep(0, d), list_init_pg$alpha_vb)
 
             if (link == "probit") {
 
@@ -315,33 +315,34 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
             vb_tr <- locus_core_(Y_tr, X_tr, list_hyper_pg,
                                  list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
                                  list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
-                                 tol_cv, maxit_cv, verbose = FALSE, full_output = TRUE)
+                                 tol_cv, maxit_cv, anneal = NULL,
+                                 verbose = FALSE, full_output = TRUE)
 
             lb_vec[ind_pg] <- with(vb_tr, {
 
-              mat_x_m1 <-  X_test %*% m1_beta
+              mat_x_m1 <-  X_test %*% beta_vb
 
-              elbo_(Y_test, a, a_vb, b, b_vb, eta, gam_vb, kappa,
-                    lambda, nu, sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta,
+              elbo_(Y_test, a, a_vb, b, b_vb, beta_vb, eta, gam_vb, kappa,
+                    lambda, nu, sig2_beta_vb, sig2_inv_vb, tau_vb, 
                     m2_beta, mat_x_m1, sum_gam)
 
             })
           } else {
             vb_tr <- locus_z_core_(Y_tr, X_tr, Z_tr, list_hyper_pg,
-                                   list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
+                                   list_init_pg$gam_vb, list_init_pg$alpha_vb,
                                    list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
                                    list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
                                    tol_cv, maxit_cv, verbose = FALSE, full_output = TRUE)
 
             lb_vec[ind_pg] <- with(vb_tr, {
 
-              mat_z_mu <-  Z_test %*% mu_alpha_vb
-              mat_x_m1 <-  X_test %*% m1_beta
+              mat_z_mu <-  Z_test %*% alpha_vb
+              mat_x_m1 <-  X_test %*% beta_vb
 
-              elbo_z_(Y_test, Z_test, a, a_vb, b, b_vb, eta, gam_vb,
-                      kappa, lambda, mu_alpha_vb, nu, phi, phi_vb,
+              elbo_z_(Y_test, Z_test, a, a_vb, b, b_vb, beta_vb, eta, gam_vb,
+                      kappa, lambda, alpha_vb, nu, phi, phi_vb,
                       sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb, xi,
-                      zeta2_inv_vb, m2_alpha, m1_beta, m2_beta, mat_x_m1,
+                      zeta2_inv_vb, m2_alpha, m2_beta, mat_x_m1,
                       mat_z_mu, sum_gam)
             })
           }
@@ -349,40 +350,40 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
         } else if (link == "probit") {
 
           vb_tr <- locus_probit_core_(Y_tr, X_tr, Z_tr, list_hyper_pg,
-                                      list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
+                                      list_init_pg$gam_vb, list_init_pg$alpha_vb,
                                       list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
                                       list_init_pg$sig2_beta_vb, tol_cv, maxit_cv,
                                       verbose = FALSE, full_output = TRUE)
 
           lb_vec[ind_pg] <- with(vb_tr, {
 
-            mat_z_mu <-  Z_test %*% mu_alpha_vb
-            mat_x_m1 <-  X_test %*% m1_beta
+            mat_z_mu <-  Z_test %*% alpha_vb
+            mat_x_m1 <-  X_test %*% beta_vb
 
-            elbo_probit_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, gam_vb,
+            elbo_probit_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, beta_vb, gam_vb,
                          lambda, nu, phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
-                         sig2_inv_vb, xi, zeta2_inv_vb, mu_alpha_vb, m1_beta,
+                         sig2_inv_vb, xi, zeta2_inv_vb, alpha_vb, 
                          m2_alpha, m2_beta, mat_x_m1, mat_z_mu, sum_gam)
           })
 
         } else if (link == "mix") {
 
           vb_tr <- locus_mix_core_(Y_tr, X_tr, Z_tr, ind_bin, list_hyper_pg,
-                                   list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
+                                   list_init_pg$gam_vb, list_init_pg$alpha_vb,
                                    list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
                                    list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
                                    tol_cv, maxit_cv, verbose = FALSE, full_output = TRUE)
 
           lb_vec[ind_pg] <- with(vb_tr, {
 
-            mat_z_mu <-  Z_test %*% mu_alpha_vb
-            mat_x_m1 <-  X_test %*% m1_beta
+            mat_z_mu <-  Z_test %*% alpha_vb
+            mat_x_m1 <-  X_test %*% beta_vb
 
             elbo_mix_(Y_test[, ind_bin, drop = FALSE],
                       Y_test[, -ind_bin, drop = FALSE], ind_bin, X_test, Z_test,
-                      a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, mu_alpha_vb,
+                      a, a_vb, b, b_vb, beta_vb, eta, gam_vb, kappa, lambda, alpha_vb,
                       nu, phi, phi_vb, sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb,
-                      tau_vb, log_tau_vb, xi, zeta2_inv_vb, m2_alpha, m1_beta,
+                      tau_vb, log_tau_vb, xi, zeta2_inv_vb, m2_alpha, 
                       m2_beta, mat_x_m1, mat_z_mu, sum_gam)
 
           })

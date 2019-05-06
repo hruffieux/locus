@@ -104,8 +104,50 @@ create_named_list_ <- function(...) {
 }
 
 
+
+get_annealing_ladder_ <- function(anneal, verbose) {
+
+  # ladder set following:
+  # Importance Tempering, Robert B. Gramacy & Richard J. Samworth, pp.9-10, arxiv v4
+
+  k_m <- 1 / anneal[2]
+  m <- anneal[3]
+
+  if(anneal[1] == 1) {
+
+    type <- "geometric"
+
+    delta_k <- k_m^(1 / (1 - m)) - 1
+
+    ladder <- (1 + delta_k)^(1 - m:1)
+
+  } else if (anneal[1] == 2) { # harmonic spacing
+
+    type <- "harmonic"
+
+    delta_k <- ( 1 / k_m - 1) / (m - 1)
+
+    ladder <- 1 / (1 + delta_k * (m:1 - 1))
+
+  } else { # linear spacing
+
+    type <- "linear"
+
+    delta_k <- (1 - k_m) / (m - 1)
+
+    ladder <- k_m + delta_k * (1:m - 1)
+  }
+
+  if (verbose)
+    cat(paste0("** Annealing with ", type," spacing ** \n\n"))
+
+  ladder
+
+}
+
+
 log_one_plus_exp_ <- function(x) { # computes log(1 + exp(x)) avoiding
-  # numerical overflow
+                                   # numerical overflow
   m <- x
   m[x < 0] <- 0
 
@@ -155,6 +197,19 @@ inv_mills_ratio_ <- function(Y, U) {
 
 }
 
+
+log_sum_exp_ <- function(x) {
+  # Computes log(sum(exp(x))
+
+  if ( max(abs(x)) > max(x) )
+    offset <- min(x)
+  else
+    offset <- max(x)
+  log(sum(exp(x - offset))) + offset
+
+}
+
+
 # entropy_ <- function(Y, U) {
 #
 #   log((2 * pi * exp(1))^(1/2) *
@@ -163,36 +218,6 @@ inv_mills_ratio_ <- function(Y, U) {
 #   U * inv_mills_ratio_(Y, U) / 2
 #
 # }
-
-
-# Functions for hyperparameter settings in dual_core (similarly to what is done in HESS)
-#
-E_Phi_X <- function(mu, s2, lower_tail = TRUE) {
-
-  pnorm(mu / sqrt(1 + s2), lower.tail = lower_tail)
-
-}
-
-E_Phi_X_2 <- function(mu, s2) {
-
-  pnorm(mu / sqrt(1 + s2)) -
-    2 * PowerTOST::OwensT(mu / sqrt(1 + s2), 1 / sqrt(1 + 2 * s2))
-
-}
-
-get_V_p_t <- function(mu, s2, p) {
-  p * (p - 1) * E_Phi_X_2(mu, s2) -
-    p^2 * E_Phi_X(mu, s2)^2 +
-    p * E_Phi_X(mu, s2)
-}
-
-
-get_mu <- function(E_p_t, s2, p) {
-
-  sqrt(1 + s2) * qnorm(1- E_p_t / p)
-
-}
-
 
 rm_constant_ <- function(mat, verbose) {
 
@@ -268,3 +293,43 @@ rm_collinear_ <- function(mat, verbose) {
 }
 
 make_chunks_ <- function(x, n_g) split(x, factor(sort(rank(x) %% n_g)))
+
+
+checkpoint_ <- function(it, checkpoint_path, gam_vb, converged, lb_new, lb_old, 
+                        om_vb = NULL, rate = 100) {
+  
+  if (!is.null(checkpoint_path) && it %% rate == 0) {
+    
+    diff_lb <- abs(lb_new - lb_old)
+    
+    tmp_vb <- create_named_list_(gam_vb, converged, it, lb_new, diff_lb, om_vb)
+    
+    file_save <- paste0(checkpoint_path, "tmp_output_it_", it, ".RData")
+    
+    save(tmp_vb, file = file_save)
+    
+    old_file_clean_up <- paste0(checkpoint_path, "tmp_output_it_", it - 2 * rate, ".RData") # keep only the last two for comparison
+    
+    if (file.exists(old_file_clean_up)) 
+      file.remove(old_file_clean_up)
+
+  }
+    
+}
+
+
+checkpoint_clean_up_ <- function(checkpoint_path) {
+  
+  if (!is.null(checkpoint_path)) {
+    
+    old_files_clean_up <- list.files(path = checkpoint_path, pattern = "tmp_output_it_")
+    
+    sapply(old_files_clean_up, function(ff) {
+      if (file.exists(file.path(checkpoint_path, ff))) 
+        file.remove(file.path(checkpoint_path, ff))
+    })
+    
+  } 
+  
+}
+ 

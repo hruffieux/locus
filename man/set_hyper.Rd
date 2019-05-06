@@ -5,9 +5,8 @@
 \title{Gather model hyperparameters provided by the user.}
 \usage{
 set_hyper(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
-  ind_bin = NULL, q = NULL, phi = NULL, xi = NULL, r = NULL,
-  m0 = NULL, n0 = NULL, s02 = NULL, s2 = NULL, t02 = NULL, G = NULL,
-  dual = FALSE, struct = FALSE)
+  ind_bin = NULL, q = NULL, phi = NULL, xi = NULL, m0 = NULL,
+  s02 = NULL, G = NULL, struct = FALSE)
 }
 \arguments{
 \item{d}{Number of responses.}
@@ -71,32 +70,15 @@ repeated q times. Default is \code{NULL}, for \code{Z} \code{NULL}.}
 covariate effects, \eqn{\zeta}. If of length 1, the provided value is
 repeated q times. Default is \code{NULL}, for \code{Z} \code{NULL}.}
 
-\item{r}{Number of variables representing external information on the
-candidate predictors. Default is \code{NULL}, for \code{V} \code{NULL}.}
-
-\item{m0}{Vector of length 1 or p. Hyperparameter when \code{V},
-\code{list_struct} or \code{dual} is non-\code{NULL}. Default is
-\code{NULL}.}
-
-\item{n0}{Vector of length 1 or d. Hyperparameter when \code{dual} is
+\item{m0}{Vector of length 1 or p. Hyperparameter when \code{list_struct} 
 non-\code{NULL}. Default is \code{NULL}.}
 
-\item{s02}{Variance hyperparameter when \code{V}, \code{list_struct} or
-\code{dual} is non-\code{NULL} non-\code{NULL}. Default is \code{NULL}.}
-
-\item{s2}{Variance hyperparameter when \code{V} is non-\code{NULL}
-non-\code{NULL}. Default is \code{NULL}.}
-
-\item{t02}{Variance hyperparameter when \code{dual} is non-\code{NULL}
+\item{s02}{Variance hyperparameter when \code{list_struct} is 
 non-\code{NULL}. Default is \code{NULL}.}
 
 \item{G}{Number of candidate predictor groups when using the group selection
 model from the \code{\link{locus}} function. Default is \code{NULL},
 for no group selection.}
-
-\item{dual}{If \code{TRUE}, dual propensity control (by candidate predictors
-and by responses). Functionality under development and with limited
-associated functionalities. Default is \code{FALSE}.}
 
 \item{struct}{Boolean indicating the use of structured sparse priors
 set through the \code{\link{set_struct}} function. Default is \code{FALSE},
@@ -124,7 +106,7 @@ seed <- 123; set.seed(seed)
 
 ## Examples using small problem sizes:
 ##
-n <- 200; p <- 200; p0 <- 20; d <- 20; d0 <- 15; q <- 2; r <- 3
+n <- 200; p <- 200; p0 <- 20; d <- 20; d0 <- 15; q <- 2
 
 ## Candidate predictors (subject to selection)
 ##
@@ -160,10 +142,6 @@ Y <- cbind(Y_act, Y_inact)[, shuff_y_ind] + Z \%*\% alpha
 ## Binary responses
 ##
 Y_bin <- ifelse(Y > 0, 1, 0)
-## Informative annotation variables
-##
-V <- matrix(rnorm(p * r), nrow = p)
-V[bool_x_act, ] <- rnorm(p0 * r, mean = 2)
 
 ########################
 ## Infer associations ##
@@ -196,17 +174,6 @@ list_hyper_g_z <- set_hyper(d, p, lambda = 1, nu = 1, a = 1, b = 4*d-1,
 
 vb_g_z <- locus(Y = Y, X = X, p0_av = p0, Z = Z, link = "identity",
                 list_hyper = list_hyper_g_z, user_seed = seed)
-
-
-# With external annotation variables
-#
-list_hyper_g_v <- set_hyper(d, p, lambda = 1, nu = 1, a = NULL, b = NULL,
-                            eta = 1, kappa = apply(Y, 2, var),
-                            link = "identity", r = r, m0 = 0, s02 = 0.1,
-                            s2 = 0.001)
-
-vb_g_v <- locus(Y = Y, X = X, p0_av = p0,  V = V, link = "identity",
-                list_hyper = list_hyper_g_v, user_seed = seed)
 
 ## Binary responses
 ##

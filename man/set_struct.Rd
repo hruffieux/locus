@@ -15,8 +15,9 @@ set_struct(n, p, pos_st, n_cpus, verbose = TRUE)
 \item{pos_st}{Vector gathering the predictor block positions (first index of
 each block). The predictors must be ordered by blocks.}
 
-\item{n_cpus}{Number of CPUs to be used. If large, one should ensure that
-enough RAM will be available for parallel execution. Set to 1 for serial
+\item{n_cpus}{Number of CPUs to be used. Only used if \code{hyper} is 
+\code{FALSE}, otherwise set it to 1. If large, one should ensure that 
+enough RAM will be available for parallel execution. Set to 1 for serial 
 execution.}
 
 \item{verbose}{If \code{TRUE}, messages are displayed when calling

@@ -22,7 +22,7 @@ unless you want to test and report issues.
 To install, run the following commands in R:
 
 ``` r
-install.packages("devtools")
+require(devtools) # after having installed devtools (install.packages("devtools"))
 devtools::install_github("hruffieux/locus", ref = "devel")
 ```
 
