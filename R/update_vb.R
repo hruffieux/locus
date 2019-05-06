@@ -149,78 +149,11 @@ update_g_m1_btXtXb_ <- function(list_X, gam_vb, list_mu_beta_vb, list_sig2_beta_
 }
 
 
-####################
-## b's updates ##
-####################
-
-
-update_annealed_b_vb_ <- function(G_vb, c, df) { # here G_vb <- c * G_vb / df
-  
-  if (df == 1) {
-
-    gsl::gamma_inc(- c + 2, G_vb) / (gsl::gamma_inc(- c + 1, G_vb) * G_vb) - 1
-
-   } else { # also works for df = 1, but slightly less efficient
-
-    (gamma(c * (df - 1) / 2 + 2) * gamma(c) * gsl::hyperg_1F1(c * (df - 1) / 2 + 2, 3 - c, G_vb) / (c - 1) / (c - 2) / gamma(c * (df + 1) / 2) +
-               gamma(2 - c) * G_vb^(c - 2) * gsl::hyperg_1F1(c * (df + 1) / 2, c - 1, G_vb) ) /
-      (gamma(c * (df - 1) / 2 + 1) * gamma(c) * gsl::hyperg_1F1(c * (df - 1) / 2 + 1, 2 - c, G_vb) / (c - 1) / gamma(c * (df + 1) / 2) +
-         gamma(1 - c) * G_vb^(c - 1) * gsl::hyperg_1F1(c * (df + 1) / 2, c, G_vb) ) / df
-
-  }
-  
-}
-
-
 ########################
 ## c0 and c's updates ##
 ########################
 
-update_mu_c0_vb_ <- function(W, mat_v_mu, m0, s02, sig2_c0_vb, c = 1) c * sig2_c0_vb * (rowSums(W - mat_v_mu) + m0 / s02)
-
-
 update_sig2_c0_vb_ <- function(d, s02, c = 1) 1 / (c * (d + (1/s02)))
-
-
-update_sig2_c_vb_ <- function(p, s2, d = 1, c = 1) 1 / (c * (d * (p - 1) + (1/s2)))
-
-
-update_mat_v_mu_ <- function(V, mu_0_s, mat_c, mu_0_t = NULL, resp_spec = FALSE) { # !dual : mu_0_s = mu_c0_vb, mat_c = mu_c_vb
-                                                                                   # dual : mu_0_s = mu_theta_vb, mu_0_t = mu_rho_vb, mat_c = zeta * mu_c_vb
-
-  if (is.null(mu_0_t)) {
-    sweep(V %*% mat_c, 1, mu_0_s, `+`)
-  } else {
-
-    if (resp_spec) {
-      sweep(sweep(V %*% mat_c, 1, mu_0_s, `+`), 2, mu_0_t, `+`)
-    } else {
-      d <- length(mu_0_t)
-      sweep(tcrossprod(mu_0_s + V %*% mat_c, rep(1, d)), 2, mu_0_t, `+`)
-    }
-
-  }
-
-}
-
-
-update_mat_v_mu_block_ <- function(list_V, mu_0_s, mu_0_t, list_mat_c, vec_fac_bl) {
-  
-  d <- length(mu_0_t)
-  
-  bl_ids <- unique(vec_fac_bl)
-  n_bl <- length(bl_ids)
-  
-  list_bl <- lapply(1:n_bl, function(bl) {
-    
-    sweep(tcrossprod(as.vector(mu_0_s[vec_fac_bl == bl_ids[bl]] + list_V[[bl]] %*% list_mat_c[[bl]]), rep(1, d)), 2, mu_0_t, `+`)
-    
-  })
-  
-  as.matrix(plyr::rbind.fill.matrix(list_bl))
-  
-}
-
 
 
 ###################
@@ -256,33 +189,6 @@ update_log_om_vb <- function(a, digam_sum, rs_gam, c = 1) digamma(c * (a + rs_ga
 
 update_log_1_min_om_vb <- function(b, d, digam_sum, rs_gam, c = 1) digamma(c * (b - rs_gam + d) - c + 1) - digam_sum
 
-
-#####################
-## rho's updates ##
-#####################
-
-
-update_mu_rho_vb_ <- function(W, mat_add, n0, sig2_rho_vb, T0_inv, is_mat = FALSE, c = 1) {
-
-
-  if (is_mat) {
-    as.vector(c * sig2_rho_vb * (colSums(W) + T0_inv * n0 - colSums(mat_add))) # mat_add <- sweep(mat_v_mu, 1, mu_rho_vb, `-`)
-  } else {
-    # as.vector(sig2_rho_vb %*% (colSums(W) + T0_inv %*% n0 - sum(mu_theta_vb)))
-    # sig2_rho_vb and T0_inv is stored as a scalar which represents the value on the diagonal of the corresponding diagonal matrix
-    as.vector(c * sig2_rho_vb * (colSums(W) + T0_inv * n0 - sum(mat_add))) # mat_add = mu_theta_vb
-  }
-
-}
-
-
-update_sig2_rho_vb_ <- function(p, T0_inv) {
-
-  # sig2_rho_vb and T0_inv are stored as scalars which represent the value on the diagonal of the corresponding diagonal matrix
-  1 / (T0_inv + p)
-  # as.matrix(solve(T0_inv + diag(p, nrow(T0_inv))))
-
-}
 
 
 #####################
@@ -474,16 +380,6 @@ update_sig2_theta_vb_ <- function(d, p, list_struct, s02, X = NULL, c = 1) {
 #################
 ## W's updates ##
 #################
-
-update_W_info_ <- function(gam_vb, mat_v_mu, c = 1) {
-
-  sqrt_c <- sqrt(c)
-
-  (gam_vb * (inv_mills_ratio_(1, sqrt_c * mat_v_mu) - inv_mills_ratio_(0, sqrt_c * mat_v_mu)) +
-     inv_mills_ratio_(0, sqrt_c * mat_v_mu)) / sqrt_c + mat_v_mu
-
-}
-
 
 update_W_probit_ <- function(Y, mat_z_mu, mat_x_m1) mat_z_mu + mat_x_m1 + inv_mills_ratio_(Y, mat_z_mu + mat_x_m1)
 

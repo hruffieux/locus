@@ -82,8 +82,8 @@
 #'
 #' @export
 #'
-set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
-                   maxit_cv = 1e3, verbose = TRUE) {
+set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 0.1,
+                   maxit_cv = 1000, verbose = TRUE) {
 
   check_structure_(n_folds, "vector", "numeric", 1)
   check_natural_(n_folds)
@@ -252,11 +252,11 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
         if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
 
-        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, r = NULL, dual = FALSE,
-                                         link = link, ind_bin = ind_bin,
-                                         struct = FALSE,  vec_fac_gr = NULL)
+        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, link = link, 
+                                         ind_bin = ind_bin, struct = FALSE, 
+                                         vec_fac_gr = NULL)
         list_init_pg <- auto_set_init_(Y_tr, G = NULL, p, pg, q, user_seed,
-                                       dual = FALSE, link = link, ind_bin = ind_bin)
+                                       link = link, ind_bin = ind_bin)
 
         nq <- is.null(q)
 

@@ -10,7 +10,7 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, mu_alpha_vb,
                               maxit, verbose, batch = "y", full_output = FALSE,
                               debug = FALSE) {
 
-  # 1/2 must have been substracted from Y, and X and V must have been standardized (except intercept in Z)
+  # 1/2 must have been substracted from Y and X must have been standardized (except intercept in Z)
 
   d <- ncol(Y)
   n <- nrow(Y)

@@ -3,8 +3,7 @@
  * This file is part of the `locus` R package:
  *     https://github.com/hruffieux/locus
  *
- * Functions for computationally expensive updates in algorithms without
- * external information.
+ * Functions for computationally expensive updates
  *
  * These functions use Eigen::Map to pass large matrices by reference from R.
  * Given dimensionalities involved in some applications, copying such matrices
