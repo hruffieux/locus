@@ -19,14 +19,7 @@ unless you want to test and report issues.
 
 ## Installation
 
-Important note: the R package depends on `libgsl` which needs to be manually installed. 
-For example on Ubuntu,
-
-``` bash
-$ sudo apt-get install libgsl-dev
-```
-
-To install the package in R, run the following command:
+To install, run the following command in R:
 
 ``` r
 # after having installed devtools (install.packages("devtools"))
