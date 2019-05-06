@@ -7,6 +7,7 @@ Date: 2019-05-06
 Authors@R: c(
     person("Helene", "Ruffieux", email = "helene.ruffieux@alumni.epfl.ch",
             role = c("aut", "cre"))
+            )
 Description: Variational inference for sparse multivariate regression models
     that allow combined selection of covariates and associated responses in
     high-dimensional set-ups (Helene Ruffieux, Anthony C. Davison, Jorg Hager,
