@@ -157,23 +157,24 @@ locus_struct_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_v
 
     lb_opt <- lb_new
 
+    names_x <- colnames(X)
+    names_y <- colnames(Y)
+    
+    rownames(gam_vb) <- rownames(beta_vb) <- names_x
+    colnames(gam_vb) <- colnames(beta_vb) <- names_y
+    names(theta_vb) <- names_x
+    
+    diff_lb <- abs(lb_opt - lb_old)
+    
     if (full_output) { # for internal use only
 
       create_named_list_(beta_vb, eta, eta_vb, gam_vb, kappa, kappa_vb, lambda,
                          lambda_vb, m0, mu_beta_vb, theta_vb, nu, nu_vb, sig2_beta_vb,
                          list_S0_inv, list_sig2_theta_vb, sig2_inv_vb, tau_vb,
-                          m2_beta, vec_fac_st, vec_sum_log_det)
+                         m2_beta, vec_fac_st, vec_sum_log_det, converged, it, 
+                         lb_opt, diff_lb)
 
     } else {
-
-      names_x <- colnames(X)
-      names_y <- colnames(Y)
-
-      rownames(gam_vb) <- rownames(beta_vb) <- names_x
-      colnames(gam_vb) <- colnames(beta_vb) <- names_y
-      names(theta_vb) <- names_x
-
-      diff_lb <- abs(lb_opt - lb_old)
 
       create_named_list_(beta_vb, gam_vb, theta_vb, converged, it, lb_opt, diff_lb)
 
