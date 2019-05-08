@@ -195,25 +195,27 @@ locus_group_core_ <- function(Y, list_X, list_hyper, gam_vb, list_mu_beta_vb,
 
     lb_opt <- lb_new
 
+    names_y <- colnames(Y)
+    
+    names_G <- unlist(lapply(list_X,
+                             function(X_g) paste0(as.character(colnames(X_g)), collapse = "-")))
+    
+    rownames(gam_vb) <- names_G
+    colnames(gam_vb) <- names_y
+    names(om_vb) <- names_G
+    
+    names(list_beta_vb) <- names_G
+    
+    diff_lb <- abs(lb_opt - lb_old)
+    
     if (full_output) { # for internal use only
+      
       create_named_list_(a, a_vb, b, b_vb, eta, eta_vb, g_sizes,
                          gam_vb, kappa, kappa_vb, lambda, lambda_vb, nu, nu_vb,
-                         rs_gam, list_sig2_beta_star, sig2_inv_vb, tau_vb,
+                         om_vb, rs_gam, list_sig2_beta_star, sig2_inv_vb, tau_vb,
                          vec_log_det, list_beta_vb, list_mu_beta_vb, 
-                         list_m1_btb, list_m1_btXtXb)
+                         list_m1_btb, list_m1_btXtXb, converged, it, lb_opt, diff_lb)
     } else {
-      names_y <- colnames(Y)
-
-      names_G <- unlist(lapply(list_X,
-                               function(X_g) paste0(as.character(colnames(X_g)), collapse = "-")))
-
-      rownames(gam_vb) <- names_G
-      colnames(gam_vb) <- names_y
-      names(om_vb) <- names_G
-      
-      names(list_beta_vb) <- names_G
-
-      diff_lb <- abs(lb_opt - lb_old)
 
       create_named_list_(list_beta_vb, gam_vb, om_vb, converged, it, lb_opt, diff_lb)
     }

@@ -236,25 +236,27 @@ locus_logit_core_ <- function(Y, X, Z, list_hyper, chi_vb, gam_vb, alpha_vb,
 
     lb_opt <- lb_new
 
+    names_x <- colnames(X)
+    names_y <- colnames(Y)
+    names_z <- colnames(Z)
+    
+    rownames(gam_vb) <- rownames(beta_vb) <- names_x
+    colnames(gam_vb) <- colnames(beta_vb) <- names_y
+    
+    names(om_vb) <- names_x
+    rownames(alpha_vb) <- names_z
+    colnames(alpha_vb) <- names_y
+    
+    diff_lb <- abs(lb_opt - lb_old)
+    
     if (full_output) { # for internal use only
-      create_named_list_(a, a_vb, b, b_vb, beta_vb, chi_vb, gam_vb, lambda, 
-                         mu_beta_vb, nu, phi, phi_vb, psi_vb, sig2_alpha_vb, 
-                         sig2_beta_vb, sig2_inv_vb, xi, zeta2_inv_vb, alpha_vb, 
-                         m2_alpha, m2_beta, mat_x_m1, mat_z_mu, sum_gam)
-    } else {
-
-      names_x <- colnames(X)
-      names_y <- colnames(Y)
-      names_z <- colnames(Z)
-
-      rownames(gam_vb) <- rownames(beta_vb) <- names_x
-      colnames(gam_vb) <- colnames(beta_vb) <- names_y
       
-      names(om_vb) <- names_x
-      rownames(alpha_vb) <- names_z
-      colnames(alpha_vb) <- names_y
-
-      diff_lb <- abs(lb_opt - lb_old)
+      create_named_list_(a, a_vb, b, b_vb, beta_vb, chi_vb, gam_vb, lambda, 
+                         mu_beta_vb, nu, om_vb, phi, phi_vb, psi_vb, sig2_alpha_vb, 
+                         sig2_beta_vb, sig2_inv_vb, xi, zeta2_inv_vb, alpha_vb, 
+                         m2_alpha, m2_beta, mat_x_m1, mat_z_mu, sum_gam, 
+                         converged, it, lb_opt, diff_lb)
+    } else {
 
       create_named_list_(beta_vb, gam_vb, om_vb, alpha_vb, converged, it, lb_opt, diff_lb)
     }

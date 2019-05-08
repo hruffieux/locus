@@ -227,22 +227,26 @@ locus_core_ <- function(Y, X, list_hyper, gam_vb, mu_beta_vb, sig2_beta_vb,
 
     lb_opt <- lb_new
 
+    
+    names_x <- colnames(X)
+    names_y <- colnames(Y)
+    
+    rownames(gam_vb) <- rownames(beta_vb) <- names_x
+    colnames(gam_vb) <- colnames(beta_vb) <- names_y
+    names(om_vb) <- names_x
+    
+    diff_lb <- abs(lb_opt - lb_old)
+    
+    annealing <- ifelse(is.null(anneal), FALSE, anneal[1])
+    
     if (full_output) { # for internal use only
+      
       create_named_list_(a, a_vb, b, b_vb, beta_vb, eta, gam_vb, kappa, lambda,
-                         mu_beta_vb, nu, sig2_beta_vb, sig2_inv_vb, tau_vb, 
-                         m2_beta, mat_x_m1, sum_gam)
+                         mu_beta_vb, nu, om_vb, sig2_beta_vb, sig2_inv_vb, tau_vb, 
+                         m2_beta, mat_x_m1, sum_gam, converged, it, lb_opt, 
+                         diff_lb, annealing)
     } else {
-      names_x <- colnames(X)
-      names_y <- colnames(Y)
-
-      rownames(gam_vb) <- rownames(beta_vb) <- names_x
-      colnames(gam_vb) <- colnames(beta_vb) <- names_y
-      names(om_vb) <- names_x
-
-      diff_lb <- abs(lb_opt - lb_old)
-
-      annealing <- ifelse(is.null(anneal), FALSE, anneal[1])
-
+     
       create_named_list_(beta_vb, gam_vb, om_vb, converged, it, lb_opt, diff_lb, 
                          annealing)
     }
