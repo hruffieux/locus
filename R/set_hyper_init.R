@@ -764,7 +764,7 @@ auto_set_init_ <- function(Y, G, p, p_star, q, user_seed, link, ind_bin) {
 
     gam_vb <- matrix(rbeta(p * d, shape1 = shape1_gam, shape2 = shape2_gam),
                      nrow = p)
-    
+
   } else {
 
     shape2_gam <- d * (G - p_star) / p_star
