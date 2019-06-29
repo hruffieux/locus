@@ -379,13 +379,22 @@ update_sig2_theta_vb_ <- function(d, p, list_struct, s02, X = NULL, c = 1) {
 ## W's updates ##
 #################
 
-update_W_probit_ <- function(Y, mat_z_mu, mat_x_m1) mat_z_mu + mat_x_m1 + inv_mills_ratio_(Y, mat_z_mu + mat_x_m1)
+update_W_probit_ <- function(Y, mat_z_mu, mat_x_m1) {
+  
+  mat_z_mu + mat_x_m1 + inv_mills_ratio_matrix_(Y, mat_z_mu + mat_x_m1)
+
+}
 
 
 update_W_struct_ <- function(gam_vb, theta_vb) {
 
-  sweep(sweep(gam_vb, 1, (inv_mills_ratio_(1, theta_vb) - inv_mills_ratio_(0, theta_vb)), `*`),
-        1,  theta_vb + inv_mills_ratio_(0, theta_vb), `+`)
+  log_pnorm <- pnorm(theta_vb, log.p = TRUE)
+  log_1_pnorm <- pnorm(theta_vb, log.p = TRUE, lower.tail = FALSE)
+  
+  imr0 <- inv_mills_ratio_(0, theta_vb, log_1_pnorm, log_pnorm)
+  
+  sweep(sweep(gam_vb, 1, (inv_mills_ratio_(1, theta_vb, log_1_pnorm, log_pnorm) - imr0), `*`),
+        1,  theta_vb + imr0, `+`)
 
 }
 
