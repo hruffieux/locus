@@ -4,12 +4,29 @@
 \alias{locus}
 \title{Fit sparse multivariate regression models using variational inference.}
 \usage{
-locus(Y, X, p0_av, Z = NULL, link = "identity", ind_bin = NULL,
-  list_hyper = NULL, list_init = NULL, list_cv = NULL,
-  list_blocks = NULL, list_groups = NULL, list_struct = NULL,
-  user_seed = NULL, tol = 0.1, maxit = 1000, anneal = NULL,
-  save_hyper = FALSE, save_init = FALSE, full_output = FALSE,
-  verbose = TRUE, checkpoint_path = NULL)
+locus(
+  Y,
+  X,
+  p0_av,
+  Z = NULL,
+  link = "identity",
+  ind_bin = NULL,
+  list_hyper = NULL,
+  list_init = NULL,
+  list_cv = NULL,
+  list_blocks = NULL,
+  list_groups = NULL,
+  list_struct = NULL,
+  user_seed = NULL,
+  tol = 0.1,
+  maxit = 1000,
+  anneal = NULL,
+  save_hyper = FALSE,
+  save_init = FALSE,
+  full_output = FALSE,
+  verbose = TRUE,
+  checkpoint_path = NULL
+)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of

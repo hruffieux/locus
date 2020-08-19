@@ -4,9 +4,21 @@
 \alias{set_init}
 \title{Gather initial variational parameters provided by the user.}
 \usage{
-set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, link = "identity",
-  ind_bin = NULL, q = NULL, alpha_vb = NULL, sig2_alpha_vb = NULL,
-  sig2_inv_vb = NULL, G = NULL)
+set_init(
+  d,
+  p,
+  gam_vb,
+  mu_beta_vb,
+  sig2_beta_vb,
+  tau_vb,
+  link = "identity",
+  ind_bin = NULL,
+  q = NULL,
+  alpha_vb = NULL,
+  sig2_alpha_vb = NULL,
+  sig2_inv_vb = NULL,
+  G = NULL
+)
 }
 \arguments{
 \item{d}{Number of responses.}

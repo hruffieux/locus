@@ -4,8 +4,16 @@
 \alias{set_cv}
 \title{Gather settings for the cross-validation procedure used in \code{locus}.}
 \usage{
-set_cv(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 0.1,
-  maxit_cv = 1000, verbose = TRUE)
+set_cv(
+  n,
+  p,
+  n_folds,
+  size_p0_av_grid,
+  n_cpus,
+  tol_cv = 0.1,
+  maxit_cv = 1000,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{n}{Number of samples.}

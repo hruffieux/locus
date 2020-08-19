@@ -2,10 +2,10 @@ Package: locus
 Type: Package
 Title: Large-scale variational inference for combined selection of covariate and
     response variables in regression models
-Version: 0.9.0
-Date: 2019-05-06
+Version: 1.0.0
+Date: 2020-08-19
 Authors@R: c(
-    person("Helene", "Ruffieux", email = "helene.ruffieux@alumni.epfl.ch",
+    person("Helene", "Ruffieux", email = "helene.ruffieux@mrc-bsu.cam.ac.uk",
             role = c("aut", "cre"))
             )
 Description: Variational inference for sparse multivariate regression models
@@ -25,6 +25,6 @@ Imports:
     plyr (>= 1.8.4),
     Rcpp (>= 0.12.9),
     RcppEigen (>= 0.3.2.9.0)
-RoxygenNote: 6.0.1
+RoxygenNote: 7.0.2
 Suggests: testthat
 LinkingTo: Rcpp, RcppEigen

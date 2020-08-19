@@ -4,9 +4,25 @@
 \alias{set_hyper}
 \title{Gather model hyperparameters provided by the user.}
 \usage{
-set_hyper(d, p, lambda, nu, a, b, eta, kappa, link = "identity",
-  ind_bin = NULL, q = NULL, phi = NULL, xi = NULL, m0 = NULL,
-  s02 = NULL, G = NULL, struct = FALSE)
+set_hyper(
+  d,
+  p,
+  lambda,
+  nu,
+  a,
+  b,
+  eta,
+  kappa,
+  link = "identity",
+  ind_bin = NULL,
+  q = NULL,
+  phi = NULL,
+  xi = NULL,
+  m0 = NULL,
+  s02 = NULL,
+  G = NULL,
+  struct = FALSE
+)
 }
 \arguments{
 \item{d}{Number of responses.}
