@@ -7,7 +7,7 @@ re-knitted to generate an updated README.md -->
 
 <!-- Run for the R CMD checks, run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
 
-[![](https://travis-ci.org/hruffieux/echoseq.svg?branch=devel)](https://travis-ci.org/hruffieux/echoseq)
+[![](https://travis-ci.org/hruffieux/locus.svg?branch=devel)](https://travis-ci.org/hruffieux/locus)
 [![R build
 status](https://github.com/hruffieux/locus/workflows/R-CMD-check/badge.svg)](https://github.com/hruffieux/locus/actions)
 [![License: GPL
