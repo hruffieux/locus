@@ -4,33 +4,49 @@
 \alias{locus}
 \title{Fit sparse multivariate regression models using variational inference.}
 \usage{
-locus(Y, X, p0_av, Z = NULL, V = NULL, link = "identity",
-  ind_bin = NULL, list_hyper = NULL, list_init = NULL, list_cv = NULL,
-  list_blocks = NULL, user_seed = NULL, tol = 0.001, maxit = 1000,
-  save_hyper = FALSE, save_init = FALSE, verbose = TRUE)
+locus(
+  Y,
+  X,
+  p0_av,
+  Z = NULL,
+  link = "identity",
+  ind_bin = NULL,
+  list_hyper = NULL,
+  list_init = NULL,
+  list_cv = NULL,
+  list_blocks = NULL,
+  list_groups = NULL,
+  list_struct = NULL,
+  user_seed = NULL,
+  tol = 0.1,
+  maxit = 1000,
+  anneal = NULL,
+  save_hyper = FALSE,
+  save_init = FALSE,
+  full_output = FALSE,
+  verbose = TRUE,
+  checkpoint_path = NULL
+)
 }
 \arguments{
 \item{Y}{Response data matrix of dimension n x d, where n is the number of
-observations and d is the number of response variables.}
+samples and d is the number of response variables.}
 
 \item{X}{Input matrix of dimension n x p, where p is the number of candidate
 predictors. \code{X} cannot contain NAs. No intercept must be supplied.}
 
-\item{p0_av}{Prior average number of predictors expected to be included in
-the model. Must be \code{NULL} if \code{list_init} and \code{list_hyper}
-are both non-\code{NULL} or if \code{list_cv} is non-\code{NULL}. Can also
-be a vector of length p with entry s corresponding to the prior probability
-that candidate predictor s is associated with at least one response.}
+\item{p0_av}{Prior average number of predictors (or groups of predictors if 
+\code{list_groups} is non-\code{NULL}) expected to be included in the 
+model.  Can also be a vector of length p (resp. of length the number of 
+groups) with entry s corresponding to the prior probability that candidate 
+predictor s (resp. group s) is associated with at least one response. Must 
+be \code{NULL} if \code{list_init} and \code{list_hyper} are both 
+non-\code{NULL} or if \code{list_cv} is non-\code{NULL}.}
 
 \item{Z}{Covariate matrix of dimension n x q, where q is the number of
 covariates. Variables in \code{Z} are not subject to selection. \code{NULL}
 if no covariate. Factor covariates must be supplied after transformation to
 dummy coding. No intercept must be supplied.}
-
-\item{V}{Annotation matrix of dimension p x r, where r is the number of
-variables representing external information on the candidate predictors
-which may make their selection more or less likely. \code{NULL} if no such
-information.}
 
 \item{link}{Response link. Must be "\code{identity}" for linear regression,
 "\code{logit}" for logistic regression, "\code{probit}" for probit
@@ -63,6 +79,16 @@ parallel inference on a partitioned predictor space. Must be filled using
 the \code{\link{set_blocks}} function or must be \code{NULL} for no
 partitioning.}
 
+\item{list_groups}{An object of class "\code{groups}" containing settings for
+group selection of candidate predictors. Must be filled using the
+\code{\link{set_groups}} function or must be \code{NULL} for group
+selection.}
+
+\item{list_struct}{An object of class "\code{struct}" containing settings for
+structure sparsity priors. Must be filled using the
+\code{\link{set_struct}} function or must be \code{NULL} for structured
+selection.}
+
 \item{user_seed}{Seed set for reproducible default choices of hyperparameters
 (if \code{list_hyper} is \code{NULL}) and initial variational parameters
 (if \code{list_init} is \code{NULL}). Also used at the cross-validation
@@ -73,13 +99,26 @@ seed set.}
 
 \item{maxit}{Maximum number of iterations allowed.}
 
+\item{anneal}{Parameters for annealing scheme. Must be a vector whose first
+entry is sets the type of ladder: 1 = geometric spacing, 2 = harmonic
+spacing or 3 = linear spacing, the second entry is the initial temperature,
+and the third entry is the ladder size. If \code{NULL} (default), no
+annealing is performed.}
+
 \item{save_hyper}{If \code{TRUE}, the hyperparameters used for the model are
-saved as output.}
+returned.}
 
 \item{save_init}{If \code{TRUE}, the initial variational parameters used for
-the inference are saved as output.}
+the inference are returned (note that the size of the resulting objects is
+likely to be large). Default is \code{FALSE}.}
+
+\item{full_output}{If \code{TRUE}, the inferred variational parameters for 
+all parameters are returned.}
 
 \item{verbose}{If \code{TRUE}, messages are displayed during execution.}
+
+\item{checkpoint_path}{Path where to save temporary checkpoint outputs. 
+Default is \code{NULL}, for no checkpointing.}
 }
 \value{
 An object of class "\code{vb}" containing the following variational
@@ -87,24 +126,15 @@ An object of class "\code{vb}" containing the following variational
  \item{gam_vb}{Posterior inclusion probability matrix of dimension p x d.
                Entry (s, t) corresponds to the posterior probability of
                association between candidate predictor s and response t.}
- \item{mu_alpha_vb}{Matrix of dimension q x d whose entries are the posterior
+ \item{alpha_vb}{Matrix of dimension q x d whose entries are the posterior
                     mean regression coefficients for the covariates provided
                     in \code{Z} (if \code{link = "logit"},
                     \code{link = "logit"} or
                     \code{link = "mix"} also for the intercept).
                     \code{NULL} if \code{Z} is \code{NULL}.}
- \item{mu_c0_vb}{Vector of length p whose entries are the posterior intercept
-                 coefficients at the level of probabilities of associations.
-                 Entry s represents the control of the proportion of
-                 responses associated with candidate predictor s which is not
-                 due to external annotations. \code{NULL} if \code{V} is
-                 \code{NULL}.}
- \item{mu_c_vb}{Matrix of dimension r x d. Entry (l, k) contains the effect
-                of annotation l for response k on the probabilities of
-                associations. \code{NULL} if \code{V} is \code{NULL}.}
  \item{om_vb}{Vector of length p containing the posterior mean of omega.
               Entry s controls the proportion of responses associated with
-              candidate predictor s. NULL if \code{V} is non-\code{NULL}.}
+              candidate predictor s.}
  \item{converged}{A boolean indicating whether the algorithm has converged
                   before reaching \code{maxit} iterations.}
  \item{it}{Final number of iterations.}
@@ -128,17 +158,23 @@ An object of class "\code{vb}" containing the following variational
                               \code{TRUE}, hyperparameters, resp. initial
                               variational parameters, used for inference are
                               saved as output.}
+ \item{group_labels}{If \code{list_groups} is non-\code{NULL}, labels of the
+                     groups to which the candidate predictor belong (these
+                     labels are gathered after removal of constant and
+                     collinear predictors, whose indices are stored in
+                     \code{rmvd_cst_x} and \code{rmvd_coll_x}).}
+ \item{...}{Other specific outputs are possible depending on the model used.}
 }
 \description{
 Variational approximation procedure fitting sparse multivariate regression
 models for combined selection of predictors and associated responses in
 high-dimensional set-ups. Dependence across responses linked to the same
-predictors is captured through the model hierarchical structure.
+predictors is modelled through the model hierarchical structure.
 The responses can be purely continuous, purely binary (logit or probit link
 fits), or a mix of continuous and binary variables.
 }
 \details{
-The optimization is made using efficient block coordinate ascent schemes, for
+The optimization uses efficient block coordinate ascent schemes, for
 which convergence is ensured as the objective (elbo) is multiconcave
 for the selected blocks, i.e., it is concave in each block of parameters
 whose updates are made simultaneously, see Wu et al. (reference Section
@@ -159,7 +195,7 @@ seed <- 123; set.seed(seed)
 
 ## Examples using small problem sizes:
 ##
-n <- 200; p <- 250; p0 <- 25; d <- 30; d0 <- 25; q <- 3; r <- 3
+n <- 200; p <- 250; p0 <- 25; d <- 30; d0 <- 25; q <- 3
 
 ## Candidate predictors (subject to selection)
 ##
@@ -196,12 +232,6 @@ Y <- cbind(Y_act, Y_inact)[, shuff_y_ind] + Z \%*\% alpha
 ##
 Y_bin <- ifelse(Y > 0, 1, 0)
 
-## Informative annotation variables
-##
-V <- matrix(rnorm(p * r), nrow = p)
-V[bool_x_act, ] <- rnorm(p0 * r, mean = 2)
-
-
 ########################
 ## Infer associations ##
 ########################
@@ -220,11 +250,6 @@ vb_g <- locus(Y = Y, X = X, p0_av = p0, link = "identity", user_seed = seed)
 # With covariates
 #
 vb_g_z <- locus(Y = Y, X = X, p0_av = p0,  Z = Z, link = "identity",
-                user_seed = seed)
-
-# With external annotation variables
-#
-vb_g_v <- locus(Y = Y, X = X, p0_av = p0, Z = Z, V = V, link = "identity",
                 user_seed = seed)
 
 ## Binary responses
@@ -255,5 +280,6 @@ Y. Xu, and W. Yin. A block coordinate descent method for
 }
 \seealso{
 \code{\link{set_hyper}}, \code{\link{set_init}},
-  \code{\link{set_cv}}, \code{\link{set_blocks}}
+  \code{\link{set_cv}}, \code{\link{set_blocks}}, \code{\link{set_groups}}
+  and \code{\link{set_struct}}.
 }

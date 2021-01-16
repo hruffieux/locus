@@ -4,8 +4,21 @@
 \alias{set_init}
 \title{Gather initial variational parameters provided by the user.}
 \usage{
-set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb, link = "identity",
-  ind_bin = NULL, q = NULL, mu_alpha_vb = NULL, sig2_alpha_vb = NULL)
+set_init(
+  d,
+  p,
+  gam_vb,
+  mu_beta_vb,
+  sig2_beta_vb,
+  tau_vb,
+  link = "identity",
+  ind_bin = NULL,
+  q = NULL,
+  alpha_vb = NULL,
+  sig2_alpha_vb = NULL,
+  sig2_inv_vb = NULL,
+  G = NULL
+)
 }
 \arguments{
 \item{d}{Number of responses.}
@@ -47,7 +60,7 @@ binary variables in \code{Y}. Must be \code{NULL} if \code{link != "mix"}.}
 \item{q}{Number of covariates. Default is \code{NULL}, for \code{Z}
 \code{NULL}.}
 
-\item{mu_alpha_vb}{Matrix of size q x d with initial values for the
+\item{alpha_vb}{Matrix of size q x d with initial values for the
 variational parameter yielding regression coefficient estimates for
 covariate-response pairs. Default is \code{NULL}, for \code{Z} \code{NULL}.}
 
@@ -56,6 +69,14 @@ for \code{link = "logit"} and for \code{link = "mix"} with initial values
 for the variational parameter yielding estimates of effect variances for
 covariate-response pairs. Vector of length q for \code{link = "probit"}.
 Default is \code{NULL}, for \code{Z} \code{NULL}.}
+
+\item{sig2_inv_vb}{Initial parameters necessary when \code{G} is
+non-\code{NULL}. Its inverse square root corresponds to the typical size of
+non-zero effects. Must be \code{NULL} if \code{G} is \code{NULL}.}
+
+\item{G}{Number of candidate predictor groups when using the group selection
+model from the \code{\link{locus}} function. Default is \code{NULL},
+for no group selection.}
 }
 \value{
 An object of class "\code{init}" preparing user initial values for
@@ -146,12 +167,12 @@ vb_g <- locus(Y = Y, X = X, p0_av = p0, link = "identity",
 
 # With covariates
 #
-mu_alpha_vb <- matrix(rnorm(q * d), nrow = q)
+alpha_vb <- matrix(rnorm(q * d), nrow = q)
 sig2_alpha_vb <- 1 / matrix(rgamma(q * d, shape = 2, rate = 1), nrow = q)
 
 list_init_g_z <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb, tau_vb,
                           link = "identity", q = q,
-                          mu_alpha_vb = mu_alpha_vb,
+                          alpha_vb = alpha_vb,
                           sig2_alpha_vb = sig2_alpha_vb)
 
 vb_g_z <- locus(Y = Y, X = X, p0_av = p0, Z = Z, link = "identity",
@@ -165,7 +186,7 @@ sig2_beta_vb_logit <- 1 / t(replicate(p, rgamma(d, shape = 2, rate = 1)))
 
 list_init_logit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_logit,
                             tau_vb = NULL, link = "logit", q = q,
-                            mu_alpha_vb = mu_alpha_vb,
+                            alpha_vb = alpha_vb,
                             sig2_alpha_vb = sig2_alpha_vb)
 
 vb_logit <- locus(Y = Y_bin, X = X, p0_av = p0, Z = Z, link = "logit",
@@ -175,7 +196,7 @@ sig2_alpha_vb_probit <- sig2_alpha_vb[, 1]
 sig2_beta_vb_probit <- sig2_beta_vb[1]
 list_init_probit <- set_init(d, p, gam_vb, mu_beta_vb, sig2_beta_vb_probit,
                              tau_vb = NULL, link = "probit", q = q,
-                             mu_alpha_vb = mu_alpha_vb,
+                             alpha_vb = alpha_vb,
                              sig2_alpha_vb = sig2_alpha_vb_probit)
 
 vb_probit <- locus(Y = Y_bin, X = X, p0_av = p0, Z = Z, link = "probit",
@@ -192,13 +213,13 @@ gam_vb_mix <- matrix(rbeta(p * 2*d, shape1 = 1, shape2 = 8*d-1), nrow = p)
 mu_beta_vb_mix <- matrix(rnorm(p * 2*d), nrow = p)
 sig2_beta_vb_mix <- 1 / c(rgamma(d, shape = 2, rate = 1 / tau_vb),
                           rgamma(d, shape = 2, rate = 1))
-mu_alpha_vb_mix <- matrix(rnorm(q * 2*d), nrow = q)
+alpha_vb_mix <- matrix(rnorm(q * 2*d), nrow = q)
 sig2_alpha_vb_mix <- 1 / matrix(rgamma(q * 2*d, shape = 2, rate = 1), nrow = q)
 
 list_init_mix <- set_init(2*d, p, gam_vb_mix, mu_beta_vb_mix,
                           sig2_beta_vb_mix, tau_vb, link = "mix",
                           ind_bin = ind_bin, q = q,
-                          mu_alpha_vb = mu_alpha_vb_mix,
+                          alpha_vb = alpha_vb_mix,
                           sig2_alpha_vb = sig2_alpha_vb_mix)
 
 vb_mix <- locus(Y = Y_mix, X = X, p0_av = p0, Z = Z, link = "mix",

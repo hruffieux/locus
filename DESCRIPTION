@@ -1,14 +1,13 @@
 Package: locus
 Type: Package
-Title: Large-scale variational inference for Bayesian variable selection in 
-    multiple-response regression
-Version: 0.6.3
-Date: 2018-10-19
+Title: Large-Scale Variational Inference for Combined Selection of Covariate and
+    Response Variables in Regression Models
+Version: 1.0.0
+Date: 2021-01-16
 Authors@R: c(
-    person("Helene", "Ruffieux", email = "helene.ruffieux@epfl.ch",
-            role = c("aut", "cre")),
-    person(given = "Nestle Institute of Health Sciences SA, Lausanne, Switzerland",
-            role = "cph"))
+    person("Helene", "Ruffieux", email = "helene.ruffieux@mrc-bsu.cam.ac.uk",
+            role = c("aut", "cre"))
+            )
 Description: Variational inference for sparse multivariate regression models
     that allow combined selection of responses and associated predictos in
     high-dimensional set-ups (H. Ruffieux, A. C. Davison, J. Hager and 
@@ -25,8 +24,9 @@ LazyData: TRUE
 Imports:
     Matrix (>= 1.2-2),
     parallel,
-    Rcpp (>= 0.12.9),
+    plyr (>= 1.8.4),
+    Rcpp,
     RcppEigen (>= 0.3.2.9.0)
-RoxygenNote: 6.0.1
+RoxygenNote: 7.1.1
 Suggests: testthat
 LinkingTo: Rcpp, RcppEigen

@@ -11,11 +11,11 @@
 #' This cross-validation procedure is available only for
 #' \code{link = "identity"}.
 #'
-#' @param n Number of observations.
+#' @param n Number of samples.
 #' @param p Number of candidate predictors.
 #' @param n_folds Number of number of folds. Large folds are not recommended for
 #'   large datasets as the procedure may become computationally expensive. Must
-#'   be greater than 2 and smaller than the number of observations.
+#'   be greater than 2 and smaller than the number of samples.
 #' @param size_p0_av_grid Number of possible values of p0_av to be compared.
 #'   Large numbers are not recommended for large datasets as the procedure may
 #'   become computationally expensive.
@@ -73,7 +73,7 @@
 #' ## Infer associations ##
 #' ########################
 #'
-#' list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 2)
+#' list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 1)
 #'
 #' vb <- locus(Y = Y, X = X, p0_av = NULL, link = "identity", list_cv = list_cv,
 #'             user_seed = seed)
@@ -82,14 +82,14 @@
 #'
 #' @export
 #'
-set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
-                   maxit_cv = 1e3, verbose = TRUE) {
+set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 0.1,
+                   maxit_cv = 1000, verbose = TRUE) {
 
   check_structure_(n_folds, "vector", "numeric", 1)
   check_natural_(n_folds)
 
   if (!(n_folds %in% 2:n))
-    stop("n_folds must be a natural number greater than 2 and smaller than the number of observations.")
+    stop("n_folds must be a natural number greater than 2 and smaller than the number of samples.")
 
   # 16 may correspond to (a multiple of) the number of cores available
   if (n_folds > 16) warning("n_folds is large and may induce expensive computations.")
@@ -97,20 +97,18 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
 
   check_structure_(size_p0_av_grid, "vector", "numeric", 1)
   check_natural_(size_p0_av_grid)
-  if (size_p0_av_grid < 2) stop(paste("size_p0_av_grid must be at greater 1 ",
-                                      "to allow for comparisons.",
-                                      sep=""))
-  if (size_p0_av_grid > 10) stop(paste("size_p0_av_grid is large and may ",
+  if (size_p0_av_grid < 2) stop(paste0("size_p0_av_grid must be at greater 1 ",
+                                      "to allow for comparisons."))
+  if (size_p0_av_grid > 10) stop(paste0("size_p0_av_grid is large and may ",
                                        "induce expensive computations. Choose ",
-                                       "size_p0_av_grid in {2, 3, ..., 10}.",
-                                       sep=""))
+                                       "size_p0_av_grid in {2, 3, ..., 10}."))
 
   p0_av_grid <- create_grid_(p, size_p0_av_grid)
 
   new_size <- length(p0_av_grid)
   if (size_p0_av_grid > new_size) {
-    if (verbose) cat(paste("Cross-validation p0_av_grid reduced to ", new_size,
-                           " elements as p is small.\n", sep = ""))
+    if (verbose) cat(paste0("Cross-validation p0_av_grid reduced to ", new_size,
+                           " elements as p is small.\n"))
     size_p0_av_grid <- new_size
   }
 
@@ -123,8 +121,8 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
   check_structure_(n_cpus, "vector", "numeric", 1)
   check_natural_(n_cpus)
   if (n_cpus > n_folds){
-    message <- paste("The number of cpus in use will be at most equal to n_folds.",
-                     "n_cpus is therefore set to n_folds = ", n_folds, ". \n", sep ="")
+    message <- paste0("The number of cpus in use will be at most equal to n_folds.",
+                     "n_cpus is therefore set to n_folds = ", n_folds, ". \n")
     if(verbose) cat(message)
     else warning(message)
     n_cpus <- n_folds
@@ -135,11 +133,11 @@ set_cv <- function(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 1e-3,
     n_cpus_avail <- parallel::detectCores()
     if (n_cpus > n_cpus_avail) {
       n_cpus <- n_cpus_avail
-      warning(paste("The number of CPUs specified exceeds the number of CPUs ",
-                    "available on the machine. The latter has been used instead.", sep=""))
+      warning(paste0("The number of CPUs specified exceeds the number of CPUs ",
+                    "available on the machine. The latter has been used instead."))
     }
-    if (verbose) cat(paste("Cross-validation with ", n_cpus, " CPUs.\n",
-                           "Please make sure that enough RAM is available. \n", sep=""))
+    if (verbose) cat(paste0("Cross-validation with ", n_cpus, " CPUs.\n",
+                           "Please make sure that enough RAM is available. \n"))
   }
 
   n_cv <- n
@@ -194,7 +192,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
     folds <- rep_len(1:n_folds, n)
 
     evaluate_fold_ <- function(k) {
-      if (verbose) { cat(paste("Evaluating fold k = ", k, "... \n", sep=""))
+      if (verbose) { cat(paste0("Evaluating fold k = ", k, "... \n"))
         cat("-------------------------\n")
       }
 
@@ -250,11 +248,12 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
 
         pg <-  p0_av_grid[ind_pg]
 
-        if (verbose) cat(paste("Evaluating p0_av = ", pg, "... \n", sep=""))
+        if (verbose) cat(paste0("Evaluating p0_av = ", pg, "... \n"))
 
-        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, r = NULL, link = link,
-                                         ind_bin = ind_bin)
-        list_init_pg <- auto_set_init_(Y_tr, p, pg, q, user_seed,
+        list_hyper_pg <- auto_set_hyper_(Y_tr, p, pg, q, link = link, 
+                                         ind_bin = ind_bin, struct = FALSE, 
+                                         vec_fac_gr = NULL)
+        list_init_pg <- auto_set_init_(Y_tr, G = NULL, p, pg, q, user_seed,
                                        link = link, ind_bin = ind_bin)
 
         nq <- is.null(q)
@@ -269,7 +268,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
             # uninformative prior
             list_hyper_pg$phi <- list_hyper_pg$xi <- 1e-3
 
-            list_init_pg$mu_alpha_vb <- matrix(0, nrow = 1, ncol = d)
+            list_init_pg$alpha_vb <- matrix(0, nrow = 1, ncol = d)
 
             if (link == "probit") {
 
@@ -290,7 +289,7 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
             list_hyper_pg$phi <- c(1e-3, list_hyper_pg$phi)
             list_hyper_pg$xi <- c(1e-3, list_hyper_pg$xi)
 
-            list_init_pg$mu_alpha_vb <- rbind(rep(0, d), list_init_pg$mu_alpha_vb)
+            list_init_pg$alpha_vb <- rbind(rep(0, d), list_init_pg$alpha_vb)
 
             if (link == "probit") {
 
@@ -314,33 +313,34 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
             vb_tr <- locus_core_(Y_tr, X_tr, list_hyper_pg,
                                  list_init_pg$gam_vb, list_init_pg$mu_beta_vb,
                                  list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
-                                 tol_cv, maxit_cv, verbose = FALSE, full_output = TRUE)
+                                 tol_cv, maxit_cv, anneal = NULL,
+                                 verbose = FALSE, full_output = TRUE)
 
             lb_vec[ind_pg] <- with(vb_tr, {
 
-              mat_x_m1 <-  X_test %*% m1_beta
+              mat_x_m1 <-  X_test %*% beta_vb
 
-              elbo_(Y_test, a, a_vb, b, b_vb, eta, gam_vb, kappa,
-                    lambda, nu, sig2_beta_vb, sig2_inv_vb, tau_vb, m1_beta,
+              elbo_(Y_test, a, a_vb, b, b_vb, beta_vb, eta, gam_vb, kappa,
+                    lambda, nu, sig2_beta_vb, sig2_inv_vb, tau_vb, 
                     m2_beta, mat_x_m1, sum_gam)
 
             })
           } else {
             vb_tr <- locus_z_core_(Y_tr, X_tr, Z_tr, list_hyper_pg,
-                                   list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
+                                   list_init_pg$gam_vb, list_init_pg$alpha_vb,
                                    list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
                                    list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
                                    tol_cv, maxit_cv, verbose = FALSE, full_output = TRUE)
 
             lb_vec[ind_pg] <- with(vb_tr, {
 
-              mat_z_mu <-  Z_test %*% mu_alpha_vb
-              mat_x_m1 <-  X_test %*% m1_beta
+              mat_z_mu <-  Z_test %*% alpha_vb
+              mat_x_m1 <-  X_test %*% beta_vb
 
-              elbo_z_(Y_test, Z_test, a, a_vb, b, b_vb, eta, gam_vb,
-                      kappa, lambda, mu_alpha_vb, nu, phi, phi_vb,
+              elbo_z_(Y_test, Z_test, a, a_vb, b, b_vb, beta_vb, eta, gam_vb,
+                      kappa, lambda, alpha_vb, nu, phi, phi_vb,
                       sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb, tau_vb, xi,
-                      zeta2_inv_vb, m2_alpha, m1_beta, m2_beta, mat_x_m1,
+                      zeta2_inv_vb, m2_alpha, m2_beta, mat_x_m1,
                       mat_z_mu, sum_gam)
             })
           }
@@ -348,48 +348,48 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
         } else if (link == "probit") {
 
           vb_tr <- locus_probit_core_(Y_tr, X_tr, Z_tr, list_hyper_pg,
-                                      list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
+                                      list_init_pg$gam_vb, list_init_pg$alpha_vb,
                                       list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
                                       list_init_pg$sig2_beta_vb, tol_cv, maxit_cv,
                                       verbose = FALSE, full_output = TRUE)
 
           lb_vec[ind_pg] <- with(vb_tr, {
 
-            mat_z_mu <-  Z_test %*% mu_alpha_vb
-            mat_x_m1 <-  X_test %*% m1_beta
+            mat_z_mu <-  Z_test %*% alpha_vb
+            mat_x_m1 <-  X_test %*% beta_vb
 
-            elbo_probit_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, gam_vb,
+            elbo_probit_(Y_test, X_test, Z_test, a, a_vb, b, b_vb, beta_vb, gam_vb,
                          lambda, nu, phi, phi_vb, sig2_alpha_vb, sig2_beta_vb,
-                         sig2_inv_vb, xi, zeta2_inv_vb, mu_alpha_vb, m1_beta,
+                         sig2_inv_vb, xi, zeta2_inv_vb, alpha_vb, 
                          m2_alpha, m2_beta, mat_x_m1, mat_z_mu, sum_gam)
           })
 
         } else if (link == "mix") {
 
           vb_tr <- locus_mix_core_(Y_tr, X_tr, Z_tr, ind_bin, list_hyper_pg,
-                                   list_init_pg$gam_vb, list_init_pg$mu_alpha_vb,
+                                   list_init_pg$gam_vb, list_init_pg$alpha_vb,
                                    list_init_pg$mu_beta_vb, list_init_pg$sig2_alpha_vb,
                                    list_init_pg$sig2_beta_vb, list_init_pg$tau_vb,
                                    tol_cv, maxit_cv, verbose = FALSE, full_output = TRUE)
 
           lb_vec[ind_pg] <- with(vb_tr, {
 
-            mat_z_mu <-  Z_test %*% mu_alpha_vb
-            mat_x_m1 <-  X_test %*% m1_beta
+            mat_z_mu <-  Z_test %*% alpha_vb
+            mat_x_m1 <-  X_test %*% beta_vb
 
             elbo_mix_(Y_test[, ind_bin, drop = FALSE],
                       Y_test[, -ind_bin, drop = FALSE], ind_bin, X_test, Z_test,
-                      a, a_vb, b, b_vb, eta, gam_vb, kappa, lambda, mu_alpha_vb,
+                      a, a_vb, b, b_vb, beta_vb, eta, gam_vb, kappa, lambda, alpha_vb,
                       nu, phi, phi_vb, sig2_alpha_vb, sig2_beta_vb, sig2_inv_vb,
-                      tau_vb, log_tau_vb, xi, zeta2_inv_vb, m2_alpha, m1_beta,
+                      tau_vb, log_tau_vb, xi, zeta2_inv_vb, m2_alpha, 
                       m2_beta, mat_x_m1, mat_z_mu, sum_gam)
 
           })
 
         }
 
-        if (verbose) { cat(paste("Lower bound on test set, fold ", k, ", p0_av ",
-                                 pg, ": ", format(lb_vec[ind_pg]), ". \n", sep = ""))
+        if (verbose) { cat(paste0("Lower bound on test set, fold ", k, ", p0_av ",
+                                 pg, ": ", format(lb_vec[ind_pg]), ". \n"))
           cat("-------------------------\n") }
       }
       lb_vec
@@ -401,16 +401,16 @@ cross_validate_ <- function(Y, X, Z, link, ind_bin, list_cv, user_seed, verbose)
                                  mc.cores = n_cpus)
     lb_mat <- do.call(rbind, lb_mat)
 
-    rownames(lb_mat) <- paste("fold_", 1:n_folds, sep = "")
-    colnames(lb_mat) <- paste("p0_av_", p0_av_grid, sep = "")
+    rownames(lb_mat) <- paste0("fold_", 1:n_folds)
+    colnames(lb_mat) <- paste0("p0_av_", p0_av_grid)
 
     p0_av_opt <- p0_av_grid[which.max(colMeans(lb_mat))]
 
     if (verbose) {
       cat("Lower bounds on test sets for each fold and each grid element: \n")
       print(lb_mat)
-      cat(paste("===== ...end of cross-validation with selected p0_av = ",
-                p0_av_opt, " ===== \n", sep=""))
+      cat(paste0("===== ...end of cross-validation with selected p0_av = ",
+                p0_av_opt, " ===== \n"))
     }
 
     p0_av_opt

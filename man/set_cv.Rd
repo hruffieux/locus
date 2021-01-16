@@ -4,17 +4,25 @@
 \alias{set_cv}
 \title{Gather settings for the cross-validation procedure used in \code{locus}.}
 \usage{
-set_cv(n, p, n_folds, size_p0_av_grid, n_cpus, tol_cv = 0.001,
-  maxit_cv = 1000, verbose = TRUE)
+set_cv(
+  n,
+  p,
+  n_folds,
+  size_p0_av_grid,
+  n_cpus,
+  tol_cv = 0.1,
+  maxit_cv = 1000,
+  verbose = TRUE
+)
 }
 \arguments{
-\item{n}{Number of observations.}
+\item{n}{Number of samples.}
 
 \item{p}{Number of candidate predictors.}
 
 \item{n_folds}{Number of number of folds. Large folds are not recommended for
 large datasets as the procedure may become computationally expensive. Must
-be greater than 2 and smaller than the number of observations.}
+be greater than 2 and smaller than the number of samples.}
 
 \item{size_p0_av_grid}{Number of possible values of p0_av to be compared.
 Large numbers are not recommended for large datasets as the procedure may
@@ -88,7 +96,7 @@ Y <- cbind(Y_act, Y_inact)[, shuff_y_ind]
 ## Infer associations ##
 ########################
 
-list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 2)
+list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 1)
 
 vb <- locus(Y = Y, X = X, p0_av = NULL, link = "identity", list_cv = list_cv,
             user_seed = seed)

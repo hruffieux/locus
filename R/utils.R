@@ -8,24 +8,24 @@
 
 check_natural_ <- function(x, eps = .Machine$double.eps^0.75){
   if (any(x < eps | abs(x - round(x)) > eps)) {
-    stop(paste(deparse(substitute(x)),
-               " must be natural.", sep=""))
+    stop(paste0(deparse(substitute(x)),
+               " must be natural."))
   }
 }
 
 check_positive_ <- function(x, eps = .Machine$double.eps^0.75){
   if (any(x < eps)) {
-    err_mess <- paste(deparse(substitute(x)), " must be positive, greater than ",
-                      format(eps, digits = 3), ".", sep="")
-    if (length(x) > 1) err_mess <- paste("All entries of ", err_mess, sep="")
+    err_mess <- paste0(deparse(substitute(x)), " must be positive, greater than ",
+                      format(eps, digits = 3), ".")
+    if (length(x) > 1) err_mess <- paste0("All entries of ", err_mess)
     stop(err_mess)
   }
 }
 
 check_zero_one_ <- function(x){
   if (any(x < 0) | any(x > 1)) {
-    err_mess <- paste(deparse(substitute(x)), " must lie between 0 and 1.", sep="")
-    if (length(x) > 1) err_mess <- paste("All entries of ", err_mess, sep="")
+    err_mess <- paste0(deparse(substitute(x)), " must lie between 0 and 1.")
+    if (length(x) > 1) err_mess <- paste0("All entries of ", err_mess)
     stop(err_mess)
   }
 }
@@ -55,13 +55,13 @@ check_structure_ <- function(x, struct, type, size = NULL,
     bool_struct <- is.vector(x) & (length(x) > 0) # not an empty vector
     if (!is.null(size)) {
       bool_size <- length(x) %in% size
-      size_mess <- paste(" of length ", paste(size, collapse=" or "), sep = "")
+      size_mess <- paste0(" of length ", paste0(size, collapse=" or "))
     }
   } else if (struct == "matrix") {
     bool_struct <- is.matrix(x) & (length(x) > 0) # not an empty matrix
     if (!is.null(size)) {
       bool_size <- all(dim(x) == size)
-      size_mess <- paste(" of dimension ", size[1], " x ", size[2], sep = "")
+      size_mess <- paste0(" of dimension ", size[1], " x ", size[2])
     }
   }
 
@@ -93,8 +93,8 @@ check_structure_ <- function(x, struct, type, size = NULL,
   }
 
   if(!(correct_obj)) {
-    stop(paste(deparse(substitute(x)), " must be a non-empty ", type_mess, struct,
-               size_mess, inf_mess, na_mess, null_mess, ".", sep = ""))
+    stop(paste0(deparse(substitute(x)), " must be a non-empty ", type_mess, struct,
+               size_mess, inf_mess, na_mess, null_mess, "."))
   }
 }
 
@@ -104,8 +104,50 @@ create_named_list_ <- function(...) {
 }
 
 
+
+get_annealing_ladder_ <- function(anneal, verbose) {
+
+  # ladder set following:
+  # Importance Tempering, Robert B. Gramacy & Richard J. Samworth, pp.9-10, arxiv v4
+
+  k_m <- 1 / anneal[2]
+  m <- anneal[3]
+
+  if(anneal[1] == 1) {
+
+    type <- "geometric"
+
+    delta_k <- k_m^(1 / (1 - m)) - 1
+
+    ladder <- (1 + delta_k)^(1 - m:1)
+
+  } else if (anneal[1] == 2) { # harmonic spacing
+
+    type <- "harmonic"
+
+    delta_k <- ( 1 / k_m - 1) / (m - 1)
+
+    ladder <- 1 / (1 + delta_k * (m:1 - 1))
+
+  } else { # linear spacing
+
+    type <- "linear"
+
+    delta_k <- (1 - k_m) / (m - 1)
+
+    ladder <- k_m + delta_k * (1:m - 1)
+  }
+
+  if (verbose)
+    cat(paste0("** Annealing with ", type," spacing ** \n\n"))
+
+  ladder
+
+}
+
+
 log_one_plus_exp_ <- function(x) { # computes log(1 + exp(x)) avoiding
-  # numerical overflow
+                                   # numerical overflow
   m <- x
   m[x < 0] <- 0
 
@@ -119,10 +161,24 @@ log_sigmoid_ <- function(chi) {
 
 }
 
+log_det <- function(list_mat) {
 
-inv_mills_ratio_ <- function(Y, U) {
+  if (is.list(list_mat)) {
+    sapply(list_mat, function(mat) {
+      log_det <- determinant(mat, logarithm = TRUE)
+      log_det$modulus * log_det$sign
+    })
+  } else {
+    log_det <- determinant(list_mat, logarithm = TRUE)
+    log_det$modulus * log_det$sign
+  }
 
-  m <- matrix(NA, nrow = nrow(U), ncol = ncol(U))
+}
+
+inv_mills_ratio_matrix_ <- function(Y, U) {
+
+  if (is.matrix(U)) m <- matrix(NA, nrow = nrow(U), ncol = ncol(U))
+  else m <- rep(NA, length(U))
 
   U_1 <- U[Y==1]
   m_1 <- exp(dnorm(U_1, log = TRUE) - pnorm(U_1, log.p = TRUE))
@@ -132,7 +188,7 @@ inv_mills_ratio_ <- function(Y, U) {
 
 
   U_0 <- U[Y==0]
-  m_0 <- - exp(dnorm(U[Y==0], log = TRUE) - pnorm(U[Y==0], lower.tail = FALSE, log.p = TRUE))
+  m_0 <- - exp(dnorm(U_0, log = TRUE) - pnorm(U_0, lower.tail = FALSE, log.p = TRUE))
   m_0[m_0 > -U_0] <- -U_0
 
   m[Y==0] <- m_0
@@ -141,12 +197,47 @@ inv_mills_ratio_ <- function(Y, U) {
 
 }
 
+
+inv_mills_ratio_ <- function(y, U, log_1_pnorm_U, log_pnorm_U) {
+  
+  stopifnot(y %in% c(0, 1))
+  
+  # writing explicitely the formula for pnorm(, log = TRUE) is faster...
+  if (y == 1) {
+    
+    m <- exp(-U^2/2 - log(sqrt(2*pi)) - log_pnorm_U)
+    m[m < -U] <- -U
+    
+  } else {
+    
+    m <- - exp(-U^2/2 - log(sqrt(2*pi)) - log_1_pnorm_U)
+    m[m > -U] <- -U
+    
+  }
+  
+  m
+  
+}
+
+
+log_sum_exp_ <- function(x) {
+  # Computes log(sum(exp(x))
+
+  if ( max(abs(x)) > max(x) )
+    offset <- min(x)
+  else
+    offset <- max(x)
+  log(sum(exp(x - offset))) + offset
+
+}
+
+
 # entropy_ <- function(Y, U) {
 #
 #   log((2 * pi * exp(1))^(1/2) *
 #            exp(Y * pnorm(U, log.p = TRUE) +
 #                  (1-Y) * pnorm(U, lower.tail = FALSE, log.p = TRUE))) -
-#   U * inv_mills_ratio_(Y, U) / 2
+#   U * inv_mills_ratio_matrix_(Y, U) / 2
 #
 # }
 
@@ -160,16 +251,14 @@ rm_constant_ <- function(mat, verbose) {
 
     if (verbose) {
       if (sum(bool_cst) < 50) {
-        cat(paste("Variable(s) ", paste(rmvd_cst, collapse=", "),
+        cat(paste0("Variable(s) ", paste0(rmvd_cst, collapse=", "),
                   " constant across subjects. \n",
                   "Removing corresponding column(s) and saving its/their id(s) ",
-                  "in the function output ... \n\n",
-                  sep=""))
+                  "in the function output ... \n\n"))
       } else {
-        cat(paste(sum(bool_cst), " variables constant across subjects. \n",
+        cat(paste0(sum(bool_cst), " variables constant across subjects. \n",
                   "Removing corresponding column(s) and saving their ids ",
-                  "in the function output ... \n\n",
-                  sep=""))
+                  "in the function output ... \n\n"))
       }
     }
 
@@ -192,16 +281,14 @@ rm_collinear_ <- function(mat, verbose) {
 
     if (verbose) {
       if (length(rmvd_coll) < 50) {
-        cat(paste("Presence of collinear variable(s). ",
-                  paste(rmvd_coll, collapse=", "), " redundant. \n",
+        cat(paste0("Presence of collinear variable(s). ",
+                  paste0(rmvd_coll, collapse=", "), " redundant. \n",
                   "Removing corresponding column(s) and saving its/their id(s) ",
-                  "in the function output ... \n",
-                  sep=""))
+                  "in the function output ... \n"))
       } else {
-        cat(paste("Presence of collinear variables. ", length(rmvd_coll),
+        cat(paste0("Presence of collinear variables. ", length(rmvd_coll),
                   " redundant.\n", "Removing corresponding columns and saving ",
-                  "their ids in the function output ... \n",
-                  sep=""))
+                  "their ids in the function output ... \n"))
       }
     }
 
@@ -224,3 +311,43 @@ rm_collinear_ <- function(mat, verbose) {
 }
 
 make_chunks_ <- function(x, n_g) split(x, factor(sort(rank(x) %% n_g)))
+
+
+checkpoint_ <- function(it, checkpoint_path, gam_vb, converged, lb_new, lb_old, 
+                        om_vb = NULL, rate = 100) {
+  
+  if (!is.null(checkpoint_path) && it %% rate == 0) {
+    
+    diff_lb <- abs(lb_new - lb_old)
+    
+    tmp_vb <- create_named_list_(gam_vb, converged, it, lb_new, diff_lb, om_vb)
+    
+    file_save <- paste0(checkpoint_path, "tmp_output_it_", it, ".RData")
+    
+    save(tmp_vb, file = file_save)
+    
+    old_file_clean_up <- paste0(checkpoint_path, "tmp_output_it_", it - 2 * rate, ".RData") # keep only the last two for comparison
+    
+    if (file.exists(old_file_clean_up)) 
+      file.remove(old_file_clean_up)
+
+  }
+    
+}
+
+
+checkpoint_clean_up_ <- function(checkpoint_path) {
+  
+  if (!is.null(checkpoint_path)) {
+    
+    old_files_clean_up <- list.files(path = checkpoint_path, pattern = "tmp_output_it_")
+    
+    sapply(old_files_clean_up, function(ff) {
+      if (file.exists(file.path(checkpoint_path, ff))) 
+        file.remove(file.path(checkpoint_path, ff))
+    })
+    
+  } 
+  
+}
+ 

@@ -1,36 +1,62 @@
-## LOCUS: Large-scale variational inference for Bayesian variable selection in multiple-response regression
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+<!-- First time: run usethis::use_readme_rmd() to create a pre-commit hook that 
+prevents from committing if the README.Rmd has changed, but has not been 
+re-knitted to generate an updated README.md -->
 
-[![Travis-CI Build Status](https://travis-ci.org/hruffieux/locus.svg?branch=master)](https://travis-ci.org/hruffieux/locus)
+## locus – large-scale variational inference for combined covariate and response selection in sparse regression models
+
+<!-- Run for the R CMD checks, run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
+
+[![](https://travis-ci.org/hruffieux/echoseq.svg?branch=master)](https://travis-ci.org/hruffieux/echoseq)
+[![R build
+status](https://github.com/hruffieux/locus/workflows/R-CMD-check/badge.svg)](https://github.com/hruffieux/locus/actions)
+[![License: GPL
+v2](https://img.shields.io/badge/license-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+[![](https://img.shields.io/badge/devel%20version-1.0.0-blue.svg)](https://github.com/hruffieux/locus)
+[![](https://img.shields.io/github/languages/code-size/hruffieux/locus.svg)](https://github.com/hruffieux/locus)
+[![](https://img.shields.io/badge/doi-10.1093/biostatistics/kxx007-yellow.svg)](https://doi.org/10.1093/biostatistics/kxx007)
 
 ## Overview
 
-**LOCUS** is an R package providing efficient variational algorithms for
-simultaneous selection of responses and associated predictors based
-on hierarchical sparse regression models. The method can for instance be 
-used for genome-wide association analyses with multiple clinical endpoints
-or for molecular quantitative trait locus (QTL) analyses which involve 
-hundreds of thousands of genetic variants as candidate predictors and
-thousands of molecular levels as responses, for thousands of samples.  
-
-**LOCUS** is described and extensively assessed in H. Ruffieux, 
-A. C. Davison, J. Hager and I. Irincheeva, Efficient inference
-for genetic association studies with multiple outcomes, *Biostatistics*, 
-18:618:636, 2017, doi: 10.1093/biostatistics/kxx007.
+**locus** is an R package providing efficient variational algorithms for
+simultaneous variable selection of covariates and associated responses
+based on multivariate regression models. Dependence across responses
+linked to the same covariates is captured through the model hierarchical
+structure (H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva,
+Efficient inference for genetic association studies with multiple
+outcomes, *Biostatistics*, 2017).
 
 ## Installation
 
-To install, run the following commands in R:
+To install, run the following command in R:
 
 ``` r
-require(devtools) # after having installed devtools (install.packages("devtools"))
-devtools::install_github("hruffieux/locus")
+if(!require(remotes)) install.packages("remotes")
+remotes::install_github("hruffieux/locus")
 ```
+
+## Algorithms
+
+The algorithms for joint covariate and response selection provided in
+**locus** implement inference for regression models with
+
+-   identity link;
+-   logistic link;
+-   probit link;
+-   identity-probit link.
+
+Inference on models for group selection and based on a spatial Gaussian
+process to encode the dependence structure of the candidate predictors
+are also implemented. Moreover, covariate-level external information
+variables can be incorporated to inform the selection.
+
 ## License and authors
 
-This software uses the GPL v2 license, see [LICENSE](LICENSE).
-Authors and copyright are provided in [DESCRIPTION](DESCRIPTION). Loris Michel
+This software uses the GPL v2 license, see [LICENSE](LICENSE). Authors
+and copyright are provided in [DESCRIPTION](DESCRIPTION). Loris Michel
 has also contributed to the development of this project.
 
 ## Issues
 
-To report an issue, please use the [locus issue tracker](https://github.com/hruffieux/locus/issues) at github.com.
+To report an issue, please use the [locus issue
+tracker](https://github.com/hruffieux/locus/issues) at github.com.
