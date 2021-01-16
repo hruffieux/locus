@@ -70,7 +70,7 @@ Y <- cbind(Y_act, Y_inact)[, shuff_y_ind]
 
 n_bl <- 6
 pos_bl <- seq(1, p, by = ceiling(p/n_bl))
-list_blocks <- set_blocks(p, pos_bl, n_cpus = 2)
+list_blocks <- set_blocks(p, pos_bl, n_cpus = 1)
 
 vb <- locus(Y = Y, X = X, p0_av = p0, link = "identity",
             list_blocks = list_blocks, user_seed = seed)

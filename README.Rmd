@@ -56,7 +56,7 @@ my_badge_travis <- function(ref = NULL, is_commercial = FALSE, branch = "master"
 <!-- Run for the R CMD checks, run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
 `r my_badge_travis("hruffieux/echoseq", branch = "devel")`
 `r badge_github_actions("hruffieux/locus")` 
-`r badge_license("GPL v2")`
+`r badge_license("GPL v2", url = "https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html")`
 `r badge_devel("hruffieux/locus", "blue")`
 `r badge_code_size("hruffieux/locus")`
 `r badge_doi("10.1093/biostatistics/kxx007", "yellow")`

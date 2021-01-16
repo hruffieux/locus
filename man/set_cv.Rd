@@ -96,7 +96,7 @@ Y <- cbind(Y_act, Y_inact)[, shuff_y_ind]
 ## Infer associations ##
 ########################
 
-list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 2)
+list_cv <- set_cv(n, p, n_folds = 3, size_p0_av_grid = 3, n_cpus = 1)
 
 vb <- locus(Y = Y, X = X, p0_av = NULL, link = "identity", list_cv = list_cv,
             user_seed = seed)

@@ -7,11 +7,11 @@ re-knitted to generate an updated README.md -->
 
 <!-- Run for the R CMD checks, run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
 
-[![](https://travis-ci.org/hruffieux/locus.svg?branch=master)](https://travis-ci.org/hruffieux/locus)
+[![](https://travis-ci.org/hruffieux/echoseq.svg?branch=devel)](https://travis-ci.org/hruffieux/echoseq)
 [![R build
 status](https://github.com/hruffieux/locus/workflows/R-CMD-check/badge.svg)](https://github.com/hruffieux/locus/actions)
 [![License: GPL
-v2](https://img.shields.io/badge/license-GPL%20v2-blue.svg)](https://cran.r-project.org/web/licenses/GPL%20v2)
+v2](https://img.shields.io/badge/license-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![](https://img.shields.io/badge/devel%20version-1.0.0-blue.svg)](https://github.com/hruffieux/locus)
 [![](https://img.shields.io/github/languages/code-size/hruffieux/locus.svg)](https://github.com/hruffieux/locus)
 [![](https://img.shields.io/badge/doi-10.1093/biostatistics/kxx007-yellow.svg)](https://doi.org/10.1093/biostatistics/kxx007)
