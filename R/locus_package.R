@@ -17,7 +17,7 @@
 #' @name locus-package
 #' @useDynLib locus, .registration = TRUE
 #' @import RcppEigen
-#' @importFrom Rcpp evalCpp
+#' @importFrom Rcpp sourceCpp
 #' @importFrom stats cor dnorm median pnorm qnorm rbeta rbinom rgamma rnorm setNames uniroot var
 #' @importFrom grDevices dev.off png
 #' @importFrom graphics abline legend matplot points

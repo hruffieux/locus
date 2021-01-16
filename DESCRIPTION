@@ -23,7 +23,7 @@ Imports:
     Matrix (>= 1.2-2),
     parallel,
     plyr (>= 1.8.4),
-    Rcpp (>= 0.12.9),
+    Rcpp,
     RcppEigen (>= 0.3.2.9.0)
 RoxygenNote: 7.1.1
 Suggests: testthat
