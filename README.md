@@ -39,7 +39,7 @@ To install, run the following command in R:
 
 ``` r
 if(!require(remotes)) install.packages("remotes")
-remotes::install_github("hruffieux/locus")
+remotes::install_github("hruffieux/locus", ref = "devel")
 ```
 
 ## Algorithms
