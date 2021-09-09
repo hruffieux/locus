@@ -65,16 +65,16 @@ logo_bottom <- ggplot() + geom_alignment(gr,fill = "grey80") + theme_void() + sc
 
 dir.create("man/figures/", showWarnings = FALSE)
 
-sticker(grid.arrange(logo_top, logo_bottom, heights=c(9,1)), 
+sticker(grid.arrange(logo_top, logo_bottom, heights=c(11,2.4)), 
         package="locus", 
         p_size=4.5, 
         p_color = "grey25",
         s_x=0.975, 
-        s_y=1.01, 
+        s_y=0.95, 
         s_width=1.5, 
         s_height=1.3,
-        p_x = 1.44, #0.49,#
-        p_y = 0.57, 
+        p_x = 1.435, 
+        p_y = 0.6, 
         h_fill="white", 
         h_color="grey80",
         filename="man/figures/locus_logo.png",
