@@ -3,3 +3,7 @@
 ^\.travis\.yml$
 ^README\.Rmd$
 ^\.github$
+README.Rmd
+^README\.Rmd$
+figures$
+^inst/sticker$

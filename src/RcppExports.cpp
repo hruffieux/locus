@@ -7,6 +7,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // coreBatch
 void coreBatch(const MapMat X, const MapMat Y, MapArr2D gam_vb, const MapArr1D log_om_vb, const MapArr1D log_1_min_om_vb, const double log_sig2_inv_vb, const MapArr1D log_tau_vb, MapMat beta_vb, MapMat mat_x_m1, MapArr2D mu_beta_vb, const MapArr1D sig2_beta_vb, const MapArr1D tau_vb);
 RcppExport SEXP _locus_coreBatch(SEXP XSEXP, SEXP YSEXP, SEXP gam_vbSEXP, SEXP log_om_vbSEXP, SEXP log_1_min_om_vbSEXP, SEXP log_sig2_inv_vbSEXP, SEXP log_tau_vbSEXP, SEXP beta_vbSEXP, SEXP mat_x_m1SEXP, SEXP mu_beta_vbSEXP, SEXP sig2_beta_vbSEXP, SEXP tau_vbSEXP) {
