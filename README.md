@@ -3,7 +3,7 @@
 prevents from committing if the README.Rmd has changed, but has not been 
 re-knitted to generate an updated README.md -->
 
-## locus – large-scale variational inference for combined covariate and response selection in sparse regression models
+## LOCUS – Large-scale variational inference for Bayesian variable selection in multiple-response regression <img src="man/figures/locus_logo.png" align="right" height="150"/>
 
 <!-- Run for the R CMD checks, run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
 
@@ -24,7 +24,7 @@ based on multivariate regression models. Dependence across responses
 linked to the same covariates is captured through the model hierarchical
 structure (H. Ruffieux, A. C. Davison, J. Hager, I. Irincheeva,
 Efficient inference for genetic association studies with multiple
-outcomes, *Biostatistics*, 2017).
+outcomes, *Biostatistics*, 18:618–636, 2017).
 
 ## Warning
 
@@ -62,6 +62,11 @@ variables can be incorporated to inform the selection.
 This software uses the GPL v2 license, see [LICENSE](LICENSE). Authors
 and copyright are provided in [DESCRIPTION](DESCRIPTION). Loris Michel
 has also contributed to the development of this project.
+
+Please cite the software using the following reference: H. Ruffieux, A.
+C. Davison, J. Hager, I. Irincheeva, Efficient inference for genetic
+association studies with multiple outcomes, *Biostatistics*, 18:618–636,
+2017.
 
 ## Issues
 
