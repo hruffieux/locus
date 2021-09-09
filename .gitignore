@@ -2,7 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-*.png
 *.pdf
 .DS_Store
 
