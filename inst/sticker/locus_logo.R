@@ -7,11 +7,11 @@ require(ggbio)
 require(RColorBrewer)
 
 
-seed <- 321
+seed <- 110
 set.seed(seed)
 
-p <- 18
-q <- 11
+p <- 11
+q <- 6
 
 
 # hotspot_propensity <- rbeta(p, shape1 = 1.5, shape2 = 1.5)
@@ -44,18 +44,18 @@ logo_top <- ggplot(df, aes(x = x, y = y, fill = value)) +
                         legend.position="none")
 
 
-seed <- 111
+seed <- 321
 set.seed(seed)
 
-N <- 10
+N <- 5
 
 gr <- GRanges(seqnames = rep("chr1", N),
               IRanges(
                 start = sample(1:(20*N), size = N, replace = TRUE),
-                width = sample(70:75, size = N, replace = TRUE)),
+                width = sample(25:50, size = N, replace = TRUE)),
               strand = sample(c("+", "-", "*"), size = N,
                               replace = TRUE),
-              value = rnorm(N, 10, 3), score = rnorm(N, 100, 30),
+              value = rnorm(N, 2, 20), score = rnorm(N, 100, 30),
               sample = sample(c("Normal", "Tumor"),
                               size = N, replace = TRUE),
               pair = sample(letters, size = N,
@@ -67,15 +67,17 @@ dir.create("man/figures/", showWarnings = FALSE)
 
 sticker(grid.arrange(logo_top, logo_bottom, heights=c(11,2.4)), 
         package="locus", 
-        p_size=4.2, 
+        p_size=6.3, 
         p_color = "grey25",
-        s_x=0.975, 
-        s_y=0.95, 
+        s_x=0.97, 
+        s_y=0.985, 
         s_width=1.5, 
-        s_height=1.3,
-        p_x = 1.445, 
-        p_y = 0.595, 
+        s_height=1.35,
+        p_x = 1.355, 
+        p_y = 0.65, 
+        h_size = 1,
         h_fill="white", 
-        h_color="grey80",
+        h_color= "grey25", #"grey80",
         filename="man/figures/locus_logo.png",
         dpi = 1200)
+
