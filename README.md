@@ -6,10 +6,9 @@ re-knitted to generate an updated README.md -->
 ## LOCUS – Large-scale variational inference for Bayesian variable selection in multiple-response regression <img src="man/figures/locus_logo.png" align="right" height="150"/>
 
 <!-- Run for the R CMD checks, run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
+<!-- [![](https://travis-ci.org/hruffieux/locus.svg?branch=devel)](https://travis-ci.org/hruffieux/locus) -->
+<!-- [![R build status](https://github.com/hruffieux/locus/workflows/R-CMD-check/badge.svg)](https://github.com/hruffieux/locus/actions)  -->
 
-[![](https://travis-ci.org/hruffieux/locus.svg?branch=devel)](https://travis-ci.org/hruffieux/locus)
-[![R build
-status](https://github.com/hruffieux/locus/workflows/R-CMD-check/badge.svg)](https://github.com/hruffieux/locus/actions)
 [![License: GPL
 v2](https://img.shields.io/badge/license-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![](https://img.shields.io/badge/devel%20version-1.0.0-blue.svg)](https://github.com/hruffieux/locus)
@@ -47,10 +46,10 @@ remotes::install_github("hruffieux/locus", ref = "devel")
 The algorithms for joint covariate and response selection provided in
 **locus** implement inference for regression models with
 
--   identity link;
--   logistic link;
--   probit link;
--   identity-probit link.
+- identity link;
+- logistic link;
+- probit link;
+- identity-probit link.
 
 Inference on models for group selection and based on a spatial Gaussian
 process to encode the dependence structure of the candidate predictors

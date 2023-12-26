@@ -54,8 +54,8 @@ my_badge_travis <- function(ref = NULL, is_commercial = FALSE, branch = "master"
 ## LOCUS – Large-scale variational inference for Bayesian variable selection in multiple-response regression  <img src="man/figures/locus_logo.png" align="right" height="150"/>
 
 <!-- Run for the R CMD checks, run usethis::use_github_actions() to set up the pipeline, possibly modify the .yaml file and then: -->
-`r my_badge_travis("hruffieux/locus", branch = "devel")`
-`r badge_github_actions("hruffieux/locus")` 
+<!-- `r my_badge_travis("hruffieux/locus", branch = "devel")` -->
+<!-- `r badge_github_actions("hruffieux/locus")`  -->
 `r badge_license("GPL v2", url = "https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html")`
 `r badge_devel("hruffieux/locus", "blue")`
 `r badge_code_size("hruffieux/locus")`
